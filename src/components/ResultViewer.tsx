@@ -29,7 +29,10 @@ const ResultViewer = ({ projectId, predictionId, title }: ResultViewerProps) => 
       });
 
       if (response.error) {
-        throw new Error(response.error);
+        const errorMessage = typeof response.error === 'string' 
+          ? response.error 
+          : response.error.message || 'An error occurred';
+        throw new Error(errorMessage);
       }
 
       setResult(response);
@@ -173,7 +176,13 @@ const ResultViewer = ({ projectId, predictionId, title }: ResultViewerProps) => 
         {result?.status === 'failed' && (
           <div className="text-center text-red-600">
             <p>Pemrosesan gagal. Silakan coba lagi.</p>
-            {result?.error && <p className="text-sm mt-1">{result.error}</p>}
+            {result?.error && (
+              <p className="text-sm mt-1">
+                {typeof result.error === 'string' 
+                  ? result.error 
+                  : result.error.message || 'Unknown error occurred'}
+              </p>
+            )}
           </div>
         )}
 
