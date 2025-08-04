@@ -1,1 +1,4 @@
 project_id = "ltjxuknxsewsbtggjbee"
+
+[functions.fashn-api]
+verify_jwt = true
