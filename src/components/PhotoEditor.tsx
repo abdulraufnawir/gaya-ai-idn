@@ -56,14 +56,14 @@ const PhotoEditor = ({ userId }: PhotoEditorProps) => {
       // Upload image to Supabase Storage first
       const fileName = `photo-edit-${Date.now()}-${originalImage.name}`;
       const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('project-images')
+        .from('tryon-images')
         .upload(fileName, originalImage);
 
       if (uploadError) throw uploadError;
 
       // Get public URL
       const { data: { publicUrl } } = supabase.storage
-        .from('project-images')
+        .from('tryon-images')
         .getPublicUrl(fileName);
 
       // Create project in database
