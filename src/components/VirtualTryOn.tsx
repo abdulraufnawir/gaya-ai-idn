@@ -14,6 +14,8 @@ interface VirtualTryOnProps {
 const VirtualTryOn = ({ userId }: VirtualTryOnProps) => {
   const [modelImage, setModelImage] = useState<File | null>(null);
   const [clothingImage, setClothingImage] = useState<File | null>(null);
+  const [modelImagePreview, setModelImagePreview] = useState<string | null>(null);
+  const [clothingImagePreview, setClothingImagePreview] = useState<string | null>(null);
   const [processing, setProcessing] = useState(false);
   const { toast } = useToast();
 
@@ -21,6 +23,8 @@ const VirtualTryOn = ({ userId }: VirtualTryOnProps) => {
     const file = e.target.files?.[0];
     if (file) {
       setModelImage(file);
+      const previewUrl = URL.createObjectURL(file);
+      setModelImagePreview(previewUrl);
     }
   };
 
@@ -28,6 +32,8 @@ const VirtualTryOn = ({ userId }: VirtualTryOnProps) => {
     const file = e.target.files?.[0];
     if (file) {
       setClothingImage(file);
+      const previewUrl = URL.createObjectURL(file);
+      setClothingImagePreview(previewUrl);
     }
   };
 
@@ -97,6 +103,8 @@ const VirtualTryOn = ({ userId }: VirtualTryOnProps) => {
       // Reset form
       setModelImage(null);
       setClothingImage(null);
+      setModelImagePreview(null);
+      setClothingImagePreview(null);
     } catch (error: any) {
       toast({
         title: 'Error',
@@ -141,31 +149,45 @@ const VirtualTryOn = ({ userId }: VirtualTryOnProps) => {
               <div>
                 <Label htmlFor="model-upload">Foto Model</Label>
                 <div className="mt-2 flex justify-center px-6 pt-5 pb-6 border-2 border-dashed border-muted-foreground/25 rounded-lg hover:border-primary/50 transition-colors">
-                  <div className="space-y-1 text-center">
-                    <Upload className="mx-auto h-12 w-12 text-muted-foreground" />
-                    <div className="flex text-sm text-muted-foreground">
-                      <label
-                        htmlFor="model-upload"
-                        className="relative cursor-pointer rounded-md font-medium text-primary hover:text-primary/80"
+                  {modelImagePreview ? (
+                    <div className="relative">
+                      <img 
+                        src={modelImagePreview} 
+                        alt="Model preview" 
+                        className="max-h-48 rounded-lg object-cover"
+                      />
+                      <button
+                        onClick={() => {
+                          setModelImage(null);
+                          setModelImagePreview(null);
+                        }}
+                        className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600"
                       >
-                        <span>Upload foto model</span>
-                        <Input
-                          id="model-upload"
-                          type="file"
-                          accept="image/*"
-                          className="sr-only"
-                          onChange={handleModelImageChange}
-                        />
-                      </label>
+                        ×
+                      </button>
                     </div>
-                    <p className="text-xs text-muted-foreground">PNG, JPG hingga 10MB</p>
-                  </div>
+                  ) : (
+                    <div className="space-y-1 text-center">
+                      <Upload className="mx-auto h-12 w-12 text-muted-foreground" />
+                      <div className="flex text-sm text-muted-foreground">
+                        <label
+                          htmlFor="model-upload"
+                          className="relative cursor-pointer rounded-md font-medium text-primary hover:text-primary/80"
+                        >
+                          <span>Upload foto model</span>
+                          <Input
+                            id="model-upload"
+                            type="file"
+                            accept="image/*"
+                            className="sr-only"
+                            onChange={handleModelImageChange}
+                          />
+                        </label>
+                      </div>
+                      <p className="text-xs text-muted-foreground">PNG, JPG hingga 10MB</p>
+                    </div>
+                  )}
                 </div>
-                {modelImage && (
-                  <p className="text-sm text-green-600 mt-2">
-                    ✓ {modelImage.name}
-                  </p>
-                )}
               </div>
             </div>
 
@@ -173,31 +195,45 @@ const VirtualTryOn = ({ userId }: VirtualTryOnProps) => {
               <div>
                 <Label htmlFor="clothing-upload">Foto Pakaian</Label>
                 <div className="mt-2 flex justify-center px-6 pt-5 pb-6 border-2 border-dashed border-muted-foreground/25 rounded-lg hover:border-primary/50 transition-colors">
-                  <div className="space-y-1 text-center">
-                    <Upload className="mx-auto h-12 w-12 text-muted-foreground" />
-                    <div className="flex text-sm text-muted-foreground">
-                      <label
-                        htmlFor="clothing-upload"
-                        className="relative cursor-pointer rounded-md font-medium text-primary hover:text-primary/80"
+                  {clothingImagePreview ? (
+                    <div className="relative">
+                      <img 
+                        src={clothingImagePreview} 
+                        alt="Clothing preview" 
+                        className="max-h-48 rounded-lg object-cover"
+                      />
+                      <button
+                        onClick={() => {
+                          setClothingImage(null);
+                          setClothingImagePreview(null);
+                        }}
+                        className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600"
                       >
-                        <span>Upload foto pakaian</span>
-                        <Input
-                          id="clothing-upload"
-                          type="file"
-                          accept="image/*"
-                          className="sr-only"
-                          onChange={handleClothingImageChange}
-                        />
-                      </label>
+                        ×
+                      </button>
                     </div>
-                    <p className="text-xs text-muted-foreground">PNG, JPG hingga 10MB</p>
-                  </div>
+                  ) : (
+                    <div className="space-y-1 text-center">
+                      <Upload className="mx-auto h-12 w-12 text-muted-foreground" />
+                      <div className="flex text-sm text-muted-foreground">
+                        <label
+                          htmlFor="clothing-upload"
+                          className="relative cursor-pointer rounded-md font-medium text-primary hover:text-primary/80"
+                        >
+                          <span>Upload foto pakaian</span>
+                          <Input
+                            id="clothing-upload"
+                            type="file"
+                            accept="image/*"
+                            className="sr-only"
+                            onChange={handleClothingImageChange}
+                          />
+                        </label>
+                      </div>
+                      <p className="text-xs text-muted-foreground">PNG, JPG hingga 10MB</p>
+                    </div>
+                  )}
                 </div>
-                {clothingImage && (
-                  <p className="text-sm text-green-600 mt-2">
-                    ✓ {clothingImage.name}
-                  </p>
-                )}
               </div>
             </div>
           </div>
