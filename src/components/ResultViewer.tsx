@@ -103,7 +103,9 @@ const ResultViewer = ({ projectId, predictionId, title }: ResultViewerProps) => 
 
   useEffect(() => {
     checkStatus();
-    
+  }, [predictionId]);
+
+  useEffect(() => {
     // Poll for updates if still processing
     let interval: NodeJS.Timeout;
     if (result?.status === 'processing' || result?.status === 'in_queue' || result?.status === 'starting') {
@@ -113,7 +115,7 @@ const ResultViewer = ({ projectId, predictionId, title }: ResultViewerProps) => 
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [predictionId, result?.status]);
+  }, [result?.status]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
