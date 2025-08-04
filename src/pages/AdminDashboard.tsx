@@ -21,6 +21,7 @@ import AdminUserManagement from '@/components/admin/AdminUserManagement';
 import AdminAnalytics from '@/components/admin/AdminAnalytics';
 import AdminProjectMonitoring from '@/components/admin/AdminProjectMonitoring';
 import AdminSystemHealth from '@/components/admin/AdminSystemHealth';
+import AdminRoleManager from '@/components/admin/AdminRoleManager';
 
 const AdminDashboard = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -30,7 +31,7 @@ const AdminDashboard = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       setUser(session?.user ?? null);
       setLoading(false);
       
@@ -39,22 +40,20 @@ const AdminDashboard = () => {
         return;
       }
       
-      // Check if user is admin (you can implement role checking here)
-      // For now, we'll check if email contains 'admin' or specific domains
-      const isAdmin = session.user.email?.includes('admin') || 
-                     session.user.email?.endsWith('@yourdomain.com');
+      // Check if user has admin role
+      const { data: isAdmin } = await supabase.rpc('is_admin');
       
       if (!isAdmin) {
         toast({
           title: 'Access Denied',
-          description: 'You do not have admin privileges',
+          description: 'You do not have admin privileges. Contact an administrator to get access.',
           variant: 'destructive',
         });
         navigate('/dashboard');
       }
     });
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setUser(session?.user ?? null);
       setLoading(false);
       
@@ -63,13 +62,13 @@ const AdminDashboard = () => {
         return;
       }
 
-      const isAdmin = session.user.email?.includes('admin') || 
-                     session.user.email?.endsWith('@yourdomain.com');
+      // Check if user has admin role
+      const { data: isAdmin } = await supabase.rpc('is_admin');
       
       if (!isAdmin) {
         toast({
           title: 'Access Denied',
-          description: 'You do not have admin privileges',
+          description: 'You do not have admin privileges. Contact an administrator to get access.',
           variant: 'destructive',
         });
         navigate('/dashboard');
@@ -143,7 +142,7 @@ const AdminDashboard = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 mb-6">
+          <TabsList className="grid w-full grid-cols-2 lg:grid-cols-5 mb-6">
             <TabsTrigger value="overview" className="flex items-center gap-2">
               <BarChart3 className="h-4 w-4" />
               Overview
@@ -155,6 +154,10 @@ const AdminDashboard = () => {
             <TabsTrigger value="projects" className="flex items-center gap-2">
               <FileImage className="h-4 w-4" />
               Projects
+            </TabsTrigger>
+            <TabsTrigger value="roles" className="flex items-center gap-2">
+              <Shield className="h-4 w-4" />
+              Roles
             </TabsTrigger>
             <TabsTrigger value="system" className="flex items-center gap-2">
               <Activity className="h-4 w-4" />
@@ -172,6 +175,10 @@ const AdminDashboard = () => {
 
           <TabsContent value="projects">
             <AdminProjectMonitoring />
+          </TabsContent>
+
+          <TabsContent value="roles">
+            <AdminRoleManager />
           </TabsContent>
 
           <TabsContent value="system">
