@@ -132,21 +132,21 @@ const VirtualTryOn = ({ userId }: VirtualTryOnProps) => {
   };
 
   return (
-    <div className="min-h-screen bg-background p-6">
+    <div className="bg-background p-3 sm:p-6">
       {/* Header */}
-      <div className="max-w-7xl mx-auto mb-8">
+      <div className="max-w-7xl mx-auto mb-6 sm:mb-8">
         <div className="text-center">
-          <h1 className="text-3xl font-bold mb-2">Virtual Try-On AI</h1>
-          <p className="text-muted-foreground">Upload foto model dan pakaian untuk melihat hasil virtual try-on</p>
+          <h1 className="text-2xl sm:text-3xl font-bold mb-2">Virtual Try-On AI</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">Upload foto model dan pakaian untuk melihat hasil virtual try-on</p>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-8">
+      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
         {/* Select Model */}
         <div className="space-y-4">
-          <div className="flex items-center justify-center">
-            <h2 className="text-xl font-semibold flex items-center gap-2">
+          <div className="text-center">
+            <h2 className="text-lg sm:text-xl font-semibold flex items-center justify-center gap-2">
               Select Model
               <div className="w-4 h-4 bg-muted-foreground/20 rounded-full flex items-center justify-center">
                 <span className="text-xs">?</span>
@@ -155,7 +155,7 @@ const VirtualTryOn = ({ userId }: VirtualTryOnProps) => {
           </div>
           
           <div className="relative">
-            <div className="aspect-[3/4] bg-muted/20 rounded-xl border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 transition-colors overflow-hidden">
+            <div className="aspect-[3/4] bg-muted/20 rounded-xl border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 transition-colors overflow-hidden min-h-[300px] sm:min-h-[400px]">
               {modelImagePreview ? (
                 <div className="relative w-full h-full">
                   <img 
@@ -168,7 +168,7 @@ const VirtualTryOn = ({ userId }: VirtualTryOnProps) => {
                       setModelImage(null);
                       setModelImagePreview(null);
                     }}
-                    className="absolute top-4 right-4 bg-background/80 backdrop-blur-sm text-foreground rounded-full w-8 h-8 flex items-center justify-center hover:bg-background/90 transition-colors"
+                    className="absolute top-2 right-2 bg-background/80 backdrop-blur-sm text-foreground rounded-full w-8 h-8 flex items-center justify-center hover:bg-background/90 transition-colors touch-target"
                   >
                     ×
                   </button>
@@ -176,11 +176,11 @@ const VirtualTryOn = ({ userId }: VirtualTryOnProps) => {
               ) : (
                 <label
                   htmlFor="model-upload"
-                  className="w-full h-full flex flex-col items-center justify-center cursor-pointer hover:bg-muted/10 transition-colors"
+                  className="w-full h-full flex flex-col items-center justify-center cursor-pointer hover:bg-muted/10 transition-colors p-4"
                 >
-                  <Upload className="w-12 h-12 text-muted-foreground mb-4" />
-                  <span className="text-lg font-medium text-primary mb-2">Upload foto model</span>
-                  <span className="text-sm text-muted-foreground">PNG, JPG hingga 10MB</span>
+                  <Upload className="w-10 h-10 sm:w-12 sm:h-12 text-muted-foreground mb-3 sm:mb-4" />
+                  <span className="text-base sm:text-lg font-medium text-primary mb-2 text-center">Upload foto model</span>
+                  <span className="text-xs sm:text-sm text-muted-foreground text-center">PNG, JPG hingga 10MB</span>
                   <Input
                     id="model-upload"
                     type="file"
@@ -195,10 +195,10 @@ const VirtualTryOn = ({ userId }: VirtualTryOnProps) => {
 
           {modelImage && (
             <div className="flex gap-2">
-              <Button variant="outline" size="sm" className="flex-1">
+              <Button variant="outline" size="sm" className="flex-1 text-xs sm:text-sm">
                 Generate AI Model
               </Button>
-              <Button variant="outline" size="sm" className="flex-1">
+              <Button variant="outline" size="sm" className="flex-1 text-xs sm:text-sm">
                 My Models
               </Button>
             </div>
@@ -207,8 +207,8 @@ const VirtualTryOn = ({ userId }: VirtualTryOnProps) => {
 
         {/* Select Garment */}
         <div className="space-y-4">
-          <div className="flex items-center justify-center">
-            <h2 className="text-xl font-semibold flex items-center gap-2">
+          <div className="text-center">
+            <h2 className="text-lg sm:text-xl font-semibold flex items-center justify-center gap-2">
               Select Garment
               <div className="w-4 h-4 bg-muted-foreground/20 rounded-full flex items-center justify-center">
                 <span className="text-xs">?</span>
@@ -217,7 +217,7 @@ const VirtualTryOn = ({ userId }: VirtualTryOnProps) => {
           </div>
           
           <div className="relative">
-            <div className="aspect-[3/4] bg-muted/20 rounded-xl border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 transition-colors overflow-hidden">
+            <div className="aspect-[3/4] bg-muted/20 rounded-xl border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 transition-colors overflow-hidden min-h-[300px] sm:min-h-[400px]">
               {clothingImagePreview ? (
                 <div className="relative w-full h-full">
                   <img 
@@ -230,7 +230,7 @@ const VirtualTryOn = ({ userId }: VirtualTryOnProps) => {
                       setClothingImage(null);
                       setClothingImagePreview(null);
                     }}
-                    className="absolute top-4 right-4 bg-background/80 backdrop-blur-sm text-foreground rounded-full w-8 h-8 flex items-center justify-center hover:bg-background/90 transition-colors"
+                    className="absolute top-2 right-2 bg-background/80 backdrop-blur-sm text-foreground rounded-full w-8 h-8 flex items-center justify-center hover:bg-background/90 transition-colors touch-target"
                   >
                     ×
                   </button>
@@ -238,11 +238,11 @@ const VirtualTryOn = ({ userId }: VirtualTryOnProps) => {
               ) : (
                 <label
                   htmlFor="clothing-upload"
-                  className="w-full h-full flex flex-col items-center justify-center cursor-pointer hover:bg-muted/10 transition-colors"
+                  className="w-full h-full flex flex-col items-center justify-center cursor-pointer hover:bg-muted/10 transition-colors p-4"
                 >
-                  <Upload className="w-12 h-12 text-muted-foreground mb-4" />
-                  <span className="text-lg font-medium text-primary mb-2">Upload foto pakaian</span>
-                  <span className="text-sm text-muted-foreground">PNG, JPG hingga 10MB</span>
+                  <Upload className="w-10 h-10 sm:w-12 sm:h-12 text-muted-foreground mb-3 sm:mb-4" />
+                  <span className="text-base sm:text-lg font-medium text-primary mb-2 text-center">Upload foto pakaian</span>
+                  <span className="text-xs sm:text-sm text-muted-foreground text-center">PNG, JPG hingga 10MB</span>
                   <Input
                     id="clothing-upload"
                     type="file"
@@ -256,7 +256,7 @@ const VirtualTryOn = ({ userId }: VirtualTryOnProps) => {
           </div>
 
           {clothingImage && (
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               <Button variant="outline" size="sm" className="text-xs">
                 Auto
               </Button>
@@ -266,7 +266,7 @@ const VirtualTryOn = ({ userId }: VirtualTryOnProps) => {
               <Button variant="outline" size="sm" className="text-xs">
                 Bottom
               </Button>
-              <Button variant="default" size="sm" className="text-xs">
+              <Button variant="default" size="sm" className="text-xs col-span-2 sm:col-span-1">
                 Full-body
               </Button>
             </div>
@@ -275,12 +275,12 @@ const VirtualTryOn = ({ userId }: VirtualTryOnProps) => {
       </div>
 
       {/* Generate Button */}
-      <div className="max-w-7xl mx-auto mt-8 flex justify-center">
+      <div className="max-w-7xl mx-auto mt-6 sm:mt-8 flex justify-center px-4">
         <Button
           onClick={handleProcess}
           disabled={processing || !modelImage || !clothingImage}
           size="lg"
-          className="min-w-[300px] h-12 text-lg"
+          className="w-full sm:w-auto sm:min-w-[300px] h-12 text-base sm:text-lg"
         >
           {processing ? (
             <>

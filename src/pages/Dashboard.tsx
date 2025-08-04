@@ -72,54 +72,56 @@ const Dashboard = () => {
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5">
       {/* Header */}
       <header className="border-b bg-background/80 backdrop-blur-sm sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <h1 className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-              GayaAI
-            </h1>
-            <span className="text-muted-foreground">Dashboard</span>
-          </div>
-          <div className="flex items-center space-x-4">
-            <span className="text-sm text-muted-foreground">
-              Halo, {user.email}
-            </span>
-            <Button variant="outline" size="sm" onClick={handleSignOut}>
-              <LogOut className="h-4 w-4 mr-2" />
-              Keluar
-            </Button>
+        <div className="container mx-auto px-4 py-3 sm:py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2 sm:space-x-4">
+              <h1 className="text-xl sm:text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">
+                GayaAI
+              </h1>
+              <span className="hidden sm:inline text-muted-foreground">Dashboard</span>
+            </div>
+            <div className="flex items-center space-x-2 sm:space-x-4">
+              <span className="hidden sm:inline text-sm text-muted-foreground truncate max-w-[150px] md:max-w-none">
+                Halo, {user.email}
+              </span>
+              <Button variant="outline" size="sm" onClick={handleSignOut}>
+                <LogOut className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Keluar</span>
+              </Button>
+            </div>
           </div>
         </div>
       </header>
 
-      <div className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h2 className="text-3xl font-bold mb-2">Selamat datang di GayaAI</h2>
-          <p className="text-muted-foreground">
+      <div className="container mx-auto px-4 py-4 sm:py-8">
+        <div className="mb-6 sm:mb-8">
+          <h2 className="text-2xl sm:text-3xl font-bold mb-2">Selamat datang di GayaAI</h2>
+          <p className="text-sm sm:text-base text-muted-foreground">
             Gunakan AI untuk mengembangkan bisnis fashion Anda
           </p>
         </div>
 
         <Tabs defaultValue="virtual-tryon" className="w-full">
-          <TabsList className="grid w-full grid-cols-5 mb-8">
-            <TabsTrigger value="virtual-tryon" className="flex items-center gap-2">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 mb-6 sm:mb-8 h-auto">
+            <TabsTrigger value="virtual-tryon" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 p-2 sm:p-3 text-xs sm:text-sm">
               <Upload className="h-4 w-4" />
-              Virtual Try-On
+              <span className="text-center">Virtual Try-On</span>
             </TabsTrigger>
-            <TabsTrigger value="model-swap" className="flex items-center gap-2">
+            <TabsTrigger value="model-swap" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 p-2 sm:p-3 text-xs sm:text-sm">
               <Users className="h-4 w-4" />
-              Ganti Model
+              <span className="text-center">Ganti Model</span>
             </TabsTrigger>
-            <TabsTrigger value="photo-edit" className="flex items-center gap-2">
+            <TabsTrigger value="photo-edit" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 p-2 sm:p-3 text-xs sm:text-sm">
               <Edit3 className="h-4 w-4" />
-              Edit Foto
+              <span className="text-center">Edit Foto</span>
             </TabsTrigger>
-            <TabsTrigger value="history" className="flex items-center gap-2">
+            <TabsTrigger value="history" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 p-2 sm:p-3 text-xs sm:text-sm">
               <Sparkles className="h-4 w-4" />
-              Riwayat
+              <span className="text-center">Riwayat</span>
             </TabsTrigger>
-            <TabsTrigger value="profile" className="flex items-center gap-2">
+            <TabsTrigger value="profile" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 p-2 sm:p-3 text-xs sm:text-sm">
               <UserIcon className="h-4 w-4" />
-              Profil
+              <span className="text-center">Profil</span>
             </TabsTrigger>
           </TabsList>
 
