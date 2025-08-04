@@ -42,11 +42,11 @@ const Navigation = () => {
 
           {/* Desktop CTA */}
           <div className="hidden md:flex items-center space-x-4">
-            <Button variant="ghost" size="sm">
-              Masuk
+            <Button variant="ghost" size="sm" asChild>
+              <a href="/auth">Masuk</a>
             </Button>
-            <Button variant="hero" size="sm">
-              Coba Gratis
+            <Button variant="hero" size="sm" asChild>
+              <a href="/auth">Coba Gratis</a>
             </Button>
           </div>
 
@@ -79,11 +79,11 @@ const Navigation = () => {
               </a>
             ))}
             <div className="pt-4 space-y-2">
-              <Button variant="ghost" className="w-full justify-start">
-                Masuk
+              <Button variant="ghost" className="w-full justify-start" asChild>
+                <a href="/auth">Masuk</a>
               </Button>
-              <Button variant="hero" className="w-full">
-                Coba Gratis
+              <Button variant="hero" className="w-full" asChild>
+                <a href="/auth">Coba Gratis</a>
               </Button>
             </div>
           </div>
