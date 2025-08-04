@@ -63,8 +63,8 @@ const PhotoEditor = ({ userId }: PhotoEditorProps) => {
         throw new Error('User not authenticated');
       }
 
-      // Upload image to Supabase Storage first
-      const fileName = `photo-edit-${Date.now()}-${originalImage.name}`;
+      // Upload image to Supabase Storage first with user-specific folder structure
+      const fileName = `${user.id}/photo-edit-${Date.now()}-${originalImage.name}`;
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('tryon-images')
         .upload(fileName, originalImage);
