@@ -34,14 +34,26 @@ const ResultViewer = ({ projectId, predictionId, title }: ResultViewerProps) => 
 
       setResult(response);
 
-      // Update project status in database
+      // Update project status in database using settings field
       if (response.status === 'completed' || response.status === 'failed') {
+        const { data: project } = await supabase
+          .from('projects')
+          .select('settings')
+          .eq('id', projectId)
+          .single();
+
+        const currentSettings = project?.settings as Record<string, any> || {};
+        const updatedSettings = {
+          ...currentSettings,
+          result_url: response.output?.[0] || null,
+          error_message: response.error || null
+        };
+
         await supabase
           .from('projects')
           .update({
             status: response.status,
-            result_url: response.output?.[0] || null,
-            error_message: response.error || null
+            settings: updatedSettings
           })
           .eq('id', projectId);
       }

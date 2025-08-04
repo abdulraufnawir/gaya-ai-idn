@@ -54,10 +54,14 @@ export type Database = {
         Row: {
           created_at: string
           description: string | null
+          error_message: string | null
           id: string
+          metadata: Json | null
           original_image_url: string | null
+          prediction_id: string | null
           project_type: string
           result_image_url: string | null
+          result_url: string | null
           settings: Json | null
           status: string
           title: string
@@ -67,10 +71,14 @@ export type Database = {
         Insert: {
           created_at?: string
           description?: string | null
+          error_message?: string | null
           id?: string
+          metadata?: Json | null
           original_image_url?: string | null
+          prediction_id?: string | null
           project_type: string
           result_image_url?: string | null
+          result_url?: string | null
           settings?: Json | null
           status?: string
           title: string
@@ -80,10 +88,14 @@ export type Database = {
         Update: {
           created_at?: string
           description?: string | null
+          error_message?: string | null
           id?: string
+          metadata?: Json | null
           original_image_url?: string | null
+          prediction_id?: string | null
           project_type?: string
           result_image_url?: string | null
+          result_url?: string | null
           settings?: Json | null
           status?: string
           title?: string

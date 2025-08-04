@@ -77,12 +77,12 @@ const ModelSwap = ({ userId }: ModelSwapProps) => {
         throw new Error(fashnResponse.error);
       }
 
-      // Update project with prediction ID
+      // Update project with prediction ID using settings for now
       await supabase
         .from('projects')
         .update({
-          prediction_id: fashnResponse.id,
-          metadata: {
+          settings: {
+            prediction_id: fashnResponse.id,
             original_image_url: originalImageUrl,
             target_model_url: targetModelUrl
           }
@@ -108,7 +108,7 @@ const ModelSwap = ({ userId }: ModelSwapProps) => {
   };
 
   const uploadImage = async (file: File, type: string): Promise<string> => {
-    const fileName = `${type}_${Date.now()}_${file.name}`;
+    const fileName = `${userId}/${type}_${Date.now()}_${file.name}`;
     const { data, error } = await supabase.storage
       .from('tryon-images')
       .upload(fileName, file);

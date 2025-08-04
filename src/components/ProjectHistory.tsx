@@ -2,9 +2,10 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Sparkles, Calendar, Trash2, Download } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { Calendar, Download, Eye, Trash2 } from 'lucide-react';
+import ResultViewer from './ResultViewer';
 
 interface Project {
   id: string;
@@ -14,9 +15,7 @@ interface Project {
   status: string;
   created_at: string;
   updated_at: string;
-  prediction_id?: string;
-  result_url?: string;
-  error_message?: string;
+  settings?: any;
 }
 
 interface ProjectHistoryProps {
@@ -116,6 +115,33 @@ const ProjectHistory = ({ userId }: ProjectHistoryProps) => {
     }
   };
 
+  const getStatusVariant = (status: string) => {
+    switch (status) {
+      case 'completed': return 'default';
+      case 'processing': return 'secondary';
+      case 'failed': return 'destructive';
+      default: return 'outline';
+    }
+  };
+
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'completed': return 'Selesai';
+      case 'processing': return 'Memproses';
+      case 'failed': return 'Gagal';
+      default: return status;
+    }
+  };
+
+  const getProjectTypeText = (type: string) => {
+    switch (type) {
+      case 'virtual_tryon': return 'Virtual Try-On';
+      case 'model_swap': return 'Model Swap';
+      case 'photo_edit': return 'Photo Editor';
+      default: return type;
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -129,72 +155,75 @@ const ProjectHistory = ({ userId }: ProjectHistoryProps) => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5" />
+            <Calendar className="h-5 w-5" />
             Riwayat Proyek
           </CardTitle>
           <CardDescription>
-            Lihat semua proyek AI yang pernah Anda buat
+            Lihat semua proyek AI yang telah Anda buat
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {projects.length === 0 ? (
+          {loading ? (
             <div className="text-center py-8">
-              <Sparkles className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-              <p className="text-muted-foreground">
-                Belum ada proyek. Mulai buat proyek pertama Anda!
-              </p>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+              <p className="text-sm text-muted-foreground mt-2">Memuat riwayat proyek...</p>
+            </div>
+          ) : projects.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-muted-foreground">Belum ada proyek yang dibuat</p>
             </div>
           ) : (
-            <div className="grid gap-4">
+            <div className="space-y-4">
               {projects.map((project) => (
-                <Card key={project.id} className="border">
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between">
-                      <div className="space-y-2 flex-1">
-                        <div className="flex items-center gap-2">
-                          <h3 className="font-semibold">{project.title}</h3>
-                          <Badge variant="outline">
-                            {getProjectTypeLabel(project.project_type)}
-                          </Badge>
-                          <Badge 
-                            variant="secondary" 
-                            className={`text-white ${getStatusColor(project.status)}`}
-                          >
-                            {getStatusLabel(project.status)}
-                          </Badge>
-                        </div>
-                        <p className="text-sm text-muted-foreground">
-                          {project.description}
-                        </p>
-                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                          <div className="flex items-center gap-1">
-                            <Calendar className="h-3 w-3" />
-                            {new Date(project.created_at).toLocaleDateString('id-ID')}
-                          </div>
-                        </div>
-                      </div>
+                <div key={project.id} className="border rounded-lg p-4">
+                  <div className="flex items-start justify-between">
+                    <div className="space-y-2">
+                      <h3 className="font-semibold">{project.title}</h3>
+                      <p className="text-sm text-muted-foreground">{project.description}</p>
                       <div className="flex items-center gap-2">
-                        {project.status === 'completed' && (
-                          <Button variant="outline" size="sm">
-                            <Download className="h-4 w-4" />
-                          </Button>
-                        )}
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          onClick={() => deleteProject(project.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        <Badge variant={getStatusVariant(project.status)}>
+                          {getStatusText(project.status)}
+                        </Badge>
+                        <Badge variant="outline">
+                          {getProjectTypeText(project.project_type)}
+                        </Badge>
                       </div>
+                      <p className="text-xs text-muted-foreground">
+                        Dibuat: {new Date(project.created_at).toLocaleDateString('id-ID')}
+                      </p>
                     </div>
-                  </CardContent>
-                </Card>
+                    <div className="flex gap-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => setSelectedProject(project)}
+                        disabled={!project.settings?.prediction_id}
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => deleteProject(project.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
               ))}
             </div>
           )}
         </CardContent>
       </Card>
+
+      {selectedProject && selectedProject.settings?.prediction_id && (
+        <ResultViewer
+          projectId={selectedProject.id}
+          predictionId={selectedProject.settings.prediction_id}
+          title={selectedProject.title}
+        />
+      )}
     </div>
   );
 };

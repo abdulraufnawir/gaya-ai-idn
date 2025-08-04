@@ -77,12 +77,12 @@ const VirtualTryOn = ({ userId }: VirtualTryOnProps) => {
         throw new Error(fashnResponse.error);
       }
 
-      // Update project with prediction ID
+      // Update project with prediction ID using settings for now
       await supabase
         .from('projects')
         .update({
-          prediction_id: fashnResponse.id,
-          metadata: {
+          settings: {
+            prediction_id: fashnResponse.id,
             model_image_url: modelImageUrl,
             garment_image_url: clothingImageUrl
           }
@@ -109,7 +109,7 @@ const VirtualTryOn = ({ userId }: VirtualTryOnProps) => {
   };
 
   const uploadImage = async (file: File, type: string): Promise<string> => {
-    const fileName = `${type}_${Date.now()}_${file.name}`;
+    const fileName = `${userId}/${type}_${Date.now()}_${file.name}`;
     const { data, error } = await supabase.storage
       .from('tryon-images')
       .upload(fileName, file);
