@@ -122,45 +122,66 @@ const ModelSwap = ({ userId }: ModelSwapProps) => {
 
       if (projectError) throw projectError;
 
-      // Start Fashn.ai prediction for model swap (using try-on with swapped model)
-      const { data: fashnResponse } = await supabase.functions.invoke('fashn-api', {
+      // Start Fashn.ai prediction for model swap
+      const { data: fashnResponse, error: fashnError } = await supabase.functions.invoke('fashn-api', {
         body: {
           action: 'run',
-          modelImage: targetModelUrl,
-          garmentImage: originalImageUrl,
-          modelName: 'tryon-v1.6'
+          modelImage: targetModelUrl, // New model to replace with
+          garmentImage: originalImageUrl, // Original image with garment/clothing
+          modelName: 'tryon-v1.6',
+          swapType: 'model_swap'
         }
       });
 
-      if (fashnResponse.error) {
+      if (fashnError) {
+        console.error('Fashn API Error:', fashnError);
+        throw new Error(fashnError.message || 'Failed to start model swap');
+      }
+
+      if (fashnResponse?.error) {
+        console.error('Fashn Response Error:', fashnResponse.error);
         throw new Error(fashnResponse.error);
       }
 
+      if (!fashnResponse?.id) {
+        console.error('No prediction ID returned:', fashnResponse);
+        throw new Error('No prediction ID returned from Fashn.ai');
+      }
+
       // Update project with prediction ID using settings for now
-      await supabase
+      const { error: updateError } = await supabase
         .from('projects')
         .update({
           settings: {
             prediction_id: fashnResponse.id,
             original_image_url: originalImageUrl,
-            target_model_url: targetModelUrl
+            target_model_url: targetModelUrl,
+            swap_type: 'model_swap'
           }
         })
         .eq('id', project.id);
+
+      if (updateError) {
+        console.error('Update project error:', updateError);
+        throw updateError;
+      }
 
       toast({
         title: 'Berhasil!',
         description: 'Model swap sedang diproses. Silakan cek riwayat proyek untuk melihat hasilnya.',
       });
 
+      // Reset form
       setOriginalImage(null);
       setTargetModel(null);
       setOriginalImagePreview(null);
       setTargetModelPreview(null);
+      
     } catch (error: any) {
+      console.error('Model swap error:', error);
       toast({
         title: 'Error',
-        description: error.message,
+        description: error.message || 'Terjadi kesalahan saat memproses model swap',
         variant: 'destructive',
       });
     } finally {

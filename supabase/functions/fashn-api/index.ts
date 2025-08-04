@@ -43,20 +43,37 @@ serve(async (req) => {
   }
 });
 
-async function runPrediction({ modelImage, garmentImage, modelName = 'tryon-v1.6' }) {
+async function runPrediction({ modelImage, garmentImage, modelName = 'tryon-v1.6', swapType = 'tryon' }) {
+  // For model swapping, we use different model configurations
+  let requestBody;
+  
+  if (swapType === 'model_swap') {
+    // For model swapping: swap the model while keeping the garment
+    requestBody = {
+      model_name: 'tryon-v1.6', // Currently using try-on model for swapping
+      inputs: {
+        model_image: modelImage, // New model to replace with
+        garment_image: garmentImage // Original image containing the garment
+      }
+    };
+  } else {
+    // Default try-on behavior
+    requestBody = {
+      model_name: modelName,
+      inputs: {
+        model_image: modelImage,
+        garment_image: garmentImage
+      }
+    };
+  }
+
   const response = await fetch('https://api.fashn.ai/v1/run', {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${fashnApiKey}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({
-      model_name: modelName,
-      inputs: {
-        model_image: modelImage,
-        garment_image: garmentImage
-      }
-    }),
+    body: JSON.stringify(requestBody),
   });
 
   const data = await response.json();
