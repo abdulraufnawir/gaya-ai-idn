@@ -1,0 +1,276 @@
+import { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { Upload, User, Search, Sparkles, CheckCircle } from 'lucide-react';
+
+interface Model {
+  id: string;
+  name: string;
+  imageUrl: string;
+  type: 'template' | 'uploaded';
+  uploadedAt?: string;
+}
+
+interface ModelGalleryProps {
+  onModelSelect: (model: Model) => void;
+  selectedModel?: Model | null;
+}
+
+const ModelGallery = ({ onModelSelect, selectedModel }: ModelGalleryProps) => {
+  const [models, setModels] = useState<Model[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [uploading, setUploading] = useState(false);
+  const { toast } = useToast();
+
+  // Template models yang disediakan aplikasi
+  const templateModels: Model[] = [
+    {
+      id: 'template-1',
+      name: 'Model Wanita Asia',
+      imageUrl: 'https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?w=400&h=600&fit=crop',
+      type: 'template'
+    },
+    {
+      id: 'template-2', 
+      name: 'Model Pria Profesional',
+      imageUrl: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=400&h=600&fit=crop',
+      type: 'template'
+    },
+    {
+      id: 'template-3',
+      name: 'Model Wanita Casual',
+      imageUrl: 'https://images.unsplash.com/photo-1535268647677-300dbf3d78d1?w=400&h=600&fit=crop',
+      type: 'template'
+    },
+    {
+      id: 'template-4',
+      name: 'Model Pria Casual',
+      imageUrl: 'https://images.unsplash.com/photo-1582562124811-c09040d0a901?w=400&h=600&fit=crop',
+      type: 'template'
+    }
+  ];
+
+  useEffect(() => {
+    loadUploadedModels();
+  }, []);
+
+  const loadUploadedModels = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Load models dari storage
+      const { data: files, error } = await supabase.storage
+        .from('tryon-images')
+        .list(`${user.id}/models`, {
+          limit: 50,
+          sortBy: { column: 'created_at', order: 'desc' }
+        });
+
+      if (error) {
+        console.error('Error loading models:', error);
+        return;
+      }
+
+      const uploadedModels: Model[] = files?.map(file => ({
+        id: `uploaded-${file.name}`,
+        name: file.name.replace(/\.[^/.]+$/, ""), // Remove extension
+        imageUrl: supabase.storage
+          .from('tryon-images')
+          .getPublicUrl(`${user.id}/models/${file.name}`).data.publicUrl,
+        type: 'uploaded',
+        uploadedAt: file.created_at
+      })) || [];
+
+      setModels([...templateModels, ...uploadedModels]);
+    } catch (error) {
+      console.error('Error loading models:', error);
+    }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: 'Error',
+        description: 'Silakan upload file gambar',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setUploading(true);
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
+      const fileName = `model-${Date.now()}-${file.name}`;
+      const filePath = `${user.id}/models/${fileName}`;
+
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('tryon-images')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('tryon-images')
+        .getPublicUrl(filePath);
+
+      const newModel: Model = {
+        id: `uploaded-${fileName}`,
+        name: fileName.replace(/\.[^/.]+$/, ""),
+        imageUrl: publicUrl,
+        type: 'uploaded',
+        uploadedAt: new Date().toISOString()
+      };
+
+      setModels(prev => [templateModels[0], templateModels[1], templateModels[2], templateModels[3], newModel, ...prev.slice(4)]);
+
+      toast({
+        title: 'Berhasil!',
+        description: 'Model berhasil diupload',
+      });
+
+    } catch (error: any) {
+      console.error('Upload error:', error);
+      toast({
+        title: 'Error',
+        description: error.message || 'Gagal mengupload model',
+        variant: 'destructive',
+      });
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const filteredModels = models.filter(model =>
+    model.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  return (
+    <Card className="overflow-hidden">
+      <CardHeader className="bg-gradient-to-r from-primary/5 to-accent/5 border-b">
+        <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+          <User className="h-5 w-5" />
+          Pilih Model
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="p-4 sm:p-6">
+        <div className="space-y-6">
+          {/* Upload New Model */}
+          <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 text-center hover:border-primary/50 transition-colors">
+            <Upload className="mx-auto h-8 w-8 text-muted-foreground mb-3" />
+            <Label
+              htmlFor="model-upload"
+              className="cursor-pointer inline-flex items-center gap-2 text-primary hover:text-primary/80 font-medium"
+            >
+              <span>Upload Model Baru</span>
+              <Input
+                id="model-upload"
+                type="file"
+                accept="image/*"
+                className="sr-only"
+                onChange={handleFileUpload}
+                disabled={uploading}
+              />
+            </Label>
+            <p className="text-xs text-muted-foreground mt-2">
+              PNG, JPG hingga 10MB
+            </p>
+          </div>
+
+          {/* Search */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Cari model..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+
+          {/* Models Grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+            {filteredModels.map((model) => (
+              <div
+                key={model.id}
+                className={`relative group cursor-pointer transition-all duration-200 ${
+                  selectedModel?.id === model.id
+                    ? 'ring-2 ring-primary ring-offset-2'
+                    : 'hover:scale-105'
+                }`}
+                onClick={() => onModelSelect(model)}
+              >
+                <div className="aspect-[3/4] overflow-hidden rounded-lg bg-muted">
+                  <img
+                    src={model.imageUrl}
+                    alt={model.name}
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                  
+                  {/* Overlay */}
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      className="opacity-90"
+                    >
+                      Pilih Model
+                    </Button>
+                  </div>
+
+                  {/* Selected Indicator */}
+                  {selectedModel?.id === model.id && (
+                    <div className="absolute top-2 right-2">
+                      <CheckCircle className="h-6 w-6 text-primary bg-white rounded-full" />
+                    </div>
+                  )}
+                </div>
+
+                {/* Model Info */}
+                <div className="mt-2 space-y-1">
+                  <p className="text-sm font-medium truncate">{model.name}</p>
+                  <div className="flex items-center gap-2">
+                    <Badge 
+                      variant={model.type === 'template' ? 'default' : 'secondary'}
+                      className="text-xs"
+                    >
+                      {model.type === 'template' ? (
+                        <>
+                          <Sparkles className="h-3 w-3 mr-1" />
+                          Template
+                        </>
+                      ) : (
+                        'Upload'
+                      )}
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {filteredModels.length === 0 && (
+            <div className="text-center py-8 text-muted-foreground">
+              <User className="mx-auto h-12 w-12 mb-3 opacity-50" />
+              <p>Tidak ada model ditemukan</p>
+            </div>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
+export default ModelGallery;
