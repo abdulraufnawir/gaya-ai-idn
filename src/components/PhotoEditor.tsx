@@ -56,6 +56,9 @@ const PhotoEditor = ({ userId }: PhotoEditorProps) => {
       // Get the authenticated user
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       
+      console.log('Auth user:', user);
+      console.log('Auth error:', userError);
+      
       if (userError || !user) {
         throw new Error('User not authenticated');
       }
