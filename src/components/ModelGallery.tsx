@@ -158,20 +158,20 @@ const ModelGallery = ({ onModelSelect, selectedModel }: ModelGalleryProps) => {
 
   return (
     <Card className="overflow-hidden">
-      <CardHeader className="bg-gradient-to-r from-primary/5 to-accent/5 border-b">
-        <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
-          <User className="h-5 w-5" />
+      <CardHeader className="bg-gradient-to-r from-primary/5 to-accent/5 border-b p-3 sm:p-4">
+        <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+          <User className="h-4 w-4" />
           Pilih Model
         </CardTitle>
       </CardHeader>
-      <CardContent className="p-4 sm:p-6">
-        <div className="space-y-6">
+      <CardContent className="p-3 sm:p-4">
+        <div className="space-y-4">
           {/* Upload New Model */}
-          <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 text-center hover:border-primary/50 transition-colors">
-            <Upload className="mx-auto h-8 w-8 text-muted-foreground mb-3" />
+          <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-4 text-center hover:border-primary/50 transition-colors">
+            <Upload className="mx-auto h-6 w-6 text-muted-foreground mb-2" />
             <Label
               htmlFor="model-upload"
-              className="cursor-pointer inline-flex items-center gap-2 text-primary hover:text-primary/80 font-medium"
+              className="cursor-pointer inline-flex items-center gap-2 text-primary hover:text-primary/80 font-medium text-sm"
             >
               <span>Upload Model Baru</span>
               <Input
@@ -183,7 +183,7 @@ const ModelGallery = ({ onModelSelect, selectedModel }: ModelGalleryProps) => {
                 disabled={uploading}
               />
             </Label>
-            <p className="text-xs text-muted-foreground mt-2">
+            <p className="text-xs text-muted-foreground mt-1">
               PNG, JPG hingga 10MB
             </p>
           </div>

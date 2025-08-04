@@ -132,17 +132,17 @@ const VirtualTryOn = ({ userId }: VirtualTryOnProps) => {
   };
 
   return (
-    <div className="bg-background p-3 sm:p-6">
+    <div className="bg-background p-2 sm:p-4">
       {/* Header */}
-      <div className="max-w-7xl mx-auto mb-6 sm:mb-8">
+      <div className="max-w-7xl mx-auto mb-3 sm:mb-4">
         <div className="text-center">
-          <h1 className="text-2xl sm:text-3xl font-bold mb-2">Virtual Try-On AI</h1>
-          <p className="text-sm sm:text-base text-muted-foreground">Upload foto model dan pakaian untuk melihat hasil virtual try-on</p>
+          <h1 className="text-xl sm:text-2xl font-bold mb-1">Virtual Try-On AI</h1>
+          <p className="text-sm text-muted-foreground">Upload foto model dan pakaian untuk melihat hasil virtual try-on</p>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
+      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Select Model */}
         <div className="space-y-4">
           <div className="text-center">
@@ -275,12 +275,12 @@ const VirtualTryOn = ({ userId }: VirtualTryOnProps) => {
       </div>
 
       {/* Generate Button */}
-      <div className="max-w-7xl mx-auto mt-6 sm:mt-8 flex justify-center px-4">
+      <div className="max-w-7xl mx-auto mt-4 flex justify-center px-4">
         <Button
           onClick={handleProcess}
           disabled={processing || !modelImage || !clothingImage}
           size="lg"
-          className="w-full sm:w-auto sm:min-w-[300px] h-12 text-base sm:text-lg"
+          className="w-full sm:w-auto sm:min-w-[300px] h-12 text-base"
         >
           {processing ? (
             <>

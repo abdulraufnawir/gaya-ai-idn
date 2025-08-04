@@ -174,24 +174,24 @@ const PhotoEditor = ({ userId }: PhotoEditorProps) => {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Edit3 className="h-5 w-5" />
+        <CardHeader className="p-3 sm:p-4">
+          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+            <Edit3 className="h-4 w-4" />
             Editor Foto AI
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-sm">
             Edit foto produk Anda dengan kekuatan AI
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-4 p-3 sm:p-4">
           {/* Image Upload Section */}
           <div>
-            <Label htmlFor="photo-upload">Upload Foto</Label>
-            <div className="mt-2 flex justify-center px-6 pt-5 pb-6 border-2 border-dashed border-muted-foreground/25 rounded-lg hover:border-primary/50 transition-colors">
+            <Label htmlFor="photo-upload" className="text-sm">Upload Foto</Label>
+            <div className="mt-2 flex justify-center px-4 py-4 border-2 border-dashed border-muted-foreground/25 rounded-lg hover:border-primary/50 transition-colors">
               <div className="space-y-1 text-center">
-                <Upload className="mx-auto h-12 w-12 text-muted-foreground" />
+                <Upload className="mx-auto h-8 w-8 text-muted-foreground" />
                 <div className="flex text-sm text-muted-foreground">
                   <label
                     htmlFor="photo-upload"

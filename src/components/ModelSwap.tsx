@@ -165,18 +165,18 @@ const ModelSwap = ({ userId }: ModelSwapProps) => {
   };
 
   return (
-    <div className="bg-background p-3 sm:p-6">
+    <div className="bg-background p-2 sm:p-4">
       {/* Header */}
-      <div className="max-w-7xl mx-auto mb-6 sm:mb-8">
+      <div className="max-w-7xl mx-auto mb-3 sm:mb-4">
         <div className="text-center">
-          <h1 className="text-2xl sm:text-3xl font-bold mb-2">Ganti Model AI</h1>
-          <p className="text-sm sm:text-base text-muted-foreground">
+          <h1 className="text-xl sm:text-2xl font-bold mb-1">Ganti Model AI</h1>
+          <p className="text-sm text-muted-foreground">
             Pilih model dari galeri dan ganti model dalam foto produk Anda
           </p>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto space-y-6 sm:space-y-8">
+      <div className="max-w-7xl mx-auto space-y-4">
         {/* Model Gallery Section */}
         <ModelGallery 
           onModelSelect={handleModelSelect}
@@ -185,16 +185,16 @@ const ModelSwap = ({ userId }: ModelSwapProps) => {
 
         {/* Manual Model Swap Section */}
         <Card className="overflow-hidden">
-          <CardHeader className="bg-gradient-to-r from-accent/5 to-primary/5 border-b">
-            <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
-              <ArrowLeftRight className="h-5 w-5" />
+          <CardHeader className="bg-gradient-to-r from-accent/5 to-primary/5 border-b p-3 sm:p-4">
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+              <ArrowLeftRight className="h-4 w-4" />
               Ganti Model Manual
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-sm">
               Upload gambar produk dan pilih model untuk ditukar
             </CardDescription>
           </CardHeader>
-          <CardContent className="p-4 sm:p-6">
+          <CardContent className="p-3 sm:p-4">
             <div className="space-y-6">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Original Product Image Upload */}
