@@ -44,7 +44,12 @@ const ModelSwap = ({ userId }: ModelSwapProps) => {
     setProcessing(true);
 
     try {
-      const { data, error } = await supabase
+      // Upload images to storage
+      const originalImageUrl = await uploadImage(originalImage, 'original');
+      const targetModelUrl = await uploadImage(targetModel, 'target');
+
+      // Create project record
+      const { data: project, error: projectError } = await supabase
         .from('projects')
         .insert({
           user_id: userId,
@@ -56,11 +61,37 @@ const ModelSwap = ({ userId }: ModelSwapProps) => {
         .select()
         .single();
 
-      if (error) throw error;
+      if (projectError) throw projectError;
+
+      // Start Fashn.ai prediction for model swap (using try-on with swapped model)
+      const { data: fashnResponse } = await supabase.functions.invoke('fashn-api', {
+        body: {
+          action: 'run',
+          modelImage: targetModelUrl,
+          garmentImage: originalImageUrl,
+          modelName: 'tryon-v1.6'
+        }
+      });
+
+      if (fashnResponse.error) {
+        throw new Error(fashnResponse.error);
+      }
+
+      // Update project with prediction ID
+      await supabase
+        .from('projects')
+        .update({
+          prediction_id: fashnResponse.id,
+          metadata: {
+            original_image_url: originalImageUrl,
+            target_model_url: targetModelUrl
+          }
+        })
+        .eq('id', project.id);
 
       toast({
         title: 'Berhasil!',
-        description: 'Proyek penggantian model telah dibuat. Fitur AI akan segera tersedia!',
+        description: 'Model swap sedang diproses. Silakan cek riwayat proyek untuk melihat hasilnya.',
       });
 
       setOriginalImage(null);
@@ -74,6 +105,21 @@ const ModelSwap = ({ userId }: ModelSwapProps) => {
     } finally {
       setProcessing(false);
     }
+  };
+
+  const uploadImage = async (file: File, type: string): Promise<string> => {
+    const fileName = `${type}_${Date.now()}_${file.name}`;
+    const { data, error } = await supabase.storage
+      .from('tryon-images')
+      .upload(fileName, file);
+
+    if (error) throw error;
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('tryon-images')
+      .getPublicUrl(fileName);
+
+    return publicUrl;
   };
 
   return (

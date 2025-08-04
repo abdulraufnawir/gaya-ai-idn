@@ -44,8 +44,12 @@ const VirtualTryOn = ({ userId }: VirtualTryOnProps) => {
     setProcessing(true);
 
     try {
+      // First, upload images to storage
+      const modelImageUrl = await uploadImage(modelImage, 'model');
+      const clothingImageUrl = await uploadImage(clothingImage, 'clothing');
+
       // Create project record
-      const { data, error } = await supabase
+      const { data: project, error: projectError } = await supabase
         .from('projects')
         .insert({
           user_id: userId,
@@ -57,11 +61,37 @@ const VirtualTryOn = ({ userId }: VirtualTryOnProps) => {
         .select()
         .single();
 
-      if (error) throw error;
+      if (projectError) throw projectError;
+
+      // Start Fashn.ai prediction
+      const { data: fashnResponse } = await supabase.functions.invoke('fashn-api', {
+        body: {
+          action: 'run',
+          modelImage: modelImageUrl,
+          garmentImage: clothingImageUrl,
+          modelName: 'tryon-v1.6'
+        }
+      });
+
+      if (fashnResponse.error) {
+        throw new Error(fashnResponse.error);
+      }
+
+      // Update project with prediction ID
+      await supabase
+        .from('projects')
+        .update({
+          prediction_id: fashnResponse.id,
+          metadata: {
+            model_image_url: modelImageUrl,
+            garment_image_url: clothingImageUrl
+          }
+        })
+        .eq('id', project.id);
 
       toast({
         title: 'Berhasil!',
-        description: 'Proyek virtual try-on telah dibuat. Fitur AI akan segera tersedia!',
+        description: 'Virtual try-on sedang diproses. Silakan cek riwayat proyek untuk melihat hasilnya.',
       });
 
       // Reset form
@@ -76,6 +106,21 @@ const VirtualTryOn = ({ userId }: VirtualTryOnProps) => {
     } finally {
       setProcessing(false);
     }
+  };
+
+  const uploadImage = async (file: File, type: string): Promise<string> => {
+    const fileName = `${type}_${Date.now()}_${file.name}`;
+    const { data, error } = await supabase.storage
+      .from('tryon-images')
+      .upload(fileName, file);
+
+    if (error) throw error;
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('tryon-images')
+      .getPublicUrl(fileName);
+
+    return publicUrl;
   };
 
   return (

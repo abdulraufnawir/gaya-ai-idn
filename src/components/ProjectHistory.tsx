@@ -14,6 +14,9 @@ interface Project {
   status: string;
   created_at: string;
   updated_at: string;
+  prediction_id?: string;
+  result_url?: string;
+  error_message?: string;
 }
 
 interface ProjectHistoryProps {
@@ -23,6 +26,7 @@ interface ProjectHistoryProps {
 const ProjectHistory = ({ userId }: ProjectHistoryProps) => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
