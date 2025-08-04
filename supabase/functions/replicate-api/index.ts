@@ -68,13 +68,12 @@ async function replaceBackground(replicate: any, { imageUrl, prompt }: { imageUr
   console.log('Replacing background for image:', imageUrl, 'with prompt:', prompt);
   
   const prediction = await replicate.predictions.create({
-    version: "95b7223104132402a9ae91cc677285bc5eb997834bd2349fa486f53910fd68a3",
+    version: "julienkay/layerdiffusion-v1-bg2fg",
     input: {
       image: imageUrl,
       prompt: prompt,
       negative_prompt: "low quality, blurry, distorted",
-      num_inference_steps: 20,
-      guidance_scale: 7.5
+      num_inference_steps: 20
     }
   });
 
@@ -87,11 +86,11 @@ async function enhanceImage(replicate: any, { imageUrl }: { imageUrl: string }) 
   console.log('Enhancing image:', imageUrl);
   
   const prediction = await replicate.predictions.create({
-    version: "30c1d0b916a6f8efce669bc3cc4abecc219df1a01a7762315fb24eaab6649de7",
+    version: "tencentarc/gfpgan",
     input: {
-      image: imageUrl,
-      scale: 2,
-      face_enhance: true
+      img: imageUrl,
+      version: "v1.4",
+      scale: 2
     }
   });
 
