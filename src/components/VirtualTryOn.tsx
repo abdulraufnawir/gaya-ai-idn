@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Upload, Sparkles } from 'lucide-react';
+import { Upload, Sparkles, Users, Shirt } from 'lucide-react';
 
 interface VirtualTryOnProps {
   userId: string;
@@ -271,6 +271,101 @@ const VirtualTryOn = ({ userId }: VirtualTryOnProps) => {
               </Button>
             </div>
           )}
+        </div>
+      </div>
+
+      {/* Model and Garment Options */}
+      <div className="max-w-7xl mx-auto mt-4 space-y-3">
+        {/* Model Options */}
+        <div className="flex flex-col sm:flex-row gap-2 justify-center px-4">
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-2 min-w-[140px]"
+            onClick={() => {
+              // TODO: Implement AI model generation
+              toast({
+                title: 'Coming Soon',
+                description: 'Fitur Generate AI Model akan segera hadir',
+              });
+            }}
+          >
+            <Sparkles className="h-4 w-4" />
+            Generate AI Model
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-2 min-w-[140px]"
+            onClick={() => {
+              // Navigate to model gallery tab
+              const event = new CustomEvent('switchToModelTab');
+              window.dispatchEvent(event);
+              toast({
+                title: 'Info',
+                description: 'Silakan gunakan tab "Ganti Model" untuk memilih dari galeri model',
+              });
+            }}
+          >
+            <Users className="h-4 w-4" />
+            Model Saya
+          </Button>
+        </div>
+
+        {/* Garment Category Options */}
+        <div className="flex flex-wrap gap-2 justify-center px-4">
+          <Button
+            variant={!clothingImage ? "default" : "outline"}
+            size="sm"
+            className="min-w-[80px]"
+            onClick={() => {
+              // Auto detection - default behavior
+            }}
+          >
+            Auto
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-2 min-w-[80px]"
+            onClick={() => {
+              toast({
+                title: 'Mode Atasan',
+                description: 'Optimasi untuk pakaian atasan seperti kemeja, kaos, jaket',
+              });
+            }}
+          >
+            <Upload className="h-3 w-3" />
+            Atasan
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-2 min-w-[80px]"
+            onClick={() => {
+              toast({
+                title: 'Mode Bawahan',
+                description: 'Optimasi untuk pakaian bawahan seperti celana, rok',
+              });
+            }}
+          >
+            <Upload className="h-3 w-3" />
+            Bawahan
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-2 min-w-[100px]"
+            onClick={() => {
+              toast({
+                title: 'Mode Full-body',
+                description: 'Optimasi untuk pakaian lengkap seperti dress, jumpsuit',
+              });
+            }}
+          >
+            <Users className="h-3 w-3" />
+            Badan Penuh
+          </Button>
         </div>
       </div>
 

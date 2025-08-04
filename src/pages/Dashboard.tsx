@@ -16,6 +16,7 @@ import UserProfile from '@/components/UserProfile';
 const Dashboard = () => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('virtual-tryon');
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -38,7 +39,17 @@ const Dashboard = () => {
       }
     });
 
-    return () => subscription.unsubscribe();
+    // Listen for custom event to switch to model tab
+    const handleSwitchToModelTab = () => {
+      setActiveTab('model-swap');
+    };
+
+    window.addEventListener('switchToModelTab', handleSwitchToModelTab);
+
+    return () => {
+      subscription.unsubscribe();
+      window.removeEventListener('switchToModelTab', handleSwitchToModelTab);
+    };
   }, [navigate]);
 
   const handleSignOut = async () => {
@@ -101,7 +112,7 @@ const Dashboard = () => {
           </p>
         </div>
 
-        <Tabs defaultValue="virtual-tryon" className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 mb-4 h-auto">
             <TabsTrigger value="virtual-tryon" className="flex flex-col sm:flex-row items-center gap-1 p-2 text-xs sm:text-sm">
               <Upload className="h-4 w-4" />
