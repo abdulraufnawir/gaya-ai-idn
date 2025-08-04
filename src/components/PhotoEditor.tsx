@@ -53,6 +53,13 @@ const PhotoEditor = ({ userId }: PhotoEditorProps) => {
     setProcessing(true);
 
     try {
+      // Get the authenticated user
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      
+      if (userError || !user) {
+        throw new Error('User not authenticated');
+      }
+
       // Upload image to Supabase Storage first
       const fileName = `photo-edit-${Date.now()}-${originalImage.name}`;
       const { data: uploadData, error: uploadError } = await supabase.storage
@@ -70,7 +77,7 @@ const PhotoEditor = ({ userId }: PhotoEditorProps) => {
       const { data: project, error: projectError } = await supabase
         .from('projects')
         .insert({
-          user_id: userId,
+          user_id: user.id,
           title: `Photo Edit - ${new Date().toLocaleDateString('id-ID')}`,
           description: editType === 'background_removal' 
             ? 'Hapus background foto' 
