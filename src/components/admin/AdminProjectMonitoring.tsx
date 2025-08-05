@@ -62,9 +62,12 @@ const AdminProjectMonitoring = () => {
 
       setProjects(projects || []);
     } catch (error: any) {
+      console.error('Error fetching projects:', error);
       toast({
         title: 'Error',
-        description: 'Failed to fetch projects',
+        description: error.message === 'Admin access required' 
+          ? 'You need admin privileges to access project monitoring'
+          : 'Failed to fetch projects',
         variant: 'destructive',
       });
     } finally {

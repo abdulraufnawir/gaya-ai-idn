@@ -135,9 +135,12 @@ const AdminAnalytics = () => {
       });
 
     } catch (error: any) {
+      console.error('Error fetching analytics:', error);
       toast({
         title: 'Error',
-        description: 'Failed to fetch analytics data',
+        description: error.message === 'Admin access required' 
+          ? 'You need admin privileges to access analytics'
+          : 'Failed to fetch analytics data',
         variant: 'destructive',
       });
     } finally {

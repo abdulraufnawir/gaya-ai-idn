@@ -68,9 +68,12 @@ const AdminUserManagement = () => {
 
       setUsers(usersWithProjectCounts);
     } catch (error: any) {
+      console.error('Error fetching users:', error);
       toast({
         title: 'Error',
-        description: 'Failed to fetch users',
+        description: error.message === 'Admin access required' 
+          ? 'You need admin privileges to access user management'
+          : 'Failed to fetch users',
         variant: 'destructive',
       });
     } finally {
