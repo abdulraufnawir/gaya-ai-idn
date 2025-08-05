@@ -37,7 +37,13 @@ const AdminUserManagement = () => {
     try {
       setLoading(true);
       
-      // Get all profiles
+      // Check if user is admin first
+      const { data: isAdmin } = await supabase.rpc('is_admin');
+      if (!isAdmin) {
+        throw new Error('Admin access required');
+      }
+      
+      // Get all profiles using RPC or admin-accessible query
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('*')

@@ -42,6 +42,12 @@ const AdminProjectMonitoring = () => {
     try {
       setLoading(true);
       
+      // Check if user is admin first
+      const { data: isAdmin } = await supabase.rpc('is_admin');
+      if (!isAdmin) {
+        throw new Error('Admin access required');
+      }
+      
       // Get all projects with user information
       const { data: projects, error: projectsError } = await supabase
         .from('projects')
