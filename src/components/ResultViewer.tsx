@@ -9,9 +9,10 @@ interface ResultViewerProps {
   projectId: string;
   predictionId: string;
   title: string;
+  projectType?: string;
 }
 
-const ResultViewer = ({ projectId, predictionId, title }: ResultViewerProps) => {
+const ResultViewer = ({ projectId, predictionId, title, projectType }: ResultViewerProps) => {
   const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
@@ -21,11 +22,15 @@ const ResultViewer = ({ projectId, predictionId, title }: ResultViewerProps) => 
     
     setLoading(true);
     try {
-      const { data: response } = await supabase.functions.invoke('fashn-api', {
-        body: {
-          action: 'status',
-          id: predictionId
-        }
+      // Use different APIs based on project type
+      const isPhotoEdit = projectType === 'photo_edit';
+      const apiFunction = isPhotoEdit ? 'replicate-api' : 'fashn-api';
+      const requestBody = isPhotoEdit 
+        ? { action: 'status', predictionId: predictionId }
+        : { action: 'status', id: predictionId };
+      
+      const { data: response } = await supabase.functions.invoke(apiFunction, {
+        body: requestBody
       });
 
       if (response.error) {
@@ -48,7 +53,7 @@ const ResultViewer = ({ projectId, predictionId, title }: ResultViewerProps) => 
         const currentSettings = project?.settings as Record<string, any> || {};
         const updatedSettings = {
           ...currentSettings,
-          result_url: response.output?.[0] || null,
+          result_url: response.output?.[0] || response.urls?.[0] || null,
           error_message: response.error || null
         };
 
@@ -61,10 +66,12 @@ const ResultViewer = ({ projectId, predictionId, title }: ResultViewerProps) => 
           .eq('id', projectId);
       }
 
-      if (response.status === 'completed') {
+      if (response.status === 'completed' || response.status === 'succeeded') {
         toast({
           title: 'Selesai!',
-          description: 'Hasil virtual try-on telah selesai diproses.',
+          description: projectType === 'photo_edit' 
+            ? 'Foto editing telah selesai diproses.' 
+            : 'Hasil virtual try-on telah selesai diproses.',
         });
       }
     } catch (error: any) {
@@ -79,10 +86,11 @@ const ResultViewer = ({ projectId, predictionId, title }: ResultViewerProps) => 
   };
 
   const downloadResult = async () => {
-    if (!result?.output?.[0]) return;
+    const imageUrl = result?.output?.[0] || result?.urls?.[0];
+    if (!imageUrl) return;
     
     try {
-      const response = await fetch(result.output[0]);
+      const response = await fetch(imageUrl);
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -108,7 +116,7 @@ const ResultViewer = ({ projectId, predictionId, title }: ResultViewerProps) => 
   useEffect(() => {
     // Poll for updates if still processing
     let interval: NodeJS.Timeout;
-    if (result?.status === 'processing' || result?.status === 'in_queue' || result?.status === 'starting') {
+    if (result?.status === 'processing' || result?.status === 'in_queue' || result?.status === 'starting' || result?.status === 'starting') {
       interval = setInterval(checkStatus, 5000); // Check every 5 seconds
     }
     
@@ -119,18 +127,23 @@ const ResultViewer = ({ projectId, predictionId, title }: ResultViewerProps) => 
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'completed': return 'text-green-600';
-      case 'failed': return 'text-red-600';
+      case 'completed':
+      case 'succeeded': return 'text-green-600';
+      case 'failed':
+      case 'canceled': return 'text-red-600';
       case 'processing': return 'text-blue-600';
       case 'in_queue': return 'text-yellow-600';
+      case 'starting': return 'text-blue-500';
       default: return 'text-gray-600';
     }
   };
 
   const getStatusText = (status: string) => {
     switch (status) {
-      case 'completed': return 'Selesai';
-      case 'failed': return 'Gagal';
+      case 'completed':
+      case 'succeeded': return 'Selesai';
+      case 'failed':
+      case 'canceled': return 'Gagal';
       case 'processing': return 'Memproses';
       case 'in_queue': return 'Antrian';
       case 'starting': return 'Memulai';
@@ -152,10 +165,10 @@ const ResultViewer = ({ projectId, predictionId, title }: ResultViewerProps) => 
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {result?.output?.[0] && (
+        {(result?.output?.[0] || result?.urls?.[0]) && (
           <div className="space-y-4">
             <img 
-              src={result.output[0]} 
+              src={result.output?.[0] || result.urls?.[0]} 
               alt="Result" 
               className="w-full rounded-lg shadow-lg"
             />

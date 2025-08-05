@@ -226,6 +226,7 @@ const ProjectHistory = ({ userId }: ProjectHistoryProps) => {
           projectId={selectedProject.id}
           predictionId={selectedProject.settings.prediction_id}
           title={selectedProject.title}
+          projectType={selectedProject.project_type}
         />
       )}
     </div>
