@@ -9,14 +9,14 @@ const Pricing = () => {
       name: "Starter",
       description: "Cocok untuk UMKM yang baru mulai",
       price: "IDR 49.000",
-      originalPrice: "",
+      originalPrice: "59.000",
       period: "selamanya",
       icon: Zap,
       features: [
-        "10 foto per bulan",
-        "Model AI basic",
-        "Resolusi standar",
-        "Watermark GayaAI",
+        "20 foto per bulan",
+        "Virtual Try-on",
+        "Membuat Model berbasis AI ",
+        "Edit gambar AI",
         "Support email"
       ],
       buttonText: "Mulai Gratis",
@@ -39,7 +39,7 @@ const Pricing = () => {
         "Priority support",
         "API access"
       ],
-      buttonText: "Coba 7 Hari Gratis",
+      buttonText: "Coba Gratis",
       buttonVariant: "hero" as const,
       popular: true
     },
@@ -51,11 +51,10 @@ const Pricing = () => {
       period: "/bulan",
       icon: Crown,
       features: [
+        "Semua yang Ada pada paket Pro",
         "Unlimited foto",
-        "Custom model training",
         "Resolusi 4K",
         "White-label solution",
-        "Dedicated account manager",
         "Custom integration",
         "SLA 99.9%"
       ],
