@@ -147,7 +147,7 @@ const VirtualTryOn = ({ userId }: VirtualTryOnProps) => {
         <div className="space-y-4">
           <div className="text-center">
             <h2 className="text-lg sm:text-xl font-semibold flex items-center justify-center gap-2">
-              Select Model
+              Pilih Model
               <div className="w-4 h-4 bg-muted-foreground/20 rounded-full flex items-center justify-center">
                 <span className="text-xs">?</span>
               </div>
