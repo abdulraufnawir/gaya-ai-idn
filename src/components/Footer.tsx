@@ -8,8 +8,7 @@ const Footer = () => {
         { label: "Virtual Try-On", href: "#" },
         { label: "Model AI", href: "#" },
         { label: "Photo Editor", href: "#" },
-        { label: "API Integration", href: "#" }
-      ]
+       ]
     },
     {
       title: "Solusi",
