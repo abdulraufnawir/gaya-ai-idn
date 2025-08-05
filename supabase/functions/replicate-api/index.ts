@@ -68,18 +68,10 @@ async function replaceBackground(replicate: any, { imageUrl, prompt }: { imageUr
   console.log('Replacing background for image:', imageUrl, 'with prompt:', prompt);
   
   const prediction = await replicate.predictions.create({
-    version: "c76e94e8e6b44b42bc65de97e41faea6f2d21b3b76a4a6b01e1e42b4b5a0e8ab",
+    version: "e9e2ad4616048014645b4d3a0bc95f0b254c03dcbbbe8e6a28483bcbae4bd9a5",
     input: {
       image_url: imageUrl,
-      bg_prompt: prompt,
-      negative_prompt: "low quality, blurry, distorted, artifacts",
-      sync: false,
-      fast: true,
-      refine_prompt: true,
-      enhance_ref_image: true,
-      original_quality: false,
-      force_rmbg: false,
-      content_moderation: false
+      bg_prompt: prompt
     }
   });
 
