@@ -68,12 +68,12 @@ async function replaceBackground(replicate: any, { imageUrl, prompt }: { imageUr
   console.log('Replacing background for image:', imageUrl, 'with prompt:', prompt);
   
   const prediction = await replicate.predictions.create({
-    version: "julienkay/layerdiffusion-v1-bg2fg",
+    version: "bria/generate-background",
     input: {
       image: imageUrl,
       prompt: prompt,
-      negative_prompt: "low quality, blurry, distorted",
-      num_inference_steps: 20
+      negative_prompt: "low quality, blurry, distorted, artifacts",
+      num_inference_steps: 25
     }
   });
 
