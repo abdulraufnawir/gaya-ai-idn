@@ -8,7 +8,7 @@ const Pricing = () => {
     {
       name: "Starter",
       description: "Cocok untuk UMKM yang baru mulai",
-      price: "Gratis",
+      price: "IDR 49.000",
       originalPrice: "",
       period: "selamanya",
       icon: Zap,
