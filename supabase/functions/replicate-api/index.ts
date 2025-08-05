@@ -70,7 +70,7 @@ async function replaceBackground(replicate: any, { imageUrl, prompt }: { imageUr
   const prediction = await replicate.predictions.create({
     model: "bria/generate-background",
     input: {
-      image: imageUrl,
+      image_url: imageUrl,
       bg_prompt: prompt,
       negative_prompt: "low quality, blurry, distorted, artifacts",
       fast: true,
