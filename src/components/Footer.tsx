@@ -20,22 +20,14 @@ const Footer = () => {
         { label: "Fashion Brand", href: "#" }
       ]
     },
-    {
-      title: "Sumber Daya",
-      links: [
-        { label: "Blog", href: "#" },
-        { label: "Tutorial", href: "#" },
-        { label: "API Docs", href: "#" },
-        { label: "Case Studies", href: "#" }
-      ]
-    },
+    
     {
       title: "Dukungan",
       links: [
         { label: "Help Center", href: "#" },
         { label: "Kontak", href: "#" },
         { label: "Live Chat", href: "#" },
-        { label: "Training", href: "#" }
+       
       ]
     }
   ];
