@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Upload, User, Search, Sparkles, CheckCircle } from 'lucide-react';
+import { Upload, User, Search, Sparkles, CheckCircle, X } from 'lucide-react';
 
 interface Model {
   id: string;
@@ -152,6 +152,38 @@ const ModelGallery = ({ onModelSelect, selectedModel }: ModelGalleryProps) => {
     }
   };
 
+  const handleDeleteModel = async (model: Model) => {
+    if (model.type === 'template') return; // Can't delete template models
+    
+    try {
+      // Extract file path from URL
+      const url = new URL(model.imageUrl);
+      const filePath = url.pathname.split('/').pop();
+      
+      if (filePath) {
+        const { error } = await supabase.storage
+          .from('tryon-images')
+          .remove([filePath]);
+
+        if (error) throw error;
+
+        // Remove from state
+        setModels(prev => prev.filter(m => m.id !== model.id));
+        
+        toast({
+          title: 'Berhasil',
+          description: 'Model berhasil dihapus',
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: 'Gagal menghapus model: ' + error.message,
+        variant: 'destructive',
+      });
+    }
+  };
+
   const filteredModels = models.filter(model =>
     model.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -230,9 +262,22 @@ const ModelGallery = ({ onModelSelect, selectedModel }: ModelGalleryProps) => {
                     </Button>
                   </div>
 
+                  {/* Delete Button for uploaded models */}
+                  {model.type === 'uploaded' && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteModel(model);
+                      }}
+                      className="absolute top-2 right-2 bg-destructive/80 hover:bg-destructive text-destructive-foreground rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  )}
+
                   {/* Selected Indicator */}
                   {selectedModel?.id === model.id && (
-                    <div className="absolute top-2 right-2">
+                    <div className="absolute top-2 left-2">
                       <CheckCircle className="h-6 w-6 text-primary bg-white rounded-full" />
                     </div>
                   )}
