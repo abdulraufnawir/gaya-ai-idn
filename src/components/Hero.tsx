@@ -48,26 +48,31 @@ const Hero = () => {
           {/* Stats */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 max-w-2xl mx-auto animate-fade-in">
             <div className="text-center">
-              <div className="text-2xl sm:text-3xl font-bold text-primary mb-1">100K+</div>
-              <div className="text-sm text-muted-foreground">Foto dibuat</div>
+              <div className="text-2xl sm:text-3xl font-bold text-primary mb-1">
+            </div>
+              <div className="text-sm text-muted-foreground">
+            </div>
             </div>
             <div className="text-center">
-              <div className="text-2xl sm:text-3xl font-bold text-primary mb-1">500+</div>
-              <div className="text-sm text-muted-foreground">Brand bergabung</div>
+              <div className="text-2xl sm:text-3xl font-bold text-primary mb-1">
+            </div>
+              <div className="text-sm text-muted-foreground">
+            </div>
             </div>
             <div className="text-center">
-              <div className="text-2xl sm:text-3xl font-bold text-primary mb-1">50K+</div>
-              <div className="text-sm text-muted-foreground">Pengguna aktif</div>
+              <div className="text-2xl sm:text-3xl font-bold text-primary mb-1">
+            </div>
+              <div className="text-sm text-muted-foreground">
+            </div>
             </div>
           </div>
 
           {/* Trust indicators */}
           <div className="mt-12 animate-fade-in">
-            <p className="text-sm text-muted-foreground mb-4">Dipercaya oleh brand fashion Indonesia</p>
+            <p className="text-sm text-muted-foreground mb-4">
+          </p>
             <div className="flex flex-wrap justify-center items-center gap-6 opacity-60">
-              {['Batik Keris', 'Alleira', 'Cottonink', 'Berrybenka'].map(brand => <div key={brand} className="text-xs font-medium text-muted-foreground border border-border px-3 py-1 rounded-full">
-                  {brand}
-                </div>)}
+              {['Batik Keris', 'Alleira', 'Cottonink', 'Berrybenka'].map(brand => {})}
             </div>
           </div>
         </div>
