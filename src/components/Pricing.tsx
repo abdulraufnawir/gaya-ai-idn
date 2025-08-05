@@ -7,7 +7,7 @@ const Pricing = () => {
   const plans = [
     {
       name: "Starter",
-      description: "Perfect untuk UMKM yang baru mulai",
+      description: "Cocok untuk UMKM yang baru mulai",
       price: "Gratis",
       originalPrice: "",
       period: "selamanya",
