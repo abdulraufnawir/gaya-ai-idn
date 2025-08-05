@@ -2,15 +2,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Play, Sparkles, Zap, Users } from "lucide-react";
 import heroImage from "@/assets/hero-bg.jpg";
-
 const Hero = () => {
-  return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+  return <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
       {/* Background */}
-      <div 
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-10"
-        style={{ backgroundImage: `url(${heroImage})` }}
-      />
+      <div className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-10" style={{
+      backgroundImage: `url(${heroImage})`
+    }} />
       <div className="absolute inset-0 bg-gradient-hero opacity-5" />
       
       {/* Content */}
@@ -34,10 +31,7 @@ const Hero = () => {
           </h1>
 
           {/* Subtitle */}
-          <p className="text-lg sm:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto animate-slide-up">
-            Teknologi AI canggih untuk virtual try-on pakaian. Perfect untuk 
-            brand fashion, UMKM, dan online shop Indonesia yang ingin meningkatkan penjualan.
-          </p>
+          <p className="text-lg sm:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto animate-slide-up">Teknologi AI canggih untuk virtual try-on pakaian. Perfect untuk brand fashion, UMKM, dan online shop Indonesia yang ingin meningkatkan penjualan dan menekan biaya marketing.</p>
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12 animate-slide-up">
@@ -71,11 +65,9 @@ const Hero = () => {
           <div className="mt-12 animate-fade-in">
             <p className="text-sm text-muted-foreground mb-4">Dipercaya oleh brand fashion Indonesia</p>
             <div className="flex flex-wrap justify-center items-center gap-6 opacity-60">
-              {['Batik Keris', 'Alleira', 'Cottonink', 'Berrybenka'].map((brand) => (
-                <div key={brand} className="text-xs font-medium text-muted-foreground border border-border px-3 py-1 rounded-full">
+              {['Batik Keris', 'Alleira', 'Cottonink', 'Berrybenka'].map(brand => <div key={brand} className="text-xs font-medium text-muted-foreground border border-border px-3 py-1 rounded-full">
                   {brand}
-                </div>
-              ))}
+                </div>)}
             </div>
           </div>
         </div>
@@ -83,9 +75,9 @@ const Hero = () => {
 
       {/* Decorative elements */}
       <div className="absolute top-20 left-10 w-20 h-20 bg-gradient-primary rounded-full opacity-10 animate-glow-pulse" />
-      <div className="absolute bottom-20 right-10 w-32 h-32 bg-gradient-secondary rounded-full opacity-10 animate-glow-pulse" style={{ animationDelay: '1s' }} />
-    </section>
-  );
+      <div className="absolute bottom-20 right-10 w-32 h-32 bg-gradient-secondary rounded-full opacity-10 animate-glow-pulse" style={{
+      animationDelay: '1s'
+    }} />
+    </section>;
 };
-
 export default Hero;
