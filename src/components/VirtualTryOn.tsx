@@ -154,7 +154,7 @@ const VirtualTryOn = ({ userId }: VirtualTryOnProps) => {
           </div>
           
           <div className="relative">
-            <div className="aspect-[3/4] bg-muted/20 rounded-xl border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 transition-colors overflow-hidden min-h-[300px] sm:min-h-[400px]">
+            <div className="aspect-[3/4] bg-muted/20 rounded-xl border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 transition-colors overflow-hidden min-h-[200px] sm:min-h-[250px]">
               {modelImagePreview ? (
                 <div className="relative w-full h-full">
                   <img 
@@ -215,7 +215,7 @@ const VirtualTryOn = ({ userId }: VirtualTryOnProps) => {
           </div>
           
           <div className="relative">
-            <div className="aspect-[3/4] bg-muted/20 rounded-xl border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 transition-colors overflow-hidden min-h-[300px] sm:min-h-[400px]">
+            <div className="aspect-[3/4] bg-muted/20 rounded-xl border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 transition-colors overflow-hidden min-h-[200px] sm:min-h-[250px]">
               {clothingImagePreview ? (
                 <div className="relative w-full h-full">
                   <img 

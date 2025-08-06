@@ -200,8 +200,8 @@ const ModelSwap = ({ userId }: ModelSwapProps) => {
                 {/* Original Product Image Upload */}
                 <div className="space-y-4">
                   <Label className="text-base font-medium">Gambar Produk Asli</Label>
-                  <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 text-center hover:border-primary/50 transition-colors">
-                    <Upload className="mx-auto h-8 w-8 text-muted-foreground mb-3" />
+                  <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-4 text-center hover:border-primary/50 transition-colors">
+                    <Upload className="mx-auto h-6 w-6 text-muted-foreground mb-2" />
                     <Label
                       htmlFor="original-upload"
                       className="cursor-pointer inline-flex items-center gap-2 text-primary hover:text-primary/80 font-medium"
@@ -243,7 +243,7 @@ const ModelSwap = ({ userId }: ModelSwapProps) => {
                 {/* Selected Model Preview */}
                 <div className="space-y-4">
                   <Label className="text-base font-medium">Model yang Dipilih</Label>
-                  <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 text-center min-h-[200px] flex items-center justify-center">
+                  <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-4 text-center min-h-[150px] flex items-center justify-center">
                     {selectedModel ? (
                       <div className="text-center">
                         <img 
