@@ -27,33 +27,8 @@ const ModelGallery = ({ onModelSelect, selectedModel }: ModelGalleryProps) => {
   const [uploading, setUploading] = useState(false);
   const { toast } = useToast();
 
-  // Template models yang disediakan aplikasi
-  const templateModels: Model[] = [
-    {
-      id: 'template-1',
-      name: 'Model Wanita Asia',
-      imageUrl: 'https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?w=400&h=600&fit=crop',
-      type: 'template'
-    },
-    {
-      id: 'template-2', 
-      name: 'Model Pria Profesional',
-      imageUrl: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=400&h=600&fit=crop',
-      type: 'template'
-    },
-    {
-      id: 'template-3',
-      name: 'Model Wanita Casual',
-      imageUrl: 'https://images.unsplash.com/photo-1535268647677-300dbf3d78d1?w=400&h=600&fit=crop',
-      type: 'template'
-    },
-    {
-      id: 'template-4',
-      name: 'Model Pria Casual',
-      imageUrl: 'https://images.unsplash.com/photo-1582562124811-c09040d0a901?w=400&h=600&fit=crop',
-      type: 'template'
-    }
-  ];
+  // Template models yang disediakan aplikasi - semua dihapus
+  const templateModels: Model[] = [];
 
   useEffect(() => {
     loadUploadedModels();
@@ -133,7 +108,7 @@ const ModelGallery = ({ onModelSelect, selectedModel }: ModelGalleryProps) => {
         uploadedAt: new Date().toISOString()
       };
 
-      setModels(prev => [templateModels[0], templateModels[1], templateModels[2], templateModels[3], newModel, ...prev.slice(4)]);
+      setModels(prev => [newModel, ...prev.filter(m => m.type === 'uploaded')]);
 
       toast({
         title: 'Berhasil!',
