@@ -173,45 +173,59 @@ const ProjectHistory = ({ userId }: ProjectHistoryProps) => {
               <p className="text-muted-foreground">Belum ada proyek yang dibuat</p>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
               {projects.map((project) => (
-                <div key={project.id} className="border rounded-lg p-3 sm:p-4">
-                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-0">
-                    <div className="space-y-2 flex-1">
-                      <h3 className="font-semibold text-sm sm:text-base">{project.title}</h3>
-                      <p className="text-xs sm:text-sm text-muted-foreground">{project.description}</p>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <Badge variant={getStatusVariant(project.status)} className="text-xs">
-                          {getStatusText(project.status)}
-                        </Badge>
-                        <Badge variant="outline" className="text-xs">
-                          {getProjectTypeText(project.project_type)}
-                        </Badge>
+                <div key={project.id} className="border rounded-lg p-3 hover:shadow-md transition-shadow bg-card">
+                  <div className="space-y-2">
+                    {/* Header */}
+                    <div className="flex items-start justify-between gap-2">
+                      <h3 className="font-medium text-sm leading-tight line-clamp-2 flex-1">{project.title}</h3>
+                      <div className="flex gap-1 flex-shrink-0">
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => setSelectedProject(project)}
+                          disabled={!project.settings?.prediction_id}
+                          className="h-7 w-7 p-0"
+                        >
+                          <Eye className="h-3 w-3" />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => deleteProject(project.id)}
+                          className="h-7 w-7 p-0 text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
                       </div>
-                      <p className="text-xs text-muted-foreground">
-                        Dibuat: {new Date(project.created_at).toLocaleDateString('id-ID')}
-                      </p>
                     </div>
-                    <div className="flex gap-2 sm:flex-col sm:w-auto w-full">
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => setSelectedProject(project)}
-                        disabled={!project.settings?.prediction_id}
-                        className="flex-1 sm:flex-none touch-target"
-                      >
-                        <Eye className="h-4 w-4 sm:mr-0 mr-2" />
-                        <span className="sm:hidden">Lihat</span>
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => deleteProject(project.id)}
-                        className="flex-1 sm:flex-none touch-target"
-                      >
-                        <Trash2 className="h-4 w-4 sm:mr-0 mr-2" />
-                        <span className="sm:hidden">Hapus</span>
-                      </Button>
+
+                    {/* Status and Type */}
+                    <div className="flex flex-wrap items-center gap-1">
+                      <Badge variant={getStatusVariant(project.status)} className="text-xs px-2 py-0.5">
+                        {getStatusText(project.status)}
+                      </Badge>
+                      <Badge variant="outline" className="text-xs px-2 py-0.5">
+                        {getProjectTypeText(project.project_type)}
+                      </Badge>
+                    </div>
+
+                    {/* Description */}
+                    {project.description && (
+                      <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+                        {project.description}
+                      </p>
+                    )}
+
+                    {/* Date */}
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <Calendar className="h-3 w-3" />
+                      <span>{new Date(project.created_at).toLocaleDateString('id-ID', { 
+                        day: 'numeric', 
+                        month: 'short',
+                        year: '2-digit'
+                      })}</span>
                     </div>
                   </div>
                 </div>
