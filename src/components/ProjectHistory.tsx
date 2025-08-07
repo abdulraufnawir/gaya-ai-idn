@@ -15,6 +15,7 @@ interface Project {
   status: string;
   created_at: string;
   updated_at: string;
+  result_image_url?: string;
   settings?: any;
 }
 
@@ -173,58 +174,74 @@ const ProjectHistory = ({ userId }: ProjectHistoryProps) => {
               <p className="text-muted-foreground">Belum ada proyek yang dibuat</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
               {projects.map((project) => (
-                <div key={project.id} className="border rounded-lg p-3 hover:shadow-md transition-shadow bg-card">
-                  <div className="space-y-2">
-                    {/* Header */}
-                    <div className="flex items-start justify-between gap-2">
-                      <h3 className="font-medium text-sm leading-tight line-clamp-2 flex-1">{project.title}</h3>
-                      <div className="flex gap-1 flex-shrink-0">
+                <div key={project.id} className="group border rounded-lg overflow-hidden hover:shadow-md transition-all bg-card cursor-pointer">
+                  {/* Image Container */}
+                  <div className="aspect-square relative bg-muted">
+                    {project.result_image_url ? (
+                      <img 
+                        src={project.result_image_url} 
+                        alt={project.title}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                          e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                        }}
+                      />
+                    ) : null}
+                    <div className={`absolute inset-0 flex items-center justify-center ${project.result_image_url ? 'hidden' : ''}`}>
+                      <div className="text-center">
+                        <div className="w-8 h-8 bg-muted-foreground/20 rounded mx-auto mb-1"></div>
+                        <p className="text-xs text-muted-foreground">No Image</p>
+                      </div>
+                    </div>
+                    
+                    {/* Overlay with actions */}
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+                      <div className="flex gap-2">
                         <Button 
-                          variant="ghost" 
+                          variant="secondary" 
                           size="sm"
-                          onClick={() => setSelectedProject(project)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedProject(project);
+                          }}
                           disabled={!project.settings?.prediction_id}
-                          className="h-7 w-7 p-0"
+                          className="h-8 w-8 p-0"
                         >
-                          <Eye className="h-3 w-3" />
+                          <Eye className="h-4 w-4" />
                         </Button>
                         <Button 
-                          variant="ghost" 
+                          variant="destructive" 
                           size="sm"
-                          onClick={() => deleteProject(project.id)}
-                          className="h-7 w-7 p-0 text-destructive hover:text-destructive"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            deleteProject(project.id);
+                          }}
+                          className="h-8 w-8 p-0"
                         >
-                          <Trash2 className="h-3 w-3" />
+                          <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
                     </div>
-
-                    {/* Status and Type */}
-                    <div className="flex flex-wrap items-center gap-1">
+                    
+                    {/* Status badge */}
+                    <div className="absolute top-2 left-2">
                       <Badge variant={getStatusVariant(project.status)} className="text-xs px-2 py-0.5">
                         {getStatusText(project.status)}
                       </Badge>
-                      <Badge variant="outline" className="text-xs px-2 py-0.5">
-                        {getProjectTypeText(project.project_type)}
-                      </Badge>
                     </div>
-
-                    {/* Description */}
-                    {project.description && (
-                      <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
-                        {project.description}
-                      </p>
-                    )}
-
-                    {/* Date */}
-                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                      <Calendar className="h-3 w-3" />
+                  </div>
+                  
+                  {/* Content */}
+                  <div className="p-2 space-y-1">
+                    <h3 className="font-medium text-xs leading-tight line-clamp-1">{project.title}</h3>
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <span>{getProjectTypeText(project.project_type)}</span>
                       <span>{new Date(project.created_at).toLocaleDateString('id-ID', { 
                         day: 'numeric', 
-                        month: 'short',
-                        year: '2-digit'
+                        month: 'short'
                       })}</span>
                     </div>
                   </div>
