@@ -179,9 +179,9 @@ const ProjectHistory = ({ userId }: ProjectHistoryProps) => {
                 <div key={project.id} className="group border rounded-lg overflow-hidden hover:shadow-md transition-all bg-card cursor-pointer">
                   {/* Image Container */}
                   <div className="aspect-square relative bg-muted">
-                    {project.result_image_url ? (
+                    {(project.result_image_url || project.settings?.result_url) ? (
                       <img 
-                        src={project.result_image_url} 
+                        src={project.result_image_url || project.settings?.result_url} 
                         alt={project.title}
                         className="w-full h-full object-cover"
                         onError={(e) => {
@@ -190,7 +190,7 @@ const ProjectHistory = ({ userId }: ProjectHistoryProps) => {
                         }}
                       />
                     ) : null}
-                    <div className={`absolute inset-0 flex items-center justify-center ${project.result_image_url ? 'hidden' : ''}`}>
+                    <div className={`absolute inset-0 flex items-center justify-center ${(project.result_image_url || project.settings?.result_url) ? 'hidden' : ''}`}>
                       <div className="text-center">
                         <div className="w-8 h-8 bg-muted-foreground/20 rounded mx-auto mb-1"></div>
                         <p className="text-xs text-muted-foreground">No Image</p>
