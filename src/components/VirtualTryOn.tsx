@@ -225,16 +225,32 @@ const VirtualTryOn = ({ userId }: VirtualTryOnProps) => {
             </div>
           </div>
 
-          {modelImage && (
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" className="flex-1 text-xs sm:text-sm">
-                Generate AI Model
-              </Button>
-              <Button variant="outline" size="sm" className="flex-1 text-xs sm:text-sm">
-                My Models
-              </Button>
-            </div>
-          )}
+          <div className="flex gap-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="flex-1 text-xs sm:text-sm"
+              onClick={() => {
+                toast({
+                  title: 'Coming Soon',
+                  description: 'Fitur Generate AI Model akan segera hadir',
+                });
+              }}
+            >
+              Generate AI Model
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="flex-1 text-xs sm:text-sm"
+              onClick={() => {
+                const event = new CustomEvent('switchToModelTab');
+                window.dispatchEvent(event);
+              }}
+            >
+              Model Saya
+            </Button>
+          </div>
         </div>
 
         {/* Select Garment */}
@@ -298,7 +314,6 @@ const VirtualTryOn = ({ userId }: VirtualTryOnProps) => {
             size="sm"
             className="flex items-center gap-2 min-w-[140px]"
             onClick={() => {
-              // TODO: Implement AI model generation
               toast({
                 title: 'Coming Soon',
                 description: 'Fitur Generate AI Model akan segera hadir',
@@ -313,33 +328,7 @@ const VirtualTryOn = ({ userId }: VirtualTryOnProps) => {
             size="sm"
             className="flex items-center gap-2 min-w-[140px]"
             onClick={() => {
-              // Navigate to model gallery tab with callback
-              const event = new CustomEvent('switchToModelTab', {
-                detail: {
-                  onModelSelect: (selectedModel: any) => {
-                    if (selectedModel?.imageUrl) {
-                      fetch(selectedModel.imageUrl)
-                        .then(res => res.blob())
-                        .then(blob => {
-                          const file = new File([blob], selectedModel.name + '.jpg', { type: 'image/jpeg' });
-                          setModelImage(file);
-                          setModelImagePreview(selectedModel.imageUrl);
-                          toast({
-                            title: 'Berhasil',
-                            description: 'Model berhasil dipilih untuk virtual try-on',
-                          });
-                        })
-                        .catch(error => {
-                          toast({
-                            title: 'Error',
-                            description: 'Gagal memuat model: ' + error.message,
-                            variant: 'destructive',
-                          });
-                        });
-                    }
-                  }
-                }
-              });
+              const event = new CustomEvent('switchToModelTab');
               window.dispatchEvent(event);
             }}
           >
