@@ -37,7 +37,12 @@ const ModelGallery = ({ onModelSelect, selectedModel }: ModelGalleryProps) => {
   const loadUploadedModels = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user) {
+        console.log('ModelGallery: No user found');
+        return;
+      }
+
+      console.log('ModelGallery: Loading models for user:', user.id);
 
       // Load models dari storage
       const { data: files, error } = await supabase.storage
@@ -48,9 +53,11 @@ const ModelGallery = ({ onModelSelect, selectedModel }: ModelGalleryProps) => {
         });
 
       if (error) {
-        console.error('Error loading models:', error);
+        console.error('ModelGallery: Error loading models:', error);
         return;
       }
+
+      console.log('ModelGallery: Files found:', files);
 
       const uploadedModels: Model[] = files?.map(file => ({
         id: `uploaded-${file.name}`,
@@ -62,9 +69,13 @@ const ModelGallery = ({ onModelSelect, selectedModel }: ModelGalleryProps) => {
         uploadedAt: file.created_at
       })) || [];
 
-      setModels([...templateModels, ...uploadedModels]);
+      console.log('ModelGallery: Uploaded models:', uploadedModels);
+
+      const allModels = [...templateModels, ...uploadedModels];
+      console.log('ModelGallery: Setting models:', allModels);
+      setModels(allModels);
     } catch (error) {
-      console.error('Error loading models:', error);
+      console.error('ModelGallery: Error loading models:', error);
     }
   };
 
