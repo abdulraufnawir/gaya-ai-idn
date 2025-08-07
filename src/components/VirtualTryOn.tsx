@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -18,6 +18,39 @@ const VirtualTryOn = ({ userId }: VirtualTryOnProps) => {
   const [clothingImagePreview, setClothingImagePreview] = useState<string | null>(null);
   const [processing, setProcessing] = useState(false);
   const { toast } = useToast();
+
+  useEffect(() => {
+    // Listen for model selection from ModelGallery
+    const handleSetSelectedModel = (event: any) => {
+      const selectedModel = event.detail.model;
+      if (selectedModel?.imageUrl) {
+        fetch(selectedModel.imageUrl)
+          .then(res => res.blob())
+          .then(blob => {
+            const file = new File([blob], selectedModel.name + '.jpg', { type: 'image/jpeg' });
+            setModelImage(file);
+            setModelImagePreview(selectedModel.imageUrl);
+            toast({
+              title: 'Berhasil',
+              description: 'Model berhasil dipilih untuk virtual try-on',
+            });
+          })
+          .catch(error => {
+            toast({
+              title: 'Error',
+              description: 'Gagal memuat model: ' + error.message,
+              variant: 'destructive',
+            });
+          });
+      }
+    };
+
+    window.addEventListener('setSelectedModel', handleSetSelectedModel);
+
+    return () => {
+      window.removeEventListener('setSelectedModel', handleSetSelectedModel);
+    };
+  }, [toast]);
 
   const handleModelImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

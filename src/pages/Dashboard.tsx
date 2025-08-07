@@ -44,11 +44,23 @@ const Dashboard = () => {
       setActiveTab('model-swap');
     };
 
+    // Listen for model selection event to switch to virtual try-on
+    const handleSelectModelForTryOn = (event: any) => {
+      setActiveTab('virtual-tryon');
+      // Dispatch the model data to VirtualTryOn component
+      const virtualTryOnEvent = new CustomEvent('setSelectedModel', {
+        detail: { model: event.detail.model }
+      });
+      window.dispatchEvent(virtualTryOnEvent);
+    };
+
     window.addEventListener('switchToModelTab', handleSwitchToModelTab);
+    window.addEventListener('selectModelForTryOn', handleSelectModelForTryOn);
 
     return () => {
       subscription.unsubscribe();
       window.removeEventListener('switchToModelTab', handleSwitchToModelTab);
+      window.removeEventListener('selectModelForTryOn', handleSelectModelForTryOn);
     };
   }, [navigate]);
 

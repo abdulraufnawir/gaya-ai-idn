@@ -209,15 +209,22 @@ const ModelGallery = ({ onModelSelect, selectedModel }: ModelGalleryProps) => {
           {/* Models Grid */}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
             {filteredModels.map((model) => (
-              <div
-                key={model.id}
-                className={`relative group cursor-pointer transition-all duration-200 ${
-                  selectedModel?.id === model.id
-                    ? 'ring-2 ring-primary ring-offset-2'
-                    : 'hover:scale-105'
-                }`}
-                onClick={() => onModelSelect(model)}
-              >
+                <div
+                  key={model.id}
+                  className={`relative group cursor-pointer transition-all duration-200 ${
+                    selectedModel?.id === model.id
+                      ? 'ring-2 ring-primary ring-offset-2'
+                      : 'hover:scale-105'
+                  }`}
+                  onClick={() => {
+                    onModelSelect(model);
+                    // Dispatch event to switch to Virtual Try-On and set model
+                    const event = new CustomEvent('selectModelForTryOn', {
+                      detail: { model }
+                    });
+                    window.dispatchEvent(event);
+                  }}
+                >
                 <div className="aspect-[3/4] overflow-hidden rounded-lg bg-muted">
                   <img
                     src={model.imageUrl}
