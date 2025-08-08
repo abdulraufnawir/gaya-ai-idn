@@ -15,6 +15,7 @@ interface Project {
   status: string;
   created_at: string;
   updated_at: string;
+  prediction_id?: string;
   result_image_url?: string;
   settings?: any;
 }
