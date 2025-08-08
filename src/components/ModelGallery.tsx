@@ -142,14 +142,17 @@ const ModelGallery = ({ onModelSelect, selectedModel }: ModelGalleryProps) => {
     if (model.type === 'template') return; // Can't delete template models
     
     try {
-      // Extract file path from URL
+      // Extract full storage key from public URL
       const url = new URL(model.imageUrl);
-      const filePath = url.pathname.split('/').pop();
+      const pathPrefix = '/storage/v1/object/public/tryon-images/';
+      const fullPath = url.pathname.includes(pathPrefix)
+        ? decodeURIComponent(url.pathname.split(pathPrefix)[1])
+        : null;
       
-      if (filePath) {
+      if (fullPath) {
         const { error } = await supabase.storage
           .from('tryon-images')
-          .remove([filePath]);
+          .remove([fullPath]);
 
         if (error) throw error;
 
@@ -160,11 +163,13 @@ const ModelGallery = ({ onModelSelect, selectedModel }: ModelGalleryProps) => {
           title: 'Berhasil',
           description: 'Model berhasil dihapus',
         });
+      } else {
+        throw new Error('Tidak dapat menentukan path file.');
       }
     } catch (error: any) {
       toast({
         title: 'Error',
-        description: 'Gagal menghapus model: ' + error.message,
+        description: 'Gagal menghapus model: ' + (error.message || 'Unknown error'),
         variant: 'destructive',
       });
     }

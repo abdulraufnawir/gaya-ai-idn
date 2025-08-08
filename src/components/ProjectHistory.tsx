@@ -207,7 +207,7 @@ const ProjectHistory = ({ userId }: ProjectHistoryProps) => {
                             e.stopPropagation();
                             setSelectedProject(project);
                           }}
-                          disabled={!project.settings?.prediction_id}
+                          disabled={!(project.prediction_id || project.settings?.prediction_id)}
                           className="h-8 w-8 p-0"
                         >
                           <Eye className="h-4 w-4" />
@@ -252,10 +252,10 @@ const ProjectHistory = ({ userId }: ProjectHistoryProps) => {
         </CardContent>
       </Card>
 
-      {selectedProject && selectedProject.settings?.prediction_id && (
+      {selectedProject && (selectedProject.prediction_id || selectedProject.settings?.prediction_id) && (
         <ResultViewer
           projectId={selectedProject.id}
-          predictionId={selectedProject.settings.prediction_id}
+          predictionId={(selectedProject.prediction_id || selectedProject.settings?.prediction_id) as string}
           title={selectedProject.title}
           projectType={selectedProject.project_type}
         />

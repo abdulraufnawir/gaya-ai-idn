@@ -86,8 +86,8 @@ const ModelSwap = ({ userId }: ModelSwapProps) => {
           description: `Ganti model: ${selectedModel.name}`,
           project_type: 'model_swap',
           status: 'processing',
+          original_image_url: originalImageUrl,
           settings: {
-            original_image_url: originalImageUrl,
             model_image_url: selectedModel.imageUrl,
             model_name: selectedModel.name,
             model_type: selectedModel.type
@@ -127,12 +127,11 @@ const ModelSwap = ({ userId }: ModelSwapProps) => {
       const { error: updateError } = await supabase
         .from('projects')
         .update({
+          prediction_id: fashnResponse.prediction_id,
           settings: {
-            original_image_url: originalImageUrl,
             model_image_url: selectedModel.imageUrl,
             model_name: selectedModel.name,
-            model_type: selectedModel.type,
-            prediction_id: fashnResponse.prediction_id
+            model_type: selectedModel.type
           }
         })
         .eq('id', project.id);

@@ -120,6 +120,7 @@ const VirtualTryOn = ({ userId }: VirtualTryOnProps) => {
       await supabase
         .from('projects')
         .update({
+          prediction_id: fashnResponse.id,
           settings: {
             prediction_id: fashnResponse.id,
             model_image_url: modelImageUrl,
