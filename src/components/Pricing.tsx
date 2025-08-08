@@ -10,7 +10,7 @@ const Pricing = () => {
       description: "Cocok untuk UMKM yang baru mulai",
       price: "IDR 49.000",
       originalPrice: "59.000",
-      period: "selamanya",
+      period: "/bulan",
       icon: Zap,
       features: [
         "20 foto per bulan",
