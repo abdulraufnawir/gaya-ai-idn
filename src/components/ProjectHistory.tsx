@@ -7,6 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Calendar, Download, Eye, Trash2 } from 'lucide-react';
 import ResultViewer from './ResultViewer';
 import { useRealtimeProjects } from '@/hooks/useRealtimeProjects';
+import { StatusChecker } from './StatusChecker';
 
 interface Project {
   id: string;
@@ -166,6 +167,7 @@ const ProjectHistory = ({ userId }: ProjectHistoryProps) => {
 
   return (
     <div className="space-y-6">
+      <StatusChecker userId={userId} />
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">

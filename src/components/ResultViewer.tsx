@@ -42,7 +42,7 @@ const ResultViewer = ({ projectId, predictionId, title, projectType }: ResultVie
 
       setResult(response);
 
-      // Update project status in database using settings field
+      // Update project status in database using both top-level and settings fields
       if (response.status === 'completed' || response.status === 'failed') {
         const { data: project } = await supabase
           .from('projects')
@@ -51,17 +51,22 @@ const ResultViewer = ({ projectId, predictionId, title, projectType }: ResultVie
           .single();
 
         const currentSettings = project?.settings as Record<string, any> || {};
+        const resultUrl = response.output?.[0] || response.urls?.[0] || null;
+        
         const updatedSettings = {
           ...currentSettings,
-          result_url: response.output?.[0] || response.urls?.[0] || null,
+          result_url: resultUrl,
           error_message: response.error || null
         };
 
+        // Update both settings and top-level fields for consistency
         await supabase
           .from('projects')
           .update({
-            status: response.status,
-            settings: updatedSettings
+            status: response.status === 'completed' ? 'completed' : 'failed',
+            result_image_url: resultUrl,
+            settings: updatedSettings,
+            error_message: response.error || null
           })
           .eq('id', projectId);
       }
