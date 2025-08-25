@@ -44,6 +44,10 @@ serve(async (req) => {
 });
 
 async function runPrediction({ modelImage, garmentImage, modelName = 'tryon-v1.6', swapType = 'tryon' }) {
+  // Generate webhook callback URL
+  const webhookUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/fashn-webhook`;
+  console.log('Setting webhook URL:', webhookUrl);
+  
   // For model swapping, we use different model configurations
   let requestBody;
   
@@ -54,7 +58,8 @@ async function runPrediction({ modelImage, garmentImage, modelName = 'tryon-v1.6
       inputs: {
         model_image: modelImage, // New model to replace with
         garment_image: garmentImage // Original image containing the garment
-      }
+      },
+      webhook_url: webhookUrl
     };
   } else {
     // Default try-on behavior
@@ -63,9 +68,12 @@ async function runPrediction({ modelImage, garmentImage, modelName = 'tryon-v1.6
       inputs: {
         model_image: modelImage,
         garment_image: garmentImage
-      }
+      },
+      webhook_url: webhookUrl
     };
   }
+
+  console.log('Request body:', JSON.stringify(requestBody, null, 2));
 
   const response = await fetch('https://api.fashn.ai/v1/run', {
     method: 'POST',
@@ -81,6 +89,8 @@ async function runPrediction({ modelImage, garmentImage, modelName = 'tryon-v1.6
   if (!response.ok) {
     throw new Error(data.error || 'Failed to start prediction');
   }
+
+  console.log('Fashn API success response:', data);
 
   return new Response(JSON.stringify(data), {
     headers: { ...corsHeaders, 'Content-Type': 'application/json' },

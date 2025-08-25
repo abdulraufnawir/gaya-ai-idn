@@ -5,3 +5,9 @@ verify_jwt = true
 
 [functions.replicate-api]
 verify_jwt = true
+
+[functions.fashn-webhook]
+verify_jwt = false
+
+[functions.replicate-webhook]
+verify_jwt = false

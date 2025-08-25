@@ -6,6 +6,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Calendar, Download, Eye, Trash2 } from 'lucide-react';
 import ResultViewer from './ResultViewer';
+import { useRealtimeProjects } from '@/hooks/useRealtimeProjects';
 
 interface Project {
   id: string;
@@ -29,10 +30,21 @@ const ProjectHistory = ({ userId }: ProjectHistoryProps) => {
   const [loading, setLoading] = useState(true);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const { toast } = useToast();
+  
+  // Enable realtime updates
+  const { realtimeEnabled } = useRealtimeProjects(userId);
 
   useEffect(() => {
     fetchProjects();
   }, [userId]);
+
+  // Realtime subscription effect - refetch when updates occur
+  useEffect(() => {
+    if (realtimeEnabled) {
+      // Refetch projects when realtime updates occur
+      fetchProjects();
+    }
+  }, [realtimeEnabled]);
 
   const fetchProjects = async () => {
     try {

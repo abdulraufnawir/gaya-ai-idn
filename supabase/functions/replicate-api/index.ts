@@ -52,11 +52,17 @@ serve(async (req) => {
 async function removeBackground(replicate: any, { imageUrl }: { imageUrl: string }) {
   console.log('Removing background for image:', imageUrl);
   
+  // Generate webhook callback URL
+  const webhookUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/replicate-webhook`;
+  console.log('Setting webhook URL:', webhookUrl);
+  
   const prediction = await replicate.predictions.create({
     version: "fb8af171cfa1616ddcf1242c093f9c46bcada5ad4cf6f2fbe8b81b330ec5c003",
     input: {
       image: imageUrl
-    }
+    },
+    webhook: webhookUrl,
+    webhook_events_filter: ["start", "output", "logs", "completed"]
   });
 
   return new Response(JSON.stringify({ predictionId: prediction.id }), {
@@ -67,12 +73,18 @@ async function removeBackground(replicate: any, { imageUrl }: { imageUrl: string
 async function replaceBackground(replicate: any, { imageUrl, prompt }: { imageUrl: string; prompt: string }) {
   console.log('Replacing background for image:', imageUrl, 'with prompt:', prompt);
   
+  // Generate webhook callback URL
+  const webhookUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/replicate-webhook`;
+  console.log('Setting webhook URL:', webhookUrl);
+  
   const prediction = await replicate.predictions.create({
     version: "e9e2ad4616048014645b4d3a0bc95f0b254c03dcbbbe8e6a28483bcbae4bd9a5",
     input: {
       image_url: imageUrl,
       bg_prompt: prompt
-    }
+    },
+    webhook: webhookUrl,
+    webhook_events_filter: ["start", "output", "logs", "completed"]
   });
 
   return new Response(JSON.stringify({ predictionId: prediction.id }), {
@@ -83,13 +95,19 @@ async function replaceBackground(replicate: any, { imageUrl, prompt }: { imageUr
 async function enhanceImage(replicate: any, { imageUrl }: { imageUrl: string }) {
   console.log('Enhancing image:', imageUrl);
   
+  // Generate webhook callback URL
+  const webhookUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/replicate-webhook`;
+  console.log('Setting webhook URL:', webhookUrl);
+  
   const prediction = await replicate.predictions.create({
     version: "tencentarc/gfpgan",
     input: {
       img: imageUrl,
       version: "v1.4",
       scale: 2
-    }
+    },
+    webhook: webhookUrl,
+    webhook_events_filter: ["start", "output", "logs", "completed"]
   });
 
   return new Response(JSON.stringify({ predictionId: prediction.id }), {
