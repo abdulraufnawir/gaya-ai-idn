@@ -32,6 +32,8 @@ serve(async (req) => {
         return await processVirtualTryOn(params);
       case 'modelSwap':
         return await processModelSwap(params);
+      case 'status':
+        return await getStatus(params);
       default:
         throw new Error('Invalid action');
     }
@@ -428,6 +430,49 @@ Provide a comprehensive model swap analysis with detailed descriptions.`;
       })
       .eq('id', projectId);
   }
+
+  return new Response(JSON.stringify(result), {
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+  });
+}
+
+async function getStatus({ predictionId }) {
+  console.log('Getting status for Gemini prediction:', predictionId);
+  
+  // Since Gemini API returns results immediately, we check the database for completed results
+  const supabaseClient = createClient(
+    Deno.env.get('SUPABASE_URL') ?? '',
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+  );
+
+  // Find the project with this prediction ID
+  const { data: project, error } = await supabaseClient
+    .from('projects')
+    .select('*')
+    .eq('prediction_id', predictionId)
+    .single();
+
+  if (error || !project) {
+    console.error('Project not found for prediction:', predictionId, error);
+    return new Response(JSON.stringify({ 
+      error: 'Prediction not found',
+      status: 'failed'
+    }), {
+      status: 404,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+
+  // Return the project status and results
+  const result = {
+    id: predictionId,
+    status: project.status,
+    output: project.result_image_url ? [project.result_image_url] : null,
+    result_url: project.result_url,
+    error: project.error_message,
+    created_at: project.created_at,
+    completed_at: project.updated_at
+  };
 
   return new Response(JSON.stringify(result), {
     headers: { ...corsHeaders, 'Content-Type': 'application/json' },

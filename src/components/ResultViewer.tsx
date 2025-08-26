@@ -24,10 +24,21 @@ const ResultViewer = ({ projectId, predictionId, title, projectType }: ResultVie
     try {
       // Use different APIs based on project type
       const isPhotoEdit = projectType === 'photo_edit';
-      const apiFunction = isPhotoEdit ? 'replicate-api' : 'fashn-api';
-      const requestBody = isPhotoEdit 
-        ? { action: 'status', predictionId: predictionId }
-        : { action: 'status', id: predictionId };
+      const isVirtualTryOn = projectType === 'virtual_tryon';
+      
+      let apiFunction: string;
+      let requestBody: any;
+      
+      if (isPhotoEdit) {
+        apiFunction = 'replicate-api';
+        requestBody = { action: 'status', predictionId: predictionId };
+      } else if (isVirtualTryOn) {
+        apiFunction = 'gemini-api';
+        requestBody = { action: 'status', predictionId: predictionId };
+      } else {
+        apiFunction = 'fashn-api';
+        requestBody = { action: 'status', id: predictionId };
+      }
       
       const { data: response } = await supabase.functions.invoke(apiFunction, {
         body: requestBody
