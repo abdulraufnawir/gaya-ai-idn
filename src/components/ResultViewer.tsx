@@ -107,6 +107,23 @@ const ResultViewer = ({ projectId, predictionId, title, projectType }: ResultVie
 
   const downloadResult = async () => {
     const imageUrl = result?.output?.[0] || result?.urls?.[0];
+    const textResult = result?.result_url?.startsWith('data:text/plain;base64');
+    
+    if (textResult) {
+      // Download text result as a file
+      const textContent = atob(result.result_url.split(',')[1]);
+      const blob = new Blob([textContent], { type: 'text/plain' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${title}_analysis.txt`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      return;
+    }
+    
     if (!imageUrl) return;
     
     try {
@@ -185,7 +202,26 @@ const ResultViewer = ({ projectId, predictionId, title, projectType }: ResultVie
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {(result?.output?.[0] || result?.urls?.[0]) && (
+        {/* Handle different result types */}
+        {result?.result_url?.startsWith('data:text/plain;base64') ? (
+          // Handle Gemini text results
+          <div className="space-y-4">
+            <div className="bg-muted/20 rounded-lg p-4 border">
+              <h4 className="font-semibold mb-2 text-sm">AI Analysis Result:</h4>
+              <div className="text-sm text-muted-foreground whitespace-pre-wrap max-h-96 overflow-y-auto">
+                {atob(result.result_url.split(',')[1])}
+              </div>
+            </div>
+            <div className="text-center text-sm text-muted-foreground">
+              <p>This is an AI-generated analysis. For actual image generation, please use a different service.</p>
+            </div>
+            <Button onClick={downloadResult} variant="outline" className="w-full">
+              <Download className="h-4 w-4 mr-2" />
+              Unduh Analisis (.txt)
+            </Button>
+          </div>
+        ) : (result?.output?.[0] || result?.urls?.[0]) ? (
+          // Handle actual image results
           <div className="space-y-4">
             <img 
               src={result.output?.[0] || result.urls?.[0]} 
@@ -197,7 +233,7 @@ const ResultViewer = ({ projectId, predictionId, title, projectType }: ResultVie
               Unduh Hasil
             </Button>
           </div>
-        )}
+        ) : null}
         
         {(result?.status === 'processing' || result?.status === 'in_queue' || result?.status === 'starting') && (
           <div className="text-center space-y-2">
