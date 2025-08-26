@@ -102,27 +102,27 @@ const VirtualTryOn = ({ userId }: VirtualTryOnProps) => {
 
       if (projectError) throw projectError;
 
-      // Start Fashn.ai prediction
-      const { data: fashnResponse } = await supabase.functions.invoke('fashn-api', {
+      // Start Gemini virtual try-on
+      const { data: geminiResponse } = await supabase.functions.invoke('gemini-api', {
         body: {
-          action: 'run',
+          action: 'virtualTryOn',
           modelImage: modelImageUrl,
           garmentImage: clothingImageUrl,
-          modelName: 'tryon-v1.6'
+          projectId: project.id
         }
       });
 
-      if (fashnResponse.error) {
-        throw new Error(fashnResponse.error);
+      if (geminiResponse.error) {
+        throw new Error(geminiResponse.error);
       }
 
       // Update project with prediction ID using settings for now
       await supabase
         .from('projects')
         .update({
-          prediction_id: fashnResponse.id,
+          prediction_id: geminiResponse.prediction_id,
           settings: {
-            prediction_id: fashnResponse.id,
+            prediction_id: geminiResponse.prediction_id,
             model_image_url: modelImageUrl,
             garment_image_url: clothingImageUrl
           }

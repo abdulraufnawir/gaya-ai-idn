@@ -98,36 +98,36 @@ const ModelSwap = ({ userId }: ModelSwapProps) => {
 
       if (projectError) throw projectError;
 
-      // Call Fashn API for model swap
-      const { data: fashnResponse, error: fashnError } = await supabase.functions.invoke('fashn-api', {
+      // Call Gemini API for model swap
+      const { data: geminiResponse, error: geminiError } = await supabase.functions.invoke('gemini-api', {
         body: {
-          action: 'run',
-          model_image: selectedModel.imageUrl,
-          garment_image: originalImageUrl,
-          swapType: 'model_swap'
+          action: 'modelSwap',
+          modelImage: selectedModel.imageUrl,
+          garmentImage: originalImageUrl,
+          projectId: project.id
         }
       });
 
-      if (fashnError) {
-        console.error('Fashn API Error:', fashnError);
-        throw new Error(fashnError.message || 'Failed to start model swap');
+      if (geminiError) {
+        console.error('Gemini API Error:', geminiError);
+        throw new Error(geminiError.message || 'Failed to start model swap');
       }
 
-      if (fashnResponse?.error) {
-        console.error('Fashn Response Error:', fashnResponse.error);
-        throw new Error(fashnResponse.error);
+      if (geminiResponse?.error) {
+        console.error('Gemini Response Error:', geminiResponse.error);
+        throw new Error(geminiResponse.error);
       }
 
-      if (!fashnResponse?.prediction_id) {
-        console.error('No prediction ID returned:', fashnResponse);
-        throw new Error('No prediction ID returned from Fashn API');
+      if (!geminiResponse?.prediction_id) {
+        console.error('No prediction ID returned:', geminiResponse);
+        throw new Error('No prediction ID returned from Gemini API');
       }
 
       // Update project with prediction ID
       const { error: updateError } = await supabase
         .from('projects')
         .update({
-          prediction_id: fashnResponse.prediction_id,
+          prediction_id: geminiResponse.prediction_id,
           settings: {
             model_image_url: selectedModel.imageUrl,
             model_name: selectedModel.name,
