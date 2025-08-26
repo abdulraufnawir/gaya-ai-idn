@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Calendar, Download, Eye, Trash2 } from 'lucide-react';
+import { Calendar, Download, Eye, Trash2, RefreshCw } from 'lucide-react';
 import ResultViewer from './ResultViewer';
 import { useRealtimeProjects } from '@/hooks/useRealtimeProjects';
 import { StatusChecker } from './StatusChecker';
@@ -29,6 +29,7 @@ interface ProjectHistoryProps {
 const ProjectHistory = ({ userId }: ProjectHistoryProps) => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
+  const [retryingProjects, setRetryingProjects] = useState<Set<string>>(new Set());
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const { toast } = useToast();
   
@@ -65,6 +66,52 @@ const ProjectHistory = ({ userId }: ProjectHistoryProps) => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleRetryProject = async (projectId: string) => {
+    setRetryingProjects(prev => new Set([...prev, projectId]));
+    
+    try {
+      console.log('Retrying project:', projectId);
+      
+      const { error } = await supabase.functions.invoke('gemini-api', {
+        body: {
+          action: 'retry',
+          projectId: projectId
+        }
+      });
+
+      if (error) {
+        console.error('Retry error:', error);
+        toast({
+          title: "Retry Failed",
+          description: "Failed to retry processing. Please try again.",
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "Processing Restarted",
+          description: "The project is being reprocessed. Please wait a few moments and refresh.",
+          variant: "default"
+        });
+        
+        // Refresh the projects list after a short delay
+        setTimeout(fetchProjects, 2000);
+      }
+    } catch (error) {
+      console.error('Error retrying project:', error);
+      toast({
+        title: "Error",
+        description: "An error occurred while retrying. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setRetryingProjects(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(projectId);
+        return newSet;
+      });
     }
   };
 
@@ -212,7 +259,7 @@ const ProjectHistory = ({ userId }: ProjectHistoryProps) => {
                       </div>
                     </div>
                     
-                    {/* Overlay with actions */}
+                     {/* Overlay with actions */}
                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
                       <div className="flex gap-2">
                         <Button 
@@ -227,6 +274,20 @@ const ProjectHistory = ({ userId }: ProjectHistoryProps) => {
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
+                        {project.status === 'processing' && (
+                          <Button 
+                            variant="secondary" 
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleRetryProject(project.id);
+                            }}
+                            disabled={retryingProjects.has(project.id)}
+                            className="h-8 w-8 p-0"
+                          >
+                            <RefreshCw className={`h-4 w-4 ${retryingProjects.has(project.id) ? 'animate-spin' : ''}`} />
+                          </Button>
+                        )}
                         <Button 
                           variant="destructive" 
                           size="sm"

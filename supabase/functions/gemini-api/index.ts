@@ -34,6 +34,8 @@ serve(async (req) => {
         return await processModelSwap(params);
       case 'status':
         return await getStatus(params);
+      case 'retry':
+        return await retryProcessing(params);
       default:
         throw new Error('Invalid action');
     }
@@ -337,6 +339,12 @@ Create a photorealistic result that looks like the model is actually wearing the
           Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
         );
 
+        console.log('Updating project with results:', {
+          projectId,
+          hasResultUrl: !!resultUrl,
+          status: resultUrl ? 'completed' : 'failed'
+        });
+
         const { error: updateError } = await supabaseClient
           .from('projects')
           .update({
@@ -356,6 +364,8 @@ Create a photorealistic result that looks like the model is actually wearing the
 
         if (updateError) {
           console.error('Error updating project:', updateError);
+        } else {
+          console.log('Successfully updated project with status:', resultUrl ? 'completed' : 'failed');
         }
       } catch (error) {
         console.error('Error in project update:', error);
@@ -577,4 +587,52 @@ async function getStatus({ predictionId }) {
   return new Response(JSON.stringify(result), {
     headers: { ...corsHeaders, 'Content-Type': 'application/json' },
   });
+}
+
+async function retryProcessing({ projectId }) {
+  console.log('Retrying processing for project:', projectId);
+  
+  const supabaseClient = createClient(
+    Deno.env.get('SUPABASE_URL') ?? '',
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+  );
+
+  // Get project details
+  const { data: project, error } = await supabaseClient
+    .from('projects')
+    .select('*')
+    .eq('id', projectId)
+    .single();
+
+  if (error || !project) {
+    console.error('Project not found:', projectId, error);
+    return new Response(JSON.stringify({ 
+      error: 'Project not found',
+      status: 'failed'
+    }), {
+      status: 404,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+
+  // Get image URLs from project settings
+  const settings = project.settings as any;
+  const modelImage = settings?.model_image_url;
+  const garmentImage = settings?.garment_image_url;
+
+  if (!modelImage || !garmentImage) {
+    console.error('Missing image URLs in project settings');
+    return new Response(JSON.stringify({ 
+      error: 'Missing image URLs',
+      status: 'failed'
+    }), {
+      status: 400,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+
+  console.log('Retrying virtual try-on with:', { modelImage, garmentImage, projectId });
+  
+  // Retry the virtual try-on processing
+  return await processVirtualTryOn({ modelImage, garmentImage, projectId });
 }
