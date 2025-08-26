@@ -33,6 +33,10 @@ const ResultViewer = ({ projectId, predictionId, title, projectType }: ResultVie
         body: requestBody
       });
 
+      if (!response) {
+        throw new Error('No response received from server');
+      }
+
       if (response.error) {
         const errorMessage = typeof response.error === 'string' 
           ? response.error 
