@@ -22,6 +22,28 @@ const ResultViewer = ({ projectId, predictionId, title, projectType }: ResultVie
     
     setLoading(true);
     try {
+      // First, try to get existing result from database
+      const { data: project } = await supabase
+        .from('projects')
+        .select('*')
+        .eq('id', projectId)
+        .single();
+
+      if (project && (project.status === 'completed' || project.status === 'succeeded')) {
+        // If project is already completed, use stored result
+        const settings = project.settings as Record<string, any> || {};
+        const existingResult = {
+          status: project.status,
+          result_url: project.result_url,
+          output: project.result_image_url ? [project.result_image_url] : null,
+          urls: settings.result_url ? [settings.result_url] : null,
+          error: project.error_message
+        };
+        setResult(existingResult);
+        setLoading(false);
+        return;
+      }
+
       // Use different APIs based on project type
       const isPhotoEdit = projectType === 'photo_edit';
       const isVirtualTryOn = projectType === 'virtual_tryon';
@@ -59,14 +81,8 @@ const ResultViewer = ({ projectId, predictionId, title, projectType }: ResultVie
 
       // Update project status in database using both top-level and settings fields
       if (response.status === 'completed' || response.status === 'failed') {
-        const { data: project } = await supabase
-          .from('projects')
-          .select('settings')
-          .eq('id', projectId)
-          .single();
-
         const currentSettings = project?.settings as Record<string, any> || {};
-        const resultUrl = response.output?.[0] || response.urls?.[0] || null;
+        const resultUrl = response.result_url || response.output?.[0] || response.urls?.[0] || null;
         
         const updatedSettings = {
           ...currentSettings,
@@ -79,6 +95,7 @@ const ResultViewer = ({ projectId, predictionId, title, projectType }: ResultVie
           .from('projects')
           .update({
             status: response.status === 'completed' ? 'completed' : 'failed',
+            result_url: response.result_url || null,
             result_image_url: resultUrl,
             settings: updatedSettings,
             error_message: response.error || null
@@ -108,6 +125,7 @@ const ResultViewer = ({ projectId, predictionId, title, projectType }: ResultVie
   const downloadResult = async () => {
     const imageUrl = result?.output?.[0] || result?.urls?.[0];
     const textResult = result?.result_url?.startsWith('data:text/plain;base64');
+    const imageResult = result?.result_url?.startsWith('data:image/');
     
     if (textResult) {
       // Download text result as a file
@@ -120,6 +138,17 @@ const ResultViewer = ({ projectId, predictionId, title, projectType }: ResultVie
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      return;
+    }
+    
+    if (imageResult) {
+      // Download base64 image result directly
+      const a = document.createElement('a');
+      a.href = result.result_url;
+      a.download = `${title}_result.png`;
+      document.body.appendChild(a);
+      a.click();
       document.body.removeChild(a);
       return;
     }
@@ -220,11 +249,11 @@ const ResultViewer = ({ projectId, predictionId, title, projectType }: ResultVie
               Unduh Analisis (.txt)
             </Button>
           </div>
-        ) : (result?.output?.[0] || result?.urls?.[0]) ? (
-          // Handle actual image results
+        ) : (result?.result_url?.startsWith('data:image/') || result?.output?.[0] || result?.urls?.[0]) ? (
+          // Handle actual image results (including Gemini base64 images)
           <div className="space-y-4">
             <img 
-              src={result.output?.[0] || result.urls?.[0]} 
+              src={result.result_url?.startsWith('data:image/') ? result.result_url : (result.output?.[0] || result.urls?.[0])} 
               alt="Result" 
               className="w-full rounded-lg shadow-lg"
             />
