@@ -300,10 +300,10 @@ Create a photorealistic result that looks like the model is actually wearing the
         if (part.text) {
           analysis = part.text;
         }
-        if (part.inline_data?.data) {
-          // The generated image is returned as base64 data
-          const imageData = part.inline_data.data;
-          const mimeType = part.inline_data.mime_type || 'image/jpeg';
+        // Check both possible structures: inline_data and inlineData
+        const imageData = part.inline_data?.data || part.inlineData?.data;
+        if (imageData) {
+          const mimeType = part.inline_data?.mime_type || part.inlineData?.mimeType || 'image/jpeg';
           resultUrl = `data:${mimeType};base64,${imageData}`;
           console.log('Generated image found, size:', imageData.length);
         }
