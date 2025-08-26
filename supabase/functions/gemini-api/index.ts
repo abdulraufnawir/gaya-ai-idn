@@ -197,18 +197,23 @@ async function processImages({ modelImage, garmentImage, prompt, projectId }) {
 }
 
 async function processVirtualTryOn({ modelImage, garmentImage, projectId }) {
-  console.log('Processing virtual try-on with Gemini 2.5 Flash for project:', projectId);
+  console.log('Processing virtual try-on with Gemini 2.5 Flash Image Preview for project:', projectId);
   
-  const prompt = `Create a detailed description for a virtual try-on result by combining these images. 
-Analyze the model and garment, then describe how the garment would look when worn by the model. 
-Include details about:
-1. How the garment would fit on the model's body shape and pose
-2. Color matching and overall aesthetic
-3. Styling suggestions
-4. Realistic lighting and shadow considerations
-5. Overall fashion assessment
+  const prompt = `Generate a realistic virtual try-on image showing the model wearing the garment. 
 
-Provide a comprehensive virtual try-on analysis.`;
+Please create a high-quality image that combines:
+- The model from the first image
+- The garment from the second image
+
+Requirements:
+1. Maintain the model's pose, body proportions, and facial features exactly
+2. Fit the garment naturally on the model's body with proper sizing
+3. Preserve realistic lighting, shadows, and fabric physics
+4. Keep the garment's original colors, patterns, and design details
+5. Ensure seamless integration with professional quality
+6. Generate only the combined image, no text analysis needed
+
+Create a photorealistic result that looks like the model is actually wearing the garment.`;
 
   const parts = [{ text: prompt }];
   
@@ -261,10 +266,10 @@ Provide a comprehensive virtual try-on analysis.`;
   const requestBody = {
     contents: [{ parts }],
     generationConfig: {
-      temperature: 0.7,
+      temperature: 0.4,
       topK: 32,
-      topP: 0.9,
-      maxOutputTokens: 4096,
+      topP: 1,
+      maxOutputTokens: 8192,
     }
   };
 
@@ -284,14 +289,44 @@ Provide a comprehensive virtual try-on analysis.`;
       throw new Error(data.error?.message || 'Failed to process virtual try-on');
     }
 
-    console.log('Gemini virtual try-on response:', data);
+    console.log('Gemini virtual try-on response structure:', JSON.stringify(data, null, 2));
+    
+    // Extract generated image from response
+    let resultUrl = null;
+    let analysis = 'Virtual try-on image generated successfully';
+    
+    if (data.candidates?.[0]?.content?.parts) {
+      for (const part of data.candidates[0].content.parts) {
+        if (part.text) {
+          analysis = part.text;
+        }
+        if (part.inline_data?.data) {
+          // The generated image is returned as base64 data
+          const imageData = part.inline_data.data;
+          const mimeType = part.inline_data.mime_type || 'image/jpeg';
+          resultUrl = `data:${mimeType};base64,${imageData}`;
+          console.log('Generated image found, size:', imageData.length);
+        }
+      }
+    }
 
+    // If no image was generated, check for alternative response structure
+    if (!resultUrl && data.candidates?.[0]?.content?.parts) {
+      console.log('No image in inline_data, checking alternative structure');
+      const parts = data.candidates[0].content.parts;
+      console.log('Available parts:', parts.map(p => Object.keys(p)));
+    }
+
+    const predictionId = `gemini_pred_${Date.now()}`;
+    
     const result = {
       id: `gemini_tryon_${Date.now()}`,
-      prediction_id: `gemini_pred_${Date.now()}`,
-      status: 'completed',
-      result: data.candidates[0]?.content?.parts[0]?.text || 'Virtual try-on processing completed',
-      usage: data.usageMetadata
+      prediction_id: predictionId,
+      status: resultUrl ? 'completed' : 'failed',
+      result: resultUrl,
+      analysis: analysis,
+      usage: data.usageMetadata,
+      hasImage: !!resultUrl
     };
 
     // Update project if projectId provided
@@ -305,12 +340,16 @@ Provide a comprehensive virtual try-on analysis.`;
         const { error: updateError } = await supabaseClient
           .from('projects')
           .update({
-            status: 'completed',
-            result_url: `data:text/plain;base64,${btoa(result.result)}`,
+            status: resultUrl ? 'completed' : 'failed',
+            result_url: resultUrl,
+            analysis: analysis,
+            prediction_id: predictionId,
+            updated_at: new Date().toISOString(),
             metadata: { 
               gemini_response: data,
               processing_type: 'virtual_tryon',
-              model_used: 'gemini-2.5-flash-image-preview'
+              model_used: 'gemini-2.5-flash-image-preview',
+              has_generated_image: !!resultUrl
             }
           })
           .eq('id', projectId);
