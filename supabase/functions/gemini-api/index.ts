@@ -201,21 +201,7 @@ async function processImages({ modelImage, garmentImage, prompt, projectId }) {
 async function processVirtualTryOn({ modelImage, garmentImage, projectId }) {
   console.log('Processing virtual try-on with Gemini 2.5 Flash Image Preview for project:', projectId);
   
-  const prompt = `Generate a realistic virtual try-on image showing the model wearing the garment. 
-
-Please create a high-quality image that combines:
-- The model from the first image
-- The garment from the second image
-
-Requirements:
-1. Maintain the model's pose, body proportions, and facial features exactly
-2. Fit the garment naturally on the model's body with proper sizing
-3. Preserve realistic lighting, shadows, and fabric physics
-4. Keep the garment's original colors, patterns, and design details
-5. Ensure seamless integration with professional quality
-6. Generate only the combined image, no text analysis needed
-
-Create a photorealistic result that looks like the model is actually wearing the garment.`;
+  const prompt = `Generate a realistic virtual try-on image showing the model wearing the garment. Create a high-quality photorealistic image that seamlessly combines the model from the first image with the garment from the second image. Maintain the model's pose, body proportions, and facial features exactly while fitting the garment naturally with proper sizing, realistic lighting, shadows, and fabric physics. Keep the garment's original colors, patterns, and design details.`;
 
   const parts = [{ text: prompt }];
   
@@ -272,6 +258,7 @@ Create a photorealistic result that looks like the model is actually wearing the
       topK: 32,
       topP: 1,
       maxOutputTokens: 8192,
+      responseModalities: ['IMAGE'],
     }
   };
 
@@ -299,24 +286,41 @@ Create a photorealistic result that looks like the model is actually wearing the
     
     if (data.candidates?.[0]?.content?.parts) {
       for (const part of data.candidates[0].content.parts) {
-        if (part.text) {
-          analysis = part.text;
+        // Check for inline data (image)
+        if (part.inlineData) {
+          const base64ImageBytes = part.inlineData.data;
+          const mimeType = part.inlineData.mimeType || 'image/jpeg';
+          resultUrl = `data:${mimeType};base64,${base64ImageBytes}`;
+          console.log('Generated image found using inlineData, size:', base64ImageBytes.length);
+          break;
         }
-        // Check both possible structures: inline_data and inlineData
-        const imageData = part.inline_data?.data || part.inlineData?.data;
-        if (imageData) {
-          const mimeType = part.inline_data?.mime_type || part.inlineData?.mimeType || 'image/jpeg';
-          resultUrl = `data:${mimeType};base64,${imageData}`;
-          console.log('Generated image found, size:', imageData.length);
+        // Check legacy format
+        else if (part.inline_data) {
+          const base64ImageBytes = part.inline_data.data;
+          const mimeType = part.inline_data.mime_type || 'image/jpeg';
+          resultUrl = `data:${mimeType};base64,${base64ImageBytes}`;
+          console.log('Generated image found using inline_data, size:', base64ImageBytes.length);
+          break;
+        }
+        // Handle text response (error case)
+        else if (part.text) {
+          analysis = part.text;
+          console.log('Model returned text instead of image:', part.text);
         }
       }
     }
 
-    // If no image was generated, check for alternative response structure
-    if (!resultUrl && data.candidates?.[0]?.content?.parts) {
-      console.log('No image in inline_data, checking alternative structure');
-      const parts = data.candidates[0].content.parts;
-      console.log('Available parts:', parts.map(p => Object.keys(p)));
+    // Check if we got text instead of image
+    if (!resultUrl && analysis !== 'Virtual try-on image generated successfully') {
+      console.error('Model returned text instead of an image:', analysis);
+      throw new Error(`Model returned text instead of an image: ${analysis}`);
+    }
+
+    // If no image was generated at all
+    if (!resultUrl) {
+      console.error('No image generated in the response. Available parts:', 
+        data.candidates?.[0]?.content?.parts?.map(p => Object.keys(p)));
+      throw new Error("No image generated in the response. The model may have refused the request.");
     }
 
     const predictionId = `gemini_pred_${Date.now()}`;
