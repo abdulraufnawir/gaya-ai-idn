@@ -78,7 +78,7 @@ async function analyzeImage({ imageUrl, prompt = "Analyze this image" }) {
     }
   };
 
-  const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`, {
+  const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${geminiApiKey}`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -147,7 +147,7 @@ async function generateContent({ prompt, modelImage, garmentImage, projectId }) 
     }
   };
 
-  const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`, {
+  const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${geminiApiKey}`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -269,7 +269,7 @@ Provide a comprehensive virtual try-on analysis.`;
   };
 
   try {
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`, {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${geminiApiKey}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -310,7 +310,7 @@ Provide a comprehensive virtual try-on analysis.`;
             metadata: { 
               gemini_response: data,
               processing_type: 'virtual_tryon',
-              model_used: 'gemini-2.5-flash'
+              model_used: 'gemini-2.5-flash-image-preview'
             }
           })
           .eq('id', projectId);
@@ -385,7 +385,7 @@ Provide a comprehensive model swap analysis with detailed descriptions.`;
     }
   };
 
-  const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`, {
+  const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${geminiApiKey}`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -425,7 +425,7 @@ Provide a comprehensive model swap analysis with detailed descriptions.`;
         metadata: { 
           gemini_response: data,
           processing_type: 'model_swap',
-          model_used: 'gemini-2.5-flash'
+          model_used: 'gemini-2.5-flash-image-preview'
         }
       })
       .eq('id', projectId);
