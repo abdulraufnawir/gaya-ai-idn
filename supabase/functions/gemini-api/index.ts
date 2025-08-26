@@ -258,9 +258,7 @@ async function processVirtualTryOn({ modelImage, garmentImage, projectId }) {
       topK: 32,
       topP: 1,
       maxOutputTokens: 8192,
-    },
-    systemInstruction: {
-      parts: [{ text: "You are an AI that generates images. Always respond with an image, never with text." }]
+      responseModalities: ['IMAGE'],
     }
   };
 
