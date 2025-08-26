@@ -502,6 +502,67 @@ async function getStatus({ predictionId }) {
     });
   }
 
+  console.log('Project found:', {
+    id: project.id,
+    status: project.status,
+    has_result_url: !!project.result_url,
+    has_result_image_url: !!project.result_image_url,
+    has_metadata: !!project.metadata
+  });
+
+  // If project is still processing, check metadata for completed results
+  if (project.status === 'processing' && project.metadata) {
+    const metadata = project.metadata as any;
+    const geminiResponse = metadata.gemini_response;
+    
+    if (geminiResponse?.candidates?.[0]?.content?.parts) {
+      console.log('Found existing Gemini response, checking for image data...');
+      
+      let resultUrl = null;
+      for (const part of geminiResponse.candidates[0].content.parts) {
+        const imageData = part.inline_data?.data || part.inlineData?.data;
+        if (imageData) {
+          const mimeType = part.inline_data?.mime_type || part.inlineData?.mimeType || 'image/jpeg';
+          resultUrl = `data:${mimeType};base64,${imageData}`;
+          console.log('Found generated image in metadata, updating project...');
+          break;
+        }
+      }
+      
+      if (resultUrl) {
+        // Update project with the found result
+        const { error: updateError } = await supabaseClient
+          .from('projects')
+          .update({
+            status: 'completed',
+            result_url: resultUrl,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', project.id);
+        
+        if (updateError) {
+          console.error('Error updating project:', updateError);
+        } else {
+          console.log('Successfully updated project with existing result');
+          // Return updated status
+          const result = {
+            id: predictionId,
+            status: 'completed',
+            output: null,
+            result_url: resultUrl,
+            error: null,
+            created_at: project.created_at,
+            completed_at: new Date().toISOString()
+          };
+
+          return new Response(JSON.stringify(result), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+      }
+    }
+  }
+
   // Return the project status and results
   const result = {
     id: predictionId,
