@@ -10,6 +10,7 @@ import { Upload, Sparkles, Users, Edit3, LogOut, User as UserIcon } from 'lucide
 import VirtualTryOn from '@/components/VirtualTryOn';
 import ModelSwap from '@/components/ModelSwap';
 import PhotoEditor from '@/components/PhotoEditor';
+import GeminiProcessor from '@/components/GeminiProcessor';
 import ProjectHistory from '@/components/ProjectHistory';
 import UserProfile from '@/components/UserProfile';
 
@@ -125,7 +126,7 @@ const Dashboard = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 mb-4 h-auto">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 mb-4 h-auto">
             <TabsTrigger value="virtual-tryon" className="flex flex-col sm:flex-row items-center gap-1 p-2 text-xs sm:text-sm">
               <Upload className="h-4 w-4" />
               <span className="text-center">Virtual Try-On</span>
@@ -137,6 +138,10 @@ const Dashboard = () => {
             <TabsTrigger value="photo-edit" className="flex flex-col sm:flex-row items-center gap-1 p-2 text-xs sm:text-sm">
               <Edit3 className="h-4 w-4" />
               <span className="text-center">Edit Foto</span>
+            </TabsTrigger>
+            <TabsTrigger value="gemini-ai" className="flex flex-col sm:flex-row items-center gap-1 p-2 text-xs sm:text-sm">
+              <Sparkles className="h-4 w-4" />
+              <span className="text-center">Gemini AI</span>
             </TabsTrigger>
             <TabsTrigger value="history" className="flex flex-col sm:flex-row items-center gap-1 p-2 text-xs sm:text-sm">
               <Sparkles className="h-4 w-4" />
@@ -158,6 +163,10 @@ const Dashboard = () => {
 
           <TabsContent value="photo-edit">
             <PhotoEditor userId={user.id} />
+          </TabsContent>
+
+          <TabsContent value="gemini-ai">
+            <GeminiProcessor userId={user.id} />
           </TabsContent>
 
           <TabsContent value="history">
