@@ -197,8 +197,7 @@ async function processImages({ modelImage, garmentImage, prompt, projectId }) {
 async function processVirtualTryOn({ modelImage, garmentImage, projectId }) {
   console.log('Processing virtual try-on with Gemini 2.5 Flash for project:', projectId);
   
-  try {
-    const prompt = `Create a detailed description for a virtual try-on result by combining these images. 
+  const prompt = `Create a detailed description for a virtual try-on result by combining these images. 
 Analyze the model and garment, then describe how the garment would look when worn by the model. 
 Include details about:
 1. How the garment would fit on the model's body shape and pose
@@ -209,13 +208,18 @@ Include details about:
 
 Provide a comprehensive virtual try-on analysis.`;
 
-    const parts = [{ text: prompt }];
-    
-    // Add model image if provided
-    if (modelImage) {
+  const parts = [{ text: prompt }];
+  
+  // Add model image if provided
+  if (modelImage) {
+    try {
       const modelResponse = await fetch(modelImage);
+      if (!modelResponse.ok) {
+        throw new Error(`Failed to fetch model image: ${modelResponse.status}`);
+      }
       const modelBuffer = await modelResponse.arrayBuffer();
-      const base64Model = btoa(String.fromCharCode(...new Uint8Array(modelBuffer)));
+      const uint8Array = new Uint8Array(modelBuffer);
+      const base64Model = btoa(Array.from(uint8Array, byte => String.fromCharCode(byte)).join(''));
       
       parts.push({
         inline_data: {
@@ -223,13 +227,22 @@ Provide a comprehensive virtual try-on analysis.`;
           data: base64Model
         }
       });
+    } catch (error) {
+      console.error('Error processing model image:', error);
+      throw new Error('Failed to process model image');
     }
-    
-    // Add garment image if provided
-    if (garmentImage) {
+  }
+  
+  // Add garment image if provided
+  if (garmentImage) {
+    try {
       const garmentResponse = await fetch(garmentImage);
+      if (!garmentResponse.ok) {
+        throw new Error(`Failed to fetch garment image: ${garmentResponse.status}`);
+      }
       const garmentBuffer = await garmentResponse.arrayBuffer();
-      const base64Garment = btoa(String.fromCharCode(...new Uint8Array(garmentBuffer)));
+      const uint8Array = new Uint8Array(garmentBuffer);
+      const base64Garment = btoa(Array.from(uint8Array, byte => String.fromCharCode(byte)).join(''));
       
       parts.push({
         inline_data: {
@@ -237,18 +250,23 @@ Provide a comprehensive virtual try-on analysis.`;
           data: base64Garment
         }
       });
+    } catch (error) {
+      console.error('Error processing garment image:', error);
+      throw new Error('Failed to process garment image');
     }
+  }
 
-    const requestBody = {
-      contents: [{ parts }],
-      generationConfig: {
-        temperature: 0.7,
-        topK: 32,
-        topP: 0.9,
-        maxOutputTokens: 4096,
-      }
-    };
+  const requestBody = {
+    contents: [{ parts }],
+    generationConfig: {
+      temperature: 0.7,
+      topK: 32,
+      topP: 0.9,
+      maxOutputTokens: 4096,
+    }
+  };
 
+  try {
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${geminiApiKey}`, {
       method: 'POST',
       headers: {
@@ -276,30 +294,38 @@ Provide a comprehensive virtual try-on analysis.`;
 
     // Update project if projectId provided
     if (projectId) {
-      const supabaseClient = createClient(
-        Deno.env.get('SUPABASE_URL') ?? '',
-        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-      );
+      try {
+        const supabaseClient = createClient(
+          Deno.env.get('SUPABASE_URL') ?? '',
+          Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+        );
 
-      await supabaseClient
-        .from('projects')
-        .update({
-          status: 'completed',
-          result_url: `data:text/plain;base64,${btoa(result.result)}`,
-          metadata: { 
-            gemini_response: data,
-            processing_type: 'virtual_tryon',
-            model_used: 'gemini-2.0-flash-exp'
-          }
-        })
-        .eq('id', projectId);
+        const { error: updateError } = await supabaseClient
+          .from('projects')
+          .update({
+            status: 'completed',
+            result_url: `data:text/plain;base64,${btoa(result.result)}`,
+            metadata: { 
+              gemini_response: data,
+              processing_type: 'virtual_tryon',
+              model_used: 'gemini-2.0-flash-exp'
+            }
+          })
+          .eq('id', projectId);
+
+        if (updateError) {
+          console.error('Error updating project:', updateError);
+        }
+      } catch (error) {
+        console.error('Error in project update:', error);
+      }
     }
 
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
-    console.error('Error in processVirtualTryOn:', error);
+    console.error('Error in Gemini API call:', error);
     throw error;
   }
 }
