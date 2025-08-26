@@ -201,7 +201,7 @@ async function processImages({ modelImage, garmentImage, prompt, projectId }) {
 async function processVirtualTryOn({ modelImage, garmentImage, projectId }) {
   console.log('Processing virtual try-on with Gemini 2.5 Flash Image Preview for project:', projectId);
   
-  const prompt = `Create a high-quality photorealistic virtual try-on image showing the model wearing the garment. Seamlessly combine the model from the first image with the garment from the second image. Maintain the model's exact pose, body proportions, and facial features while fitting the garment naturally with proper sizing, realistic lighting, shadows, and fabric physics. Keep the garment's original colors, patterns, and design details. Generate a realistic fashion photograph.`;
+  const prompt = `Generate a realistic virtual try-on image showing the model wearing the garment. Create a high-quality photorealistic image that seamlessly combines the model from the first image with the garment from the second image. Maintain the model's pose, body proportions, and facial features exactly while fitting the garment naturally with proper sizing, realistic lighting, shadows, and fabric physics. Keep the garment's original colors, patterns, and design details.`;
 
   const parts = [{ text: prompt }];
   
@@ -257,7 +257,8 @@ async function processVirtualTryOn({ modelImage, garmentImage, projectId }) {
       temperature: 0.4,
       topK: 32,
       topP: 1,
-      maxOutputTokens: 8192
+      maxOutputTokens: 8192,
+      responseModalities: ['IMAGE'],
     }
   };
 
