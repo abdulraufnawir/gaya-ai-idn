@@ -103,7 +103,7 @@ const VirtualTryOn = ({ userId }: VirtualTryOnProps) => {
       if (projectError) throw projectError;
 
       // Start Gemini virtual try-on
-      const { data: geminiResponse } = await supabase.functions.invoke('gemini-api', {
+      const { data: geminiResponse, error: invokeError } = await supabase.functions.invoke('gemini-api', {
         body: {
           action: 'virtualTryOn',
           modelImage: modelImageUrl,
@@ -111,6 +111,14 @@ const VirtualTryOn = ({ userId }: VirtualTryOnProps) => {
           projectId: project.id
         }
       });
+
+      if (invokeError) {
+        throw new Error(`Function invoke error: ${invokeError.message}`);
+      }
+
+      if (!geminiResponse) {
+        throw new Error('No response received from Gemini API');
+      }
 
       if (geminiResponse.error) {
         throw new Error(geminiResponse.error);

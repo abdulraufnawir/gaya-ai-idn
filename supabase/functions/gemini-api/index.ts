@@ -197,7 +197,8 @@ async function processImages({ modelImage, garmentImage, prompt, projectId }) {
 async function processVirtualTryOn({ modelImage, garmentImage, projectId }) {
   console.log('Processing virtual try-on with Gemini 2.5 Flash for project:', projectId);
   
-  const prompt = `Create a detailed description for a virtual try-on result by combining these images. 
+  try {
+    const prompt = `Create a detailed description for a virtual try-on result by combining these images. 
 Analyze the model and garment, then describe how the garment would look when worn by the model. 
 Include details about:
 1. How the garment would fit on the model's body shape and pose
@@ -208,95 +209,99 @@ Include details about:
 
 Provide a comprehensive virtual try-on analysis.`;
 
-  const parts = [{ text: prompt }];
-  
-  // Add model image if provided
-  if (modelImage) {
-    const modelResponse = await fetch(modelImage);
-    const modelBuffer = await modelResponse.arrayBuffer();
-    const base64Model = btoa(String.fromCharCode(...new Uint8Array(modelBuffer)));
+    const parts = [{ text: prompt }];
     
-    parts.push({
-      inline_data: {
-        mime_type: modelResponse.headers.get('content-type') || 'image/jpeg',
-        data: base64Model
-      }
-    });
-  }
-  
-  // Add garment image if provided
-  if (garmentImage) {
-    const garmentResponse = await fetch(garmentImage);
-    const garmentBuffer = await garmentResponse.arrayBuffer();
-    const base64Garment = btoa(String.fromCharCode(...new Uint8Array(garmentBuffer)));
-    
-    parts.push({
-      inline_data: {
-        mime_type: garmentResponse.headers.get('content-type') || 'image/jpeg',
-        data: base64Garment
-      }
-    });
-  }
-
-  const requestBody = {
-    contents: [{ parts }],
-    generationConfig: {
-      temperature: 0.7,
-      topK: 32,
-      topP: 0.9,
-      maxOutputTokens: 4096,
-    }
-  };
-
-  const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${geminiApiKey}`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(requestBody),
-  });
-
-  const data = await response.json();
-  
-  if (!response.ok) {
-    console.error('Gemini API error:', data);
-    throw new Error(data.error?.message || 'Failed to process virtual try-on');
-  }
-
-  console.log('Gemini virtual try-on response:', data);
-
-  const result = {
-    id: `gemini_tryon_${Date.now()}`,
-    prediction_id: `gemini_pred_${Date.now()}`,
-    status: 'completed',
-    result: data.candidates[0]?.content?.parts[0]?.text || 'Virtual try-on processing completed',
-    usage: data.usageMetadata
-  };
-
-  // Update project if projectId provided
-  if (projectId) {
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
-
-    await supabaseClient
-      .from('projects')
-      .update({
-        status: 'completed',
-        result_url: `data:text/plain;base64,${btoa(result.result)}`,
-        metadata: { 
-          gemini_response: data,
-          processing_type: 'virtual_tryon',
-          model_used: 'gemini-2.0-flash-exp'
+    // Add model image if provided
+    if (modelImage) {
+      const modelResponse = await fetch(modelImage);
+      const modelBuffer = await modelResponse.arrayBuffer();
+      const base64Model = btoa(String.fromCharCode(...new Uint8Array(modelBuffer)));
+      
+      parts.push({
+        inline_data: {
+          mime_type: modelResponse.headers.get('content-type') || 'image/jpeg',
+          data: base64Model
         }
-      })
-      .eq('id', projectId);
-  }
+      });
+    }
+    
+    // Add garment image if provided
+    if (garmentImage) {
+      const garmentResponse = await fetch(garmentImage);
+      const garmentBuffer = await garmentResponse.arrayBuffer();
+      const base64Garment = btoa(String.fromCharCode(...new Uint8Array(garmentBuffer)));
+      
+      parts.push({
+        inline_data: {
+          mime_type: garmentResponse.headers.get('content-type') || 'image/jpeg',
+          data: base64Garment
+        }
+      });
+    }
 
-  return new Response(JSON.stringify(result), {
-    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-  });
+    const requestBody = {
+      contents: [{ parts }],
+      generationConfig: {
+        temperature: 0.7,
+        topK: 32,
+        topP: 0.9,
+        maxOutputTokens: 4096,
+      }
+    };
+
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${geminiApiKey}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(requestBody),
+    });
+
+    const data = await response.json();
+    
+    if (!response.ok) {
+      console.error('Gemini API error:', data);
+      throw new Error(data.error?.message || 'Failed to process virtual try-on');
+    }
+
+    console.log('Gemini virtual try-on response:', data);
+
+    const result = {
+      id: `gemini_tryon_${Date.now()}`,
+      prediction_id: `gemini_pred_${Date.now()}`,
+      status: 'completed',
+      result: data.candidates[0]?.content?.parts[0]?.text || 'Virtual try-on processing completed',
+      usage: data.usageMetadata
+    };
+
+    // Update project if projectId provided
+    if (projectId) {
+      const supabaseClient = createClient(
+        Deno.env.get('SUPABASE_URL') ?? '',
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      );
+
+      await supabaseClient
+        .from('projects')
+        .update({
+          status: 'completed',
+          result_url: `data:text/plain;base64,${btoa(result.result)}`,
+          metadata: { 
+            gemini_response: data,
+            processing_type: 'virtual_tryon',
+            model_used: 'gemini-2.0-flash-exp'
+          }
+        })
+        .eq('id', projectId);
+    }
+
+    return new Response(JSON.stringify(result), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  } catch (error) {
+    console.error('Error in processVirtualTryOn:', error);
+    throw error;
+  }
 }
 
 async function processModelSwap({ modelImage, garmentImage, projectId }) {
