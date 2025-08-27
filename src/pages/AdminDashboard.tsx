@@ -22,6 +22,7 @@ import AdminAnalytics from '@/components/admin/AdminAnalytics';
 import AdminProjectMonitoring from '@/components/admin/AdminProjectMonitoring';
 import AdminSystemHealth from '@/components/admin/AdminSystemHealth';
 import AdminRoleManager from '@/components/admin/AdminRoleManager';
+import AdminAIModelManagement from '@/components/admin/AdminAIModelManagement';
 
 const AdminDashboard = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -142,7 +143,7 @@ const AdminDashboard = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 lg:grid-cols-5 mb-6">
+          <TabsList className="grid w-full grid-cols-2 lg:grid-cols-6 mb-6">
             <TabsTrigger value="overview" className="flex items-center gap-2">
               <BarChart3 className="h-4 w-4" />
               Overview
@@ -154,6 +155,10 @@ const AdminDashboard = () => {
             <TabsTrigger value="projects" className="flex items-center gap-2">
               <FileImage className="h-4 w-4" />
               Projects
+            </TabsTrigger>
+            <TabsTrigger value="ai-models" className="flex items-center gap-2">
+              <Settings className="h-4 w-4" />
+              AI Models
             </TabsTrigger>
             <TabsTrigger value="roles" className="flex items-center gap-2">
               <Shield className="h-4 w-4" />
@@ -175,6 +180,10 @@ const AdminDashboard = () => {
 
           <TabsContent value="projects">
             <AdminProjectMonitoring />
+          </TabsContent>
+
+          <TabsContent value="ai-models">
+            <AdminAIModelManagement />
           </TabsContent>
 
           <TabsContent value="roles">

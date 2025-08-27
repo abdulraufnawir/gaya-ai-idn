@@ -13,6 +13,7 @@ import PhotoEditor from '@/components/PhotoEditor';
 import GeminiProcessor from '@/components/GeminiProcessor';
 import ProjectHistory from '@/components/ProjectHistory';
 import UserProfile from '@/components/UserProfile';
+import AdminAccess from '@/components/AdminAccess';
 
 const Dashboard = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -105,6 +106,7 @@ const Dashboard = () => {
               <span className="hidden sm:inline text-sm text-muted-foreground">Dashboard</span>
             </div>
             <div className="flex items-center space-x-3">
+              <AdminAccess />
               <span className="hidden sm:inline text-sm text-muted-foreground truncate max-w-[150px] md:max-w-none">
                 Halo, {user.email}
               </span>
