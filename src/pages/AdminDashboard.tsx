@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -13,10 +12,9 @@ import {
   FileImage, 
   LogOut, 
   Activity,
-  TrendingUp,
-  Database,
   Shield
 } from 'lucide-react';
+import AdminOverview from '@/components/admin/AdminOverview';
 import AdminUserManagement from '@/components/admin/AdminUserManagement';
 import AdminAnalytics from '@/components/admin/AdminAnalytics';
 import AdminProjectMonitoring from '@/components/admin/AdminProjectMonitoring';
@@ -27,87 +25,87 @@ import AdminAIModelManagement from '@/components/admin/AdminAIModelManagement';
 const AdminDashboard = () => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  console.log('AdminDashboard component rendered, loading:', loading, 'user:', user);
-
   useEffect(() => {
-    console.log('AdminDashboard useEffect started');
-    
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth state change:', { event, user: session?.user?.email });
-      setUser(session?.user ?? null);
-      setLoading(false);
-      
-      if (!session?.user) {
-        console.log('No user session, redirecting to auth');
-        navigate('/auth');
-        return;
-      }
-      
-      // Check if user has admin role
-      console.log('Checking admin role for user:', session.user.email);
-      const { data: isAdmin, error: adminError } = await supabase.rpc('is_admin');
-      console.log('AdminDashboard admin check result:', { isAdmin, adminError, userEmail: session.user.email });
-      
-      if (adminError) {
-        console.error('Admin RPC error in dashboard:', adminError);
-        // Don't redirect on RPC error, let user see the page
-        return;
-      }
-      
-      if (!isAdmin) {
-        console.log('User is not admin, redirecting to dashboard');
-        toast({
-          title: 'Access Denied',
-          description: 'You do not have admin privileges. Contact an administrator to get access.',
-          variant: 'destructive',
-        });
-        navigate('/dashboard');
-      } else {
-        console.log('User is admin, access granted');
-      }
-    });
+    console.log('AdminDashboard: Component mounted');
+    checkAuthAndAdmin();
+  }, []);
 
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      console.log('Getting initial session:', { user: session?.user?.email });
-      setUser(session?.user ?? null);
-      setLoading(false);
+  const checkAuthAndAdmin = async () => {
+    try {
+      console.log('AdminDashboard: Checking authentication...');
       
-      if (!session?.user) {
-        console.log('No initial session, redirecting to auth');
+      // Get current session
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) {
+        console.error('AdminDashboard: Session error:', sessionError);
         navigate('/auth');
         return;
       }
 
-      // Check if user has admin role
-      console.log('Initial admin check for user:', session.user.email);
-      const { data: isAdmin, error: adminError } = await supabase.rpc('is_admin');
-      console.log('AdminDashboard initial admin check result:', { isAdmin, adminError, userEmail: session.user.email });
-      
-      if (adminError) {
-        console.error('Admin RPC error in dashboard initial check:', adminError);
-        // Don't redirect on RPC error, let user see the page
+      if (!session?.user) {
+        console.log('AdminDashboard: No user session, redirecting to auth');
+        navigate('/auth');
         return;
       }
+
+      console.log('AdminDashboard: User authenticated:', session.user.email);
+      setUser(session.user);
+
+      // Check admin role
+      console.log('AdminDashboard: Checking admin role...');
+      const { data: adminCheck, error: adminError } = await supabase.rpc('is_admin');
       
-      if (!isAdmin) {
-        console.log('User is not admin in initial check, redirecting to dashboard');
+      console.log('AdminDashboard: Admin check result:', { adminCheck, adminError });
+      
+      if (adminError) {
+        console.error('AdminDashboard: Admin check error:', adminError);
+        // Try alternative check
+        const { data: userRoles } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', session.user.id)
+          .eq('role', 'admin');
+        
+        if (!userRoles || userRoles.length === 0) {
+          toast({
+            title: 'Access Denied',
+            description: 'You do not have admin privileges.',
+            variant: 'destructive',
+          });
+          navigate('/dashboard');
+          return;
+        }
+        setIsAdmin(true);
+      } else if (!adminCheck) {
         toast({
           title: 'Access Denied',
-          description: 'You do not have admin privileges. Contact an administrator to get access.',
+          description: 'You do not have admin privileges.',
           variant: 'destructive',
         });
         navigate('/dashboard');
+        return;
       } else {
-        console.log('User is admin in initial check, access granted');
+        setIsAdmin(true);
       }
-    });
 
-    return () => subscription.unsubscribe();
-  }, [navigate, toast]);
+      console.log('AdminDashboard: Admin access granted');
+    } catch (error: any) {
+      console.error('AdminDashboard: Error during auth check:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to verify admin access',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSignOut = async () => {
     try {
@@ -126,13 +124,28 @@ const AdminDashboard = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <h2 className="text-lg font-semibold">Loading Admin Panel...</h2>
+          <p className="text-muted-foreground">Verifying your admin privileges</p>
+        </div>
       </div>
     );
   }
 
-  if (!user) {
-    return null;
+  if (!user || !isAdmin) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5 flex items-center justify-center">
+        <div className="text-center">
+          <Shield className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+          <h2 className="text-lg font-semibold">Access Denied</h2>
+          <p className="text-muted-foreground mb-4">You don't have admin privileges</p>
+          <Button onClick={() => navigate('/dashboard')}>
+            Go to Dashboard
+          </Button>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -173,10 +186,14 @@ const AdminDashboard = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 lg:grid-cols-6 mb-6">
+          <TabsList className="grid w-full grid-cols-2 lg:grid-cols-7 mb-6">
             <TabsTrigger value="overview" className="flex items-center gap-2">
               <BarChart3 className="h-4 w-4" />
               Overview
+            </TabsTrigger>
+            <TabsTrigger value="analytics" className="flex items-center gap-2">
+              <BarChart3 className="h-4 w-4" />
+              Analytics
             </TabsTrigger>
             <TabsTrigger value="users" className="flex items-center gap-2">
               <Users className="h-4 w-4" />
@@ -201,6 +218,10 @@ const AdminDashboard = () => {
           </TabsList>
 
           <TabsContent value="overview">
+            <AdminOverview />
+          </TabsContent>
+
+          <TabsContent value="analytics">
             <AdminAnalytics />
           </TabsContent>
 
