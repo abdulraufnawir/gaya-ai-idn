@@ -226,14 +226,15 @@ const VirtualTryOn = ({ userId }: VirtualTryOnProps) => {
             </TabsList>
             
             <TabsContent value="upload" className="mt-4">
-              <div className="relative">
-                <div className="aspect-[3/4] bg-muted/20 rounded-xl border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 transition-colors overflow-hidden min-h-[200px] sm:min-h-[250px]">
+              <div className="relative w-full max-w-md mx-auto">
+                <div className="aspect-[3/4] bg-muted/20 rounded-xl border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 transition-colors overflow-hidden min-h-[200px] sm:min-h-[250px] relative">
                   {modelImagePreview ? (
-                    <div className="relative w-full h-full">
+                    <div className="relative w-full h-full overflow-hidden">
                       <img 
                         src={modelImagePreview} 
                         alt="Model preview" 
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover object-center"
+                        style={{ maxWidth: '100%', maxHeight: '100%' }}
                       />
                       <button
                         onClick={() => {
@@ -242,7 +243,7 @@ const VirtualTryOn = ({ userId }: VirtualTryOnProps) => {
                           setModelImagePreview(null);
                           setSelectedModel(null);
                         }}
-                        className="absolute top-2 right-2 bg-background/80 backdrop-blur-sm text-foreground rounded-full w-8 h-8 flex items-center justify-center hover:bg-background/90 transition-colors touch-target"
+                        className="absolute top-2 right-2 bg-background/80 backdrop-blur-sm text-foreground rounded-full w-8 h-8 flex items-center justify-center hover:bg-background/90 transition-colors touch-target z-10"
                       >
                         ×
                       </button>
