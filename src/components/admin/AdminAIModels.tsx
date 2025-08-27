@@ -56,6 +56,13 @@ const AdminAIModels = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   // AI Model Configuration State
+  const [kieAISettings, setKieAISettings] = useState({
+    model: 'google/nano-banana',
+    numImages: 1,
+    callbackTimeout: 300,
+    enableWebhooks: true
+  });
+
   const [geminiSettings, setGeminiSettings] = useState({
     maxTokens: 4096,
     temperature: 0.7,
@@ -100,13 +107,13 @@ const AdminAIModels = () => {
       // Process model stats
       const aiModelStats: AIModelStats[] = [
         {
-          modelName: 'Virtual Try-On (Gemini)',
+          modelName: 'Virtual Try-On (Kie.AI nano-banana)',
           totalRequests: projects?.filter(p => p.project_type === 'virtual_tryon')?.length || 0,
           successRate: calculateSuccessRate(projects?.filter(p => p.project_type === 'virtual_tryon') || []),
-          averageResponseTime: 8500,
+          averageResponseTime: 15000,
           lastUsed: getLastUsed(projects?.filter(p => p.project_type === 'virtual_tryon') || []),
           status: 'active',
-          costPerRequest: 0.15,
+          costPerRequest: 0.12,
           monthlyUsage: projects?.filter(p => 
             p.project_type === 'virtual_tryon' && 
             new Date(p.created_at).getMonth() === new Date().getMonth()
@@ -139,15 +146,15 @@ const AdminAIModels = () => {
           )?.length || 0
         },
         {
-          modelName: 'Gemini Analysis',
-          totalRequests: projects?.filter(p => p.project_type?.startsWith('gemini_'))?.length || 0,
-          successRate: calculateSuccessRate(projects?.filter(p => p.project_type?.startsWith('gemini_')) || []),
-          averageResponseTime: 3500,
-          lastUsed: getLastUsed(projects?.filter(p => p.project_type?.startsWith('gemini_')) || []),
+          modelName: 'Fashn Try-On API',
+          totalRequests: projects?.filter(p => p.project_type === 'fashn_tryon')?.length || 0,
+          successRate: calculateSuccessRate(projects?.filter(p => p.project_type === 'fashn_tryon') || []),
+          averageResponseTime: 18000,
+          lastUsed: getLastUsed(projects?.filter(p => p.project_type === 'fashn_tryon') || []),
           status: 'active',
-          costPerRequest: 0.05,
+          costPerRequest: 0.20,
           monthlyUsage: projects?.filter(p => 
-            p.project_type?.startsWith('gemini_') && 
+            p.project_type === 'fashn_tryon' && 
             new Date(p.created_at).getMonth() === new Date().getMonth()
           )?.length || 0
         }
@@ -180,13 +187,35 @@ const AdminAIModels = () => {
   };
 
   const checkAPIStatuses = async () => {
-    const statuses: APIStatus[] = [
-      {
-        service: 'Gemini API',
-        status: 'online',
-        responseTime: 850,
+    const statuses: APIStatus[] = [];
+    
+    // Test Kie.AI API
+    try {
+      const startTime = Date.now();
+      const { data, error } = await supabase.functions.invoke('kie-ai', {
+        body: { action: 'status', predictionId: 'test' }
+      });
+      const responseTime = Date.now() - startTime;
+      
+      statuses.push({
+        service: 'Kie.AI API',
+        status: error ? 'offline' : 'online',
+        responseTime,
         lastChecked: new Date().toISOString(),
-      },
+        errorMessage: error?.message
+      });
+    } catch (error) {
+      statuses.push({
+        service: 'Kie.AI API',
+        status: 'offline',
+        responseTime: 0,
+        lastChecked: new Date().toISOString(),
+        errorMessage: 'Connection failed'
+      });
+    }
+
+    // Test other APIs with mock data (you can implement actual tests)
+    statuses.push(
       {
         service: 'Replicate API', 
         status: 'online',
@@ -198,8 +227,14 @@ const AdminAIModels = () => {
         status: 'online',
         responseTime: 950,
         lastChecked: new Date().toISOString(),
+      },
+      {
+        service: 'Gemini API',
+        status: 'online',
+        responseTime: 850,
+        lastChecked: new Date().toISOString(),
       }
-    ];
+    );
 
     setApiStatuses(statuses);
   };
@@ -359,14 +394,15 @@ const AdminAIModels = () => {
             {modelStats.map((model, index) => (
               <Card key={index}>
                 <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="flex items-center gap-2">
-                      {model.modelName.includes('Gemini') && <Sparkles className="h-5 w-5" />}
-                      {model.modelName.includes('Photo') && <Edit3 className="h-5 w-5" />}
-                      {model.modelName.includes('Model Swap') && <Users className="h-5 w-5" />}
-                      {model.modelName.includes('Analysis') && <ImageIcon className="h-5 w-5" />}
-                      {model.modelName}
-                    </CardTitle>
+                     <div className="flex items-center justify-between">
+                      <CardTitle className="flex items-center gap-2">
+                        {model.modelName.includes('Kie.AI') && <Bot className="h-5 w-5" />}
+                        {model.modelName.includes('Gemini') && <Sparkles className="h-5 w-5" />}
+                        {model.modelName.includes('Photo') && <Edit3 className="h-5 w-5" />}
+                        {model.modelName.includes('Model Swap') && <Users className="h-5 w-5" />}
+                        {model.modelName.includes('Fashn') && <ImageIcon className="h-5 w-5" />}
+                        {model.modelName}
+                      </CardTitle>
                     <Badge variant={model.status === 'active' ? 'default' : 'secondary'}>
                       {model.status}
                     </Badge>
@@ -448,7 +484,60 @@ const AdminAIModels = () => {
         </TabsContent>
 
         <TabsContent value="settings" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Bot className="h-5 w-5" />
+                  Kie.AI Settings
+                </CardTitle>
+                <CardDescription>Configure Kie.AI nano-banana model parameters</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Model</Label>
+                  <Input
+                    value={kieAISettings.model}
+                    onChange={(e) => setKieAISettings({...kieAISettings, model: e.target.value})}
+                    disabled
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Number of Images</Label>
+                  <Input
+                    type="number"
+                    min="1"
+                    max="4"
+                    value={kieAISettings.numImages}
+                    onChange={(e) => setKieAISettings({...kieAISettings, numImages: parseInt(e.target.value)})}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Callback Timeout (seconds)</Label>
+                  <Input
+                    type="number"
+                    value={kieAISettings.callbackTimeout}
+                    onChange={(e) => setKieAISettings({...kieAISettings, callbackTimeout: parseInt(e.target.value)})}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      checked={kieAISettings.enableWebhooks}
+                      onChange={(e) => setKieAISettings({...kieAISettings, enableWebhooks: e.target.checked})}
+                      className="rounded"
+                    />
+                    <Label>Enable Webhooks</Label>
+                  </div>
+                </div>
+                <Button className="w-full">
+                  <Settings className="h-4 w-4 mr-2" />
+                  Save Kie.AI Settings
+                </Button>
+              </CardContent>
+            </Card>
+
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
