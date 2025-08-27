@@ -72,9 +72,11 @@ async function processVirtualTryOn({ modelImage, garmentImage, projectId }) {
       callBackUrl: callbackUrl,
       input: {
         prompt: prompt,
-        num_images: "1",
-        model_image: modelImage,
-        garment_image: garmentImage
+        num_inference_steps: 20,
+        guidance_scale: 7.5,
+        seed: -1,
+        person_image: modelImage,
+        cloth_image: garmentImage
       },
       metadata: {
         projectId: projectId,

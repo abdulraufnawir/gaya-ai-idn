@@ -22,10 +22,29 @@ serve(async (req) => {
     );
 
     // Extract task information from payload
-    const taskId = payload.id || payload.taskId;
-    const status = payload.status;
-    const metadata = payload.metadata || {};
-    const projectId = metadata.projectId;
+    let taskId = payload.id || payload.taskId;
+    let status = payload.status;
+    let metadata = payload.metadata || {};
+    let projectId = metadata.projectId;
+
+    // Handle Kie.AI webhook format
+    if (payload.data && payload.data.taskId) {
+      taskId = payload.data.taskId;
+      status = payload.data.state; // Kie.AI uses 'state' instead of 'status'
+      
+      // Parse metadata from the param field if it exists
+      if (payload.data.param) {
+        try {
+          const paramData = JSON.parse(payload.data.param);
+          if (paramData.metadata) {
+            metadata = paramData.metadata;
+            projectId = metadata.projectId;
+          }
+        } catch (e) {
+          console.error('Failed to parse param data:', e);
+        }
+      }
+    }
 
     if (!taskId || !projectId) {
       console.error('Missing taskId or projectId in webhook payload');
@@ -44,7 +63,7 @@ serve(async (req) => {
       }
     };
 
-    // Handle different status responses
+    // Handle different status responses  
     if (status === 'completed' || status === 'success') {
       // Extract result image URL from payload
       let resultUrl = null;
@@ -80,9 +99,16 @@ serve(async (req) => {
         hasResultUrl: !!resultUrl
       });
 
-    } else if (status === 'failed' || status === 'error') {
+    } else if (status === 'failed' || status === 'error' || status === 'fail') {
       updateData.status = 'failed';
-      updateData.error_message = payload.error || payload.message || 'Kie.AI task failed';
+      let errorMessage = payload.error || payload.message || 'Kie.AI task failed';
+      
+      // Handle Kie.AI specific error format
+      if (payload.data && payload.data.failMsg) {
+        errorMessage = payload.data.failMsg;
+      }
+      
+      updateData.error_message = errorMessage;
 
       console.log('Task failed:', {
         taskId,
