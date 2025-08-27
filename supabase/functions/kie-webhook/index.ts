@@ -68,25 +68,51 @@ serve(async (req) => {
       // Extract result image URL from payload
       let resultUrl = null;
       
-      // Check various possible locations for the result image
-      if (payload.result) {
-        if (typeof payload.result === 'string') {
-          resultUrl = payload.result;
-        } else if (payload.result.image_url) {
-          resultUrl = payload.result.image_url;
-        } else if (payload.result.url) {
-          resultUrl = payload.result.url;
-        } else if (payload.result.output) {
-          resultUrl = payload.result.output;
+      // Check Kie.AI specific resultJson format first
+      if (payload.data?.resultJson) {
+        try {
+          const resultJson = typeof payload.data.resultJson === 'string' 
+            ? JSON.parse(payload.data.resultJson) 
+            : payload.data.resultJson;
+          
+          console.log('Parsed resultJson:', JSON.stringify(resultJson, null, 2));
+          
+          if (resultJson.resultUrls && Array.isArray(resultJson.resultUrls) && resultJson.resultUrls.length > 0) {
+            resultUrl = resultJson.resultUrls[0];
+            console.log('Found result URL in resultUrls:', resultUrl);
+          } else if (resultJson.result_url) {
+            resultUrl = resultJson.result_url;
+            console.log('Found result URL in result_url:', resultUrl);
+          } else if (resultJson.output) {
+            resultUrl = Array.isArray(resultJson.output) ? resultJson.output[0] : resultJson.output;
+            console.log('Found result URL in output:', resultUrl);
+          }
+        } catch (parseError) {
+          console.error('Error parsing resultJson:', parseError);
         }
-      } else if (payload.output) {
-        if (typeof payload.output === 'string') {
-          resultUrl = payload.output;
-        } else if (Array.isArray(payload.output) && payload.output.length > 0) {
-          resultUrl = payload.output[0];
+      }
+      
+      // Fallback to other possible locations for the result image
+      if (!resultUrl) {
+        if (payload.result) {
+          if (typeof payload.result === 'string') {
+            resultUrl = payload.result;
+          } else if (payload.result.image_url) {
+            resultUrl = payload.result.image_url;
+          } else if (payload.result.url) {
+            resultUrl = payload.result.url;
+          } else if (payload.result.output) {
+            resultUrl = payload.result.output;
+          }
+        } else if (payload.output) {
+          if (typeof payload.output === 'string') {
+            resultUrl = payload.output;
+          } else if (Array.isArray(payload.output) && payload.output.length > 0) {
+            resultUrl = payload.output[0];
+          }
+        } else if (payload.image_url) {
+          resultUrl = payload.image_url;
         }
-      } else if (payload.image_url) {
-        resultUrl = payload.image_url;
       }
 
       updateData.status = 'completed';
@@ -96,7 +122,8 @@ serve(async (req) => {
       console.log('Task completed successfully:', {
         taskId,
         projectId,
-        hasResultUrl: !!resultUrl
+        hasResultUrl: !!resultUrl,
+        resultUrl: resultUrl
       });
 
     } else if (status === 'failed' || status === 'error' || status === 'fail') {
