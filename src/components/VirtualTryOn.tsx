@@ -13,6 +13,7 @@ interface VirtualTryOnProps {
 
 const VirtualTryOn = ({ userId }: VirtualTryOnProps) => {
   const [modelImage, setModelImage] = useState<File | null>(null);
+  const [modelImageUrl, setModelImageUrl] = useState<string | null>(null); // For selected models
   const [clothingImage, setClothingImage] = useState<File | null>(null);
   const [modelImagePreview, setModelImagePreview] = useState<string | null>(null);
   const [clothingImagePreview, setClothingImagePreview] = useState<string | null>(null);
@@ -24,24 +25,15 @@ const VirtualTryOn = ({ userId }: VirtualTryOnProps) => {
     const handleSetSelectedModel = (event: any) => {
       const selectedModel = event.detail.model;
       if (selectedModel?.imageUrl) {
-        fetch(selectedModel.imageUrl)
-          .then(res => res.blob())
-          .then(blob => {
-            const file = new File([blob], selectedModel.name + '.jpg', { type: 'image/jpeg' });
-            setModelImage(file);
-            setModelImagePreview(selectedModel.imageUrl);
-            toast({
-              title: 'Berhasil',
-              description: 'Model berhasil dipilih untuk virtual try-on',
-            });
-          })
-          .catch(error => {
-            toast({
-              title: 'Error',
-              description: 'Gagal memuat model: ' + error.message,
-              variant: 'destructive',
-            });
-          });
+        // Clear any uploaded file and set the selected model URL
+        setModelImage(null);
+        setModelImageUrl(selectedModel.imageUrl);
+        setModelImagePreview(selectedModel.imageUrl);
+        
+        toast({
+          title: 'Berhasil',
+          description: 'Model berhasil dipilih untuk virtual try-on',
+        });
       }
     };
 
@@ -56,6 +48,7 @@ const VirtualTryOn = ({ userId }: VirtualTryOnProps) => {
     const file = e.target.files?.[0];
     if (file) {
       setModelImage(file);
+      setModelImageUrl(null); // Clear selected model URL when uploading new file
       const previewUrl = URL.createObjectURL(file);
       setModelImagePreview(previewUrl);
     }
@@ -71,7 +64,7 @@ const VirtualTryOn = ({ userId }: VirtualTryOnProps) => {
   };
 
   const handleProcess = async () => {
-    if (!modelImage || !clothingImage) {
+    if ((!modelImage && !modelImageUrl) || !clothingImage) {
       toast({
         title: 'Error',
         description: 'Silakan upload gambar model dan pakaian',
@@ -83,8 +76,8 @@ const VirtualTryOn = ({ userId }: VirtualTryOnProps) => {
     setProcessing(true);
 
     try {
-      // First, upload images to storage
-      const modelImageUrl = await uploadImage(modelImage, 'model');
+      // Get model image URL - either from uploaded file or selected model
+      const finalModelImageUrl = modelImageUrl || await uploadImage(modelImage!, 'model');
       const clothingImageUrl = await uploadImage(clothingImage, 'clothing');
 
       // Create project record
@@ -106,7 +99,7 @@ const VirtualTryOn = ({ userId }: VirtualTryOnProps) => {
       const { data: kieResponse, error: invokeError } = await supabase.functions.invoke('kie-ai', {
         body: {
           action: 'virtualTryOn',
-          modelImage: modelImageUrl,
+          modelImage: finalModelImageUrl,
           garmentImage: clothingImageUrl,
           projectId: project.id
         }
@@ -131,7 +124,7 @@ const VirtualTryOn = ({ userId }: VirtualTryOnProps) => {
           prediction_id: kieResponse.prediction_id,
           settings: {
             prediction_id: kieResponse.prediction_id,
-            model_image_url: modelImageUrl,
+            model_image_url: finalModelImageUrl,
             garment_image_url: clothingImageUrl
           }
         })
@@ -144,6 +137,7 @@ const VirtualTryOn = ({ userId }: VirtualTryOnProps) => {
 
       // Reset form
       setModelImage(null);
+      setModelImageUrl(null);
       setClothingImage(null);
       setModelImagePreview(null);
       setClothingImagePreview(null);
@@ -207,6 +201,7 @@ const VirtualTryOn = ({ userId }: VirtualTryOnProps) => {
                   <button
                     onClick={() => {
                       setModelImage(null);
+                      setModelImageUrl(null);
                       setModelImagePreview(null);
                     }}
                     className="absolute top-2 right-2 bg-background/80 backdrop-blur-sm text-foreground rounded-full w-8 h-8 flex items-center justify-center hover:bg-background/90 transition-colors touch-target"
@@ -352,7 +347,7 @@ const VirtualTryOn = ({ userId }: VirtualTryOnProps) => {
       <div className="max-w-7xl mx-auto mt-4 flex justify-center px-4">
         <Button
           onClick={handleProcess}
-          disabled={processing || !modelImage || !clothingImage}
+          disabled={processing || (!modelImage && !modelImageUrl) || !clothingImage}
           size="lg"
           className="w-full sm:w-auto sm:min-w-[300px] h-12 text-base"
         >
