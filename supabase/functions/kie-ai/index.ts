@@ -117,7 +117,8 @@ async function processVirtualTryOn({ modelImage, garmentImage, projectId }) {
       throw new Error(`Kie.AI API Error (${response.status}): ${errorMessage}`);
     }
 
-    const taskId = result.id || result.taskId || result.task_id;
+    // Extract task ID from the nested data structure
+    const taskId = result.data?.taskId || result.id || result.taskId || result.task_id;
     console.log('Extracted task ID:', taskId);
     
     if (!taskId) {
