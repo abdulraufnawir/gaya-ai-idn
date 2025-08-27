@@ -46,20 +46,35 @@ serve(async (req) => {
 
 async function processVirtualTryOn({ modelImage, garmentImage, projectId }) {
   console.log('Processing virtual try-on with Kie.AI nano-banana for project:', projectId);
+  console.log('Model image URL:', modelImage);
+  console.log('Garment image URL:', garmentImage);
   
   try {
+    // Validate inputs
+    if (!modelImage || !garmentImage) {
+      throw new Error('Missing required images: modelImage and garmentImage are required');
+    }
+
+    if (!kieApiKey) {
+      console.error('KIE_AI_API_KEY is not configured');
+      throw new Error('KIE_AI_API_KEY is not configured in environment variables');
+    }
+
     // Create the callback URL for Kie.AI to send results back
     const callbackUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/kie-webhook`;
+    console.log('Callback URL:', callbackUrl);
     
-    // Create a detailed prompt for virtual try-on
-    const prompt = `Create a realistic virtual try-on image showing a person wearing the specified garment. The person should be wearing the clothing item naturally with proper fit, realistic lighting, shadows, and fabric physics. Maintain natural body proportions and realistic styling. High quality, photorealistic result.`;
+    // Create a detailed prompt for virtual try-on using nano-banana model
+    const prompt = `Generate a realistic virtual try-on image. Take the person from the first image and put them wearing the clothing item from the second image. Maintain the person's pose, body proportions, and facial features while fitting the garment naturally with proper sizing, realistic lighting, shadows, and fabric physics. High quality, photorealistic result.`;
 
     const requestBody = {
-      model: 'google/nano-banana',
+      model: 'google/nano-banana', 
       callBackUrl: callbackUrl,
       input: {
         prompt: prompt,
-        num_images: "1"
+        num_images: "1",
+        model_image: modelImage,
+        garment_image: garmentImage
       },
       metadata: {
         projectId: projectId,
@@ -80,19 +95,34 @@ async function processVirtualTryOn({ modelImage, garmentImage, projectId }) {
       body: JSON.stringify(requestBody)
     });
 
+    console.log('Kie.AI API response status:', response.status);
+    console.log('Kie.AI API response headers:', Object.fromEntries(response.headers.entries()));
+
     const result = await response.json();
+    console.log('Kie.AI API response body:', JSON.stringify(result, null, 2));
     
     if (!response.ok) {
-      console.error('Kie.AI API error:', result);
-      throw new Error(result.error?.message || result.message || 'Failed to create Kie.AI task');
+      console.error('Kie.AI API error - Status:', response.status);
+      console.error('Kie.AI API error - Response:', result);
+      
+      let errorMessage = 'Failed to create Kie.AI task';
+      if (result.error) {
+        errorMessage = typeof result.error === 'string' ? result.error : result.error.message || result.error;
+      } else if (result.message) {
+        errorMessage = result.message;
+      } else if (result.detail) {
+        errorMessage = result.detail;
+      }
+      
+      throw new Error(`Kie.AI API Error (${response.status}): ${errorMessage}`);
     }
 
-    console.log('Kie.AI task created:', result);
-
-    const taskId = result.id || result.taskId;
+    const taskId = result.id || result.taskId || result.task_id;
+    console.log('Extracted task ID:', taskId);
     
     if (!taskId) {
-      throw new Error('No task ID returned from Kie.AI');
+      console.error('No task ID in response:', result);
+      throw new Error('No task ID returned from Kie.AI API');
     }
 
     // Update project with task ID
@@ -137,6 +167,7 @@ async function processVirtualTryOn({ modelImage, garmentImage, projectId }) {
 
   } catch (error) {
     console.error('Error in Kie.AI processVirtualTryOn:', error);
+    console.error('Error stack:', error.stack);
     
     // Update project status to failed if projectId provided
     if (projectId) {
