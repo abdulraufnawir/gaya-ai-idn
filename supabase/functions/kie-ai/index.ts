@@ -64,20 +64,16 @@ async function processVirtualTryOn({ modelImage, garmentImage, projectId }) {
     const callbackUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/kie-webhook`;
     console.log('Callback URL:', callbackUrl);
     
-    // Create a detailed prompt for virtual try-on using a different model approach
-    const prompt = `Virtual try-on: Place the clothing item from the garment image onto the person in the model image. Maintain realistic fit, lighting, and proportions.`;
+    // Use nano-banana Edit mode for virtual try-on with correct parameters
+    const prompt = `Virtual try-on: Take the person from the first image and dress them in the clothing from the second image. Maintain the person's pose, body proportions, and facial features while fitting the garment naturally with proper sizing, realistic lighting, shadows, and fabric physics. High quality, photorealistic result.`;
 
-    // Try different model configurations for better compatibility
     const requestBody = {
-      model: 'fashn/fashn-ai-virtual-try-on', // Try using fashn model instead
+      model: 'google/nano-banana',
       callBackUrl: callbackUrl,
       input: {
         prompt: prompt,
-        image: modelImage,  // Person image
-        mask_image: garmentImage, // Clothing image
-        num_inference_steps: 30,
-        guidance_scale: 7.5,
-        strength: 0.8
+        image_urls: [modelImage, garmentImage], // Array of input images: person first, clothing second
+        num_images: "1"
       },
       metadata: {
         projectId: projectId,
@@ -87,9 +83,9 @@ async function processVirtualTryOn({ modelImage, garmentImage, projectId }) {
       }
     };
 
-    console.log('Trying fashn model for virtual try-on:', JSON.stringify(requestBody, null, 2));
+    console.log('Using nano-banana Edit mode for virtual try-on:', JSON.stringify(requestBody, null, 2));
 
-    let response = await fetch('https://api.kie.ai/api/v1/playground/createTask', {
+    const response = await fetch('https://api.kie.ai/api/v1/playground/createTask', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -97,41 +93,6 @@ async function processVirtualTryOn({ modelImage, garmentImage, projectId }) {
       },
       body: JSON.stringify(requestBody)
     });
-
-    // If fashn model fails, try nano-banana with corrected parameters
-    if (!response.ok) {
-      console.log('Fashn model failed, trying nano-banana with different parameters');
-      
-      const nanoRequestBody = {
-        model: 'google/nano-banana',
-        callBackUrl: callbackUrl,
-        input: {
-          prompt: "realistic virtual clothing try-on, maintain person identity and pose",
-          image: modelImage,
-          control_image: garmentImage,
-          num_inference_steps: 25,
-          guidance_scale: 8.0,
-          controlnet_conditioning_scale: 1.0
-        },
-        metadata: {
-          projectId: projectId,
-          modelImage: modelImage,
-          garmentImage: garmentImage,
-          action: 'virtualTryOn'
-        }
-      };
-
-      console.log('Trying nano-banana with corrected parameters:', JSON.stringify(nanoRequestBody, null, 2));
-
-      response = await fetch('https://api.kie.ai/api/v1/playground/createTask', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${kieApiKey}`
-        },
-        body: JSON.stringify(nanoRequestBody)
-      });
-    }
 
     console.log('Kie.AI API response status:', response.status);
     console.log('Kie.AI API response headers:', Object.fromEntries(response.headers.entries()));
