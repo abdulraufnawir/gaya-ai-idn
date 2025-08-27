@@ -1,0 +1,141 @@
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
+serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const payload = await req.json();
+    console.log('Received Kie.AI webhook payload:', JSON.stringify(payload, null, 2));
+
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+
+    // Extract task information from payload
+    const taskId = payload.id || payload.taskId;
+    const status = payload.status;
+    const metadata = payload.metadata || {};
+    const projectId = metadata.projectId;
+
+    if (!taskId || !projectId) {
+      console.error('Missing taskId or projectId in webhook payload');
+      return new Response(JSON.stringify({ error: 'Missing required fields' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    let updateData: any = {
+      updated_at: new Date().toISOString(),
+      metadata: {
+        ...metadata,
+        kie_webhook_payload: payload,
+        last_webhook_received: new Date().toISOString()
+      }
+    };
+
+    // Handle different status responses
+    if (status === 'completed' || status === 'success') {
+      // Extract result image URL from payload
+      let resultUrl = null;
+      
+      // Check various possible locations for the result image
+      if (payload.result) {
+        if (typeof payload.result === 'string') {
+          resultUrl = payload.result;
+        } else if (payload.result.image_url) {
+          resultUrl = payload.result.image_url;
+        } else if (payload.result.url) {
+          resultUrl = payload.result.url;
+        } else if (payload.result.output) {
+          resultUrl = payload.result.output;
+        }
+      } else if (payload.output) {
+        if (typeof payload.output === 'string') {
+          resultUrl = payload.output;
+        } else if (Array.isArray(payload.output) && payload.output.length > 0) {
+          resultUrl = payload.output[0];
+        }
+      } else if (payload.image_url) {
+        resultUrl = payload.image_url;
+      }
+
+      updateData.status = 'completed';
+      updateData.result_url = resultUrl;
+      updateData.analysis = 'Virtual try-on completed successfully with Kie.AI';
+
+      console.log('Task completed successfully:', {
+        taskId,
+        projectId,
+        hasResultUrl: !!resultUrl
+      });
+
+    } else if (status === 'failed' || status === 'error') {
+      updateData.status = 'failed';
+      updateData.error_message = payload.error || payload.message || 'Kie.AI task failed';
+
+      console.log('Task failed:', {
+        taskId,
+        projectId,
+        error: updateData.error_message
+      });
+
+    } else {
+      // For other statuses (processing, queued, etc.)
+      updateData.status = 'processing';
+      console.log('Task status update:', {
+        taskId,
+        projectId,
+        status
+      });
+    }
+
+    // Update the project in database
+    const { error: updateError } = await supabaseClient
+      .from('projects')
+      .update(updateData)
+      .eq('prediction_id', taskId)
+      .eq('id', projectId);
+
+    if (updateError) {
+      console.error('Error updating project:', updateError);
+      throw updateError;
+    }
+
+    console.log('Successfully updated project via webhook:', {
+      taskId,
+      projectId,
+      status: updateData.status
+    });
+
+    return new Response(JSON.stringify({ 
+      success: true,
+      message: 'Webhook processed successfully',
+      taskId,
+      projectId,
+      status: updateData.status
+    }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+
+  } catch (error) {
+    console.error('Error in kie-webhook function:', error);
+    return new Response(
+      JSON.stringify({ error: error.message }), 
+      { 
+        status: 500, 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      }
+    );
+  }
+});

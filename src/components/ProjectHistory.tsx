@@ -75,7 +75,7 @@ const ProjectHistory = ({ userId }: ProjectHistoryProps) => {
     try {
       console.log('Retrying project:', projectId);
       
-      const { error } = await supabase.functions.invoke('gemini-api', {
+      const { error } = await supabase.functions.invoke('kie-ai', {
         body: {
           action: 'retry',
           projectId: projectId

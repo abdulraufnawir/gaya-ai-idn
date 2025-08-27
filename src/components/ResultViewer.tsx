@@ -55,7 +55,7 @@ const ResultViewer = ({ projectId, predictionId, title, projectType }: ResultVie
         apiFunction = 'replicate-api';
         requestBody = { action: 'status', predictionId: predictionId };
       } else if (isVirtualTryOn) {
-        apiFunction = 'gemini-api';
+        apiFunction = 'kie-ai';
         requestBody = { action: 'status', predictionId: predictionId };
       } else {
         apiFunction = 'fashn-api';

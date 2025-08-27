@@ -102,8 +102,8 @@ const VirtualTryOn = ({ userId }: VirtualTryOnProps) => {
 
       if (projectError) throw projectError;
 
-      // Start Gemini virtual try-on
-      const { data: geminiResponse, error: invokeError } = await supabase.functions.invoke('gemini-api', {
+      // Start Kie.AI virtual try-on
+      const { data: kieResponse, error: invokeError } = await supabase.functions.invoke('kie-ai', {
         body: {
           action: 'virtualTryOn',
           modelImage: modelImageUrl,
@@ -116,21 +116,21 @@ const VirtualTryOn = ({ userId }: VirtualTryOnProps) => {
         throw new Error(`Function invoke error: ${invokeError.message}`);
       }
 
-      if (!geminiResponse) {
-        throw new Error('No response received from Gemini API');
+      if (!kieResponse) {
+        throw new Error('No response received from Kie.AI');
       }
 
-      if (geminiResponse.error) {
-        throw new Error(geminiResponse.error);
+      if (kieResponse.error) {
+        throw new Error(kieResponse.error);
       }
 
       // Update project with prediction ID using settings for now
       await supabase
         .from('projects')
         .update({
-          prediction_id: geminiResponse.prediction_id,
+          prediction_id: kieResponse.prediction_id,
           settings: {
-            prediction_id: geminiResponse.prediction_id,
+            prediction_id: kieResponse.prediction_id,
             model_image_url: modelImageUrl,
             garment_image_url: clothingImageUrl
           }
@@ -139,7 +139,7 @@ const VirtualTryOn = ({ userId }: VirtualTryOnProps) => {
 
       toast({
         title: 'Berhasil!',
-        description: 'Virtual try-on sedang diproses. Silakan cek riwayat proyek untuk melihat hasilnya.',
+        description: 'Virtual try-on sedang diproses dengan Kie.AI. Silakan cek riwayat proyek untuk melihat hasilnya.',
       });
 
       // Reset form
