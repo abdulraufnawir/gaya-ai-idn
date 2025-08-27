@@ -258,6 +258,93 @@ async function getStatus({ predictionId }) {
     });
   }
 
+  // If still processing, check directly with Kie.AI API
+  try {
+    console.log('Checking task status directly with Kie.AI API for task:', predictionId);
+    
+    const response = await fetch(`https://api.kie.ai/api/v1/playground/getTaskStatus/${predictionId}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${kieApiKey}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (response.ok) {
+      const result = await response.json();
+      console.log('Kie.AI status response:', JSON.stringify(result, null, 2));
+      
+      // Update database with the latest status
+      const updateData: any = {
+        updated_at: new Date().toISOString(),
+        metadata: {
+          ...project.metadata,
+          last_status_check: new Date().toISOString(),
+          kie_direct_status: result
+        }
+      };
+
+      if (result.status === 'completed' || result.status === 'success') {
+        // Extract result URL
+        let resultUrl = null;
+        if (result.result) {
+          if (typeof result.result === 'string') {
+            resultUrl = result.result;
+          } else if (result.result.image_url) {
+            resultUrl = result.result.image_url;
+          } else if (result.result.output) {
+            resultUrl = result.result.output;
+          }
+        } else if (result.output) {
+          resultUrl = Array.isArray(result.output) ? result.output[0] : result.output;
+        }
+
+        updateData.status = 'completed';
+        updateData.result_url = resultUrl;
+        updateData.analysis = 'Virtual try-on completed successfully with Kie.AI';
+
+        await supabaseClient
+          .from('projects')
+          .update(updateData)
+          .eq('id', project.id);
+
+        return new Response(JSON.stringify({
+          id: predictionId,
+          status: 'completed',
+          result: resultUrl,
+          analysis: updateData.analysis
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+
+      } else if (result.status === 'failed' || result.status === 'error') {
+        updateData.status = 'failed';
+        updateData.error_message = result.error || result.message || 'Task failed in Kie.AI';
+
+        await supabaseClient
+          .from('projects')
+          .update(updateData)
+          .eq('id', project.id);
+
+        return new Response(JSON.stringify({
+          id: predictionId,
+          status: 'failed',
+          error: updateData.error_message
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      } else {
+        // Still processing
+        await supabaseClient
+          .from('projects')
+          .update(updateData)
+          .eq('id', project.id);
+      }
+    }
+  } catch (statusError) {
+    console.error('Error checking Kie.AI status:', statusError);
+  }
+
   // Otherwise return processing status
   return new Response(JSON.stringify({
     id: predictionId,
