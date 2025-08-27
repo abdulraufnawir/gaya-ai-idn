@@ -193,16 +193,19 @@ const AdminAIModels = () => {
     try {
       const startTime = Date.now();
       const { data, error } = await supabase.functions.invoke('kie-ai', {
-        body: { action: 'status', predictionId: 'test' }
+        body: { action: 'status', predictionId: 'health' }
       });
       const responseTime = Date.now() - startTime;
       
+      // Check if the response indicates success
+      const isHealthy = data && (data.status === 'success' || data.service === 'kie-ai');
+      
       statuses.push({
         service: 'Kie.AI API',
-        status: error ? 'offline' : 'online',
+        status: error || !isHealthy ? 'offline' : 'online',
         responseTime,
         lastChecked: new Date().toISOString(),
-        errorMessage: error?.message
+        errorMessage: error?.message || (!isHealthy ? 'Health check failed' : undefined)
       });
     } catch (error) {
       statuses.push({

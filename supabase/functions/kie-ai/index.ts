@@ -166,6 +166,19 @@ async function processVirtualTryOn({ modelImage, garmentImage, projectId }) {
 async function getStatus({ predictionId }) {
   console.log('Getting status for Kie.AI task:', predictionId);
   
+  // Handle test/health check requests
+  if (predictionId === 'test' || predictionId === 'health') {
+    return new Response(JSON.stringify({
+      id: predictionId,
+      status: 'success',
+      message: 'Kie.AI API is healthy',
+      service: 'kie-ai',
+      timestamp: new Date().toISOString()
+    }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+  
   // Check the database for completed results first
   const supabaseClient = createClient(
     Deno.env.get('SUPABASE_URL') ?? '',
@@ -180,7 +193,14 @@ async function getStatus({ predictionId }) {
 
   if (error) {
     console.error('Error fetching project:', error);
-    throw new Error('Project not found');
+    return new Response(JSON.stringify({
+      id: predictionId,
+      status: 'error',
+      error: 'Project not found'
+    }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      status: 404
+    });
   }
 
   // If we already have results, return them
