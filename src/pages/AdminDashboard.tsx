@@ -21,6 +21,7 @@ import AdminProjectMonitoring from '@/components/admin/AdminProjectMonitoring';
 import AdminSystemHealth from '@/components/admin/AdminSystemHealth';
 import AdminRoleManager from '@/components/admin/AdminRoleManager';
 import AdminAIModelManagement from '@/components/admin/AdminAIModelManagement';
+import AdminAIModels from '@/components/admin/AdminAIModels';
 
 const AdminDashboard = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -234,7 +235,7 @@ const AdminDashboard = () => {
           </TabsContent>
 
           <TabsContent value="ai-models">
-            <AdminAIModelManagement />
+            <AdminAIModels />
           </TabsContent>
 
           <TabsContent value="roles">
