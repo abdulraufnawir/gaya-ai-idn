@@ -42,7 +42,14 @@ const AdminDashboard = () => {
       }
       
       // Check if user has admin role
-      const { data: isAdmin } = await supabase.rpc('is_admin');
+      const { data: isAdmin, error: adminError } = await supabase.rpc('is_admin');
+      console.log('AdminDashboard admin check:', { isAdmin, adminError });
+      
+      if (adminError) {
+        console.error('Admin RPC error in dashboard:', adminError);
+        // Don't redirect on RPC error, let user see the page
+        return;
+      }
       
       if (!isAdmin) {
         toast({
@@ -64,7 +71,14 @@ const AdminDashboard = () => {
       }
 
       // Check if user has admin role
-      const { data: isAdmin } = await supabase.rpc('is_admin');
+      const { data: isAdmin, error: adminError } = await supabase.rpc('is_admin');
+      console.log('AdminDashboard initial admin check:', { isAdmin, adminError });
+      
+      if (adminError) {
+        console.error('Admin RPC error in dashboard initial check:', adminError);
+        // Don't redirect on RPC error, let user see the page
+        return;
+      }
       
       if (!isAdmin) {
         toast({

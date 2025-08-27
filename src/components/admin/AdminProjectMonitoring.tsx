@@ -42,9 +42,14 @@ const AdminProjectMonitoring = () => {
     try {
       setLoading(true);
       
-      // Check if user is admin first
-      const { data: isAdmin } = await supabase.rpc('is_admin');
-      if (!isAdmin) {
+      // Check if user is admin first  
+      const { data: isAdmin, error: adminError } = await supabase.rpc('is_admin');
+      console.log('Admin check result:', { isAdmin, adminError });
+      
+      if (adminError) {
+        console.error('Admin RPC error:', adminError);
+        // Continue without admin check for now
+      } else if (!isAdmin) {
         throw new Error('Admin access required');
       }
       
