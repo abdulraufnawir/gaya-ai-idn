@@ -270,16 +270,25 @@ const AdminSystemHealth = () => {
           <CardDescription>API requests and error rates over the last 7 days</CardDescription>
         </CardHeader>
         <CardContent>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={performanceData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" />
-              <YAxis />
-              <Tooltip />
-              <Bar dataKey="requests" fill="hsl(var(--primary))" name="Requests" />
-              <Bar dataKey="errors" fill="hsl(var(--destructive))" name="Errors" />
-            </BarChart>
-          </ResponsiveContainer>
+          {performanceData && performanceData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={performanceData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="requests" fill="hsl(var(--primary))" name="Requests" />
+                <Bar dataKey="errors" fill="hsl(var(--destructive))" name="Errors" />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="flex items-center justify-center h-[300px]">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
+                <p className="text-sm text-muted-foreground">Loading performance data...</p>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 

@@ -234,28 +234,37 @@ const AdminAnalytics = () => {
             <CardDescription>Projects and users over the last 7 days</CardDescription>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={data?.dailyActivity}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" />
-                <YAxis />
-                <Tooltip />
-                <Line 
-                  type="monotone" 
-                  dataKey="projects" 
-                  stroke="hsl(var(--primary))" 
-                  strokeWidth={2}
-                  name="Projects"
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="users" 
-                  stroke="hsl(var(--secondary))" 
-                  strokeWidth={2}
-                  name="New Users"
-                />
-              </LineChart>
-            </ResponsiveContainer>
+            {data?.dailyActivity && data.dailyActivity.length > 0 ? (
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={data.dailyActivity}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="date" />
+                  <YAxis />
+                  <Tooltip />
+                  <Line 
+                    type="monotone" 
+                    dataKey="projects" 
+                    stroke="hsl(var(--primary))" 
+                    strokeWidth={2}
+                    name="Projects"
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="users" 
+                    stroke="hsl(var(--secondary))" 
+                    strokeWidth={2}
+                    name="New Users"
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-[300px]">
+                <div className="text-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
+                  <p className="text-sm text-muted-foreground">Loading activity data...</p>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -266,25 +275,34 @@ const AdminAnalytics = () => {
             <CardDescription>Distribution of project types</CardDescription>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={data?.projectsByType}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {data?.projectsByType?.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
+            {data?.projectsByType && data.projectsByType.length > 0 ? (
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={data.projectsByType}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="value"
+                  >
+                    {data.projectsByType.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-[300px]">
+                <div className="text-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
+                  <p className="text-sm text-muted-foreground">Loading project type data...</p>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
