@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Calendar, Download, Eye, Trash2, RefreshCw } from 'lucide-react';
@@ -31,6 +32,8 @@ const ProjectHistory = ({ userId }: ProjectHistoryProps) => {
   const [loading, setLoading] = useState(true);
   const [retryingProjects, setRetryingProjects] = useState<Set<string>>(new Set());
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [imagePopupOpen, setImagePopupOpen] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<string>('');
   const { toast } = useToast();
   
   // Enable realtime updates
@@ -260,20 +263,24 @@ const ProjectHistory = ({ userId }: ProjectHistoryProps) => {
                     </div>
                     
                      {/* Overlay with actions */}
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
-                      <div className="flex gap-2">
-                        <Button 
-                          variant="secondary" 
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedProject(project);
-                          }}
-                          disabled={!(project.prediction_id || project.settings?.prediction_id)}
-                          className="h-8 w-8 p-0"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
+                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+                       <div className="flex gap-2">
+                         <Button 
+                           variant="secondary" 
+                           size="sm"
+                           onClick={(e) => {
+                             e.stopPropagation();
+                             const imageUrl = project.result_image_url || project.settings?.result_url || (project as any).result_url;
+                             if (imageUrl) {
+                               setSelectedImage(imageUrl);
+                               setImagePopupOpen(true);
+                             }
+                           }}
+                           disabled={!(project.result_image_url || project.settings?.result_url || (project as any).result_url)}
+                           className="h-8 w-8 p-0"
+                         >
+                           <Eye className="h-4 w-4" />
+                         </Button>
                         {project.status === 'processing' && (
                           <Button 
                             variant="secondary" 
@@ -336,6 +343,22 @@ const ProjectHistory = ({ userId }: ProjectHistoryProps) => {
           projectType={selectedProject.project_type}
         />
       )}
+
+      {/* Image Popup Dialog */}
+      <Dialog open={imagePopupOpen} onOpenChange={setImagePopupOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] p-0">
+          <div className="relative">
+            <img 
+              src={selectedImage} 
+              alt="Project Result"
+              className="w-full h-auto max-h-[85vh] object-contain"
+              onError={(e) => {
+                console.error('Failed to load image:', selectedImage);
+              }}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
