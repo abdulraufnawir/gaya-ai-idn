@@ -31,19 +31,26 @@ const AdminDashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  console.log('AdminDashboard component rendered, loading:', loading, 'user:', user);
+
   useEffect(() => {
+    console.log('AdminDashboard useEffect started');
+    
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth state change:', { event, user: session?.user?.email });
       setUser(session?.user ?? null);
       setLoading(false);
       
       if (!session?.user) {
+        console.log('No user session, redirecting to auth');
         navigate('/auth');
         return;
       }
       
       // Check if user has admin role
+      console.log('Checking admin role for user:', session.user.email);
       const { data: isAdmin, error: adminError } = await supabase.rpc('is_admin');
-      console.log('AdminDashboard admin check:', { isAdmin, adminError });
+      console.log('AdminDashboard admin check result:', { isAdmin, adminError, userEmail: session.user.email });
       
       if (adminError) {
         console.error('Admin RPC error in dashboard:', adminError);
@@ -52,27 +59,33 @@ const AdminDashboard = () => {
       }
       
       if (!isAdmin) {
+        console.log('User is not admin, redirecting to dashboard');
         toast({
           title: 'Access Denied',
           description: 'You do not have admin privileges. Contact an administrator to get access.',
           variant: 'destructive',
         });
         navigate('/dashboard');
+      } else {
+        console.log('User is admin, access granted');
       }
     });
 
     supabase.auth.getSession().then(async ({ data: { session } }) => {
+      console.log('Getting initial session:', { user: session?.user?.email });
       setUser(session?.user ?? null);
       setLoading(false);
       
       if (!session?.user) {
+        console.log('No initial session, redirecting to auth');
         navigate('/auth');
         return;
       }
 
       // Check if user has admin role
+      console.log('Initial admin check for user:', session.user.email);
       const { data: isAdmin, error: adminError } = await supabase.rpc('is_admin');
-      console.log('AdminDashboard initial admin check:', { isAdmin, adminError });
+      console.log('AdminDashboard initial admin check result:', { isAdmin, adminError, userEmail: session.user.email });
       
       if (adminError) {
         console.error('Admin RPC error in dashboard initial check:', adminError);
@@ -81,12 +94,15 @@ const AdminDashboard = () => {
       }
       
       if (!isAdmin) {
+        console.log('User is not admin in initial check, redirecting to dashboard');
         toast({
           title: 'Access Denied',
           description: 'You do not have admin privileges. Contact an administrator to get access.',
           variant: 'destructive',
         });
         navigate('/dashboard');
+      } else {
+        console.log('User is admin in initial check, access granted');
       }
     });
 
