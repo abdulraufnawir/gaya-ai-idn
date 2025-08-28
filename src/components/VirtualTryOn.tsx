@@ -248,21 +248,29 @@ const VirtualTryOn = ({ userId }: VirtualTryOnProps) => {
                       </button>
                     </div>
                   ) : (
-                    <label
-                      htmlFor="model-upload"
-                      className="w-full h-full flex flex-col items-center justify-center cursor-pointer hover:bg-muted/10 transition-colors p-4"
-                    >
-                      <Upload className="w-10 h-10 sm:w-12 sm:h-12 text-muted-foreground mb-3 sm:mb-4" />
-                      <span className="text-base sm:text-lg font-medium text-primary mb-2 text-center">Upload foto model</span>
-                      <span className="text-xs sm:text-sm text-muted-foreground text-center">PNG, JPG hingga 10MB</span>
-                      <Input
-                        id="model-upload"
-                        type="file"
-                        accept="image/*"
-                        className="sr-only"
-                        onChange={handleModelImageChange}
+                    <div className="relative w-full h-full">
+                      {/* Shadow guide image */}
+                      <img 
+                        src="/lovable-uploads/0d135a5e-fd0c-41e5-a384-1c2ffeabc466.png"
+                        alt="Person positioning guide"
+                        className="absolute inset-0 w-full h-full object-contain opacity-20 pointer-events-none z-10"
                       />
-                    </label>
+                      <label
+                        htmlFor="model-upload"
+                        className="relative w-full h-full flex flex-col items-center justify-center cursor-pointer hover:bg-muted/10 transition-colors p-4 z-20"
+                      >
+                        <Upload className="w-10 h-10 sm:w-12 sm:h-12 text-muted-foreground mb-3 sm:mb-4" />
+                        <span className="text-base sm:text-lg font-medium text-primary mb-2 text-center">Upload foto model</span>
+                        <span className="text-xs sm:text-sm text-muted-foreground text-center">PNG, JPG hingga 10MB</span>
+                        <Input
+                          id="model-upload"
+                          type="file"
+                          accept="image/*"
+                          className="sr-only"
+                          onChange={handleModelImageChange}
+                        />
+                      </label>
+                    </div>
                   )}
                 </div>
               </div>
