@@ -224,7 +224,68 @@ const VirtualTryOn = ({
             </div>
           </div>
 
-          <div className="flex gap-2 mt-4 justify-center">
+          <div className="flex gap-2 mt-2 justify-center">
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="default" size="sm" className="flex items-center gap-2">
+                  <Sparkles className="h-4 w-4" />
+                  Buat Model AI
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl max-h-[80vh]">
+                <DialogHeader>
+                  <DialogTitle>Buat Model AI</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-6 p-2">
+                  <div>
+                    <h3 className="text-lg font-medium mb-3">Tambahkan prompt Anda</h3>
+                    <textarea 
+                      className="w-full h-32 p-3 border rounded-lg resize-none text-sm"
+                      placeholder="Deskripsikan penampilan model AI Anda (misalnya, pakaian, pose, latar belakang)."
+                    />
+                  </div>
+                  
+                  <Button className="w-full bg-yellow-400 hover:bg-yellow-500 text-black font-medium py-3">
+                    <Sparkles className="h-4 w-4 mr-2" />
+                    Generate
+                  </Button>
+                  
+                  <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                      <div className="w-full border-t border-gray-300" />
+                    </div>
+                    <div className="relative flex justify-center text-sm">
+                      <span className="px-2 bg-background text-muted-foreground">atau</span>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <h3 className="text-lg font-medium mb-3 text-center">Coba saran kami</h3>
+                    <div className="grid grid-cols-2 gap-3">
+                      {[
+                        "Kemeja putih, jeans indigo. Latar putih polos",
+                        "Atasan putih, jeans biru tua dengan sneakers",
+                        "Rambut pendek, latar studio biru tua",
+                        "Pria, kemeja putih, celana baggy biru tua"
+                      ].map((suggestion, index) => (
+                        <Button 
+                          key={index}
+                          variant="outline" 
+                          className="h-auto p-3 text-left text-sm text-muted-foreground hover:text-foreground whitespace-normal"
+                        >
+                          {suggestion}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  <div className="text-center text-sm text-muted-foreground">
+                    Jelajahi lebih banyak opsi di <span className="inline-flex items-center"><Users className="h-4 w-4 mx-1" />Models</span>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+            
             <Dialog>
               <DialogTrigger asChild>
                 <Button variant="outline" size="sm" className="flex items-center gap-2">
@@ -312,30 +373,6 @@ const VirtualTryOn = ({
           </div>
 
         </div>
-      </div>
-
-      {/* Model and Garment Options */}
-      <div className="max-w-7xl mx-auto mt-4 space-y-3">
-        {/* Model Options */}
-        <div className="flex flex-col sm:flex-row gap-2 justify-center px-4">
-          <Button variant="outline" size="sm" className="flex items-center gap-2 min-w-[140px]" onClick={() => {
-          toast({
-            title: 'Coming Soon',
-            description: 'Fitur Generate AI Model akan segera hadir'
-          });
-        }}>
-            <Sparkles className="h-4 w-4" />
-            Generate AI Model
-          </Button>
-          <Button variant="outline" size="sm" className="flex items-center gap-2 min-w-[140px]" onClick={() => {
-          const event = new CustomEvent('switchToModelTab');
-          window.dispatchEvent(event);
-        }}>
-            <Users className="h-4 w-4" />
-            Model Saya
-          </Button>
-        </div>
-
       </div>
 
       {/* Generate Button */}
