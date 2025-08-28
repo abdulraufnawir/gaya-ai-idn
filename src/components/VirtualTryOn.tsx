@@ -343,21 +343,29 @@ const VirtualTryOn = ({ userId }: VirtualTryOnProps) => {
                   </button>
                 </div>
               ) : (
-                <label
-                  htmlFor="clothing-upload"
-                  className="w-full h-full flex flex-col items-center justify-center cursor-pointer hover:bg-muted/10 transition-colors p-4"
-                >
-                  <Upload className="w-10 h-10 sm:w-12 sm:h-12 text-muted-foreground mb-3 sm:mb-4" />
-                  <span className="text-base sm:text-lg font-medium text-primary mb-2 text-center">Upload foto pakaian</span>
-                  <span className="text-xs sm:text-sm text-muted-foreground text-center">PNG, JPG hingga 10MB</span>
-                  <Input
-                    id="clothing-upload"
-                    type="file"
-                    accept="image/*"
-                    className="sr-only"
-                    onChange={handleClothingImageChange}
+                <div className="relative w-full h-full">
+                  {/* Shadow guide image */}
+                  <img 
+                    src="/lovable-uploads/647f3782-e153-4df6-b7b9-ec908912bca5.png"
+                    alt="Clothing positioning guide"
+                    className="absolute inset-0 w-full h-full object-contain opacity-20 pointer-events-none z-10"
                   />
-                </label>
+                  <label
+                    htmlFor="clothing-upload"
+                    className="relative w-full h-full flex flex-col items-center justify-center cursor-pointer hover:bg-muted/10 transition-colors p-4 z-20"
+                  >
+                    <Upload className="w-10 h-10 sm:w-12 sm:h-12 text-muted-foreground mb-3 sm:mb-4" />
+                    <span className="text-base sm:text-lg font-medium text-primary mb-2 text-center">Upload foto pakaian</span>
+                    <span className="text-xs sm:text-sm text-muted-foreground text-center">PNG, JPG hingga 10MB</span>
+                    <Input
+                      id="clothing-upload"
+                      type="file"
+                      accept="image/*"
+                      className="sr-only"
+                      onChange={handleClothingImageChange}
+                    />
+                  </label>
+                </div>
               )}
             </div>
           </div>
