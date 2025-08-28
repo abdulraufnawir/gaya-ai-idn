@@ -23,6 +23,7 @@ const VirtualTryOn = ({
   const [selectedModel, setSelectedModel] = useState<any>(null);
   const [clothingCategory, setClothingCategory] = useState<string | null>(null);
   const [aiModelPrompt, setAiModelPrompt] = useState<string>('');
+  const [generatingModel, setGeneratingModel] = useState(false);
   const {
     toast
   } = useToast();
@@ -58,11 +59,31 @@ const VirtualTryOn = ({
         });
       }
     };
+
+    // Listen for generated model completion
+    const handleGeneratedModelReady = (event: any) => {
+      const generatedModel = event.detail.model;
+      if (generatedModel?.imageUrl) {
+        // Set the generated model as selected for virtual try-on
+        setModelImage(null);
+        setModelImageUrl(generatedModel.imageUrl);
+        setModelImagePreview(generatedModel.imageUrl);
+        setSelectedModel(generatedModel);
+        toast({
+          title: 'Model AI Siap!',
+          description: 'Model AI telah berhasil dibuat dan siap untuk virtual try-on'
+        });
+      }
+    };
+
     window.addEventListener('setSelectedModel', handleSetSelectedModel);
     window.addEventListener('selectModelForTryOn', handleSelectModelForTryOn);
+    window.addEventListener('generatedModelReady', handleGeneratedModelReady);
+    
     return () => {
       window.removeEventListener('setSelectedModel', handleSetSelectedModel);
       window.removeEventListener('selectModelForTryOn', handleSelectModelForTryOn);
+      window.removeEventListener('generatedModelReady', handleGeneratedModelReady);
     };
   }, [toast]);
   const handleModelImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -179,6 +200,82 @@ const VirtualTryOn = ({
     } = supabase.storage.from('tryon-images').getPublicUrl(fileName);
     return publicUrl;
   };
+
+  const handleGenerateModel = async () => {
+    if (!aiModelPrompt.trim()) {
+      toast({
+        title: 'Error',
+        description: 'Silakan masukkan deskripsi model yang ingin dibuat',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setGeneratingModel(true);
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
+      // Create project for model generation
+      const { data: project, error: projectError } = await supabase
+        .from('projects')
+        .insert({
+          user_id: user.id,
+          title: `AI Model Generation - ${new Date().toLocaleDateString('id-ID')}`,
+          description: aiModelPrompt.substring(0, 100),
+          project_type: 'model_generation',
+          status: 'processing',
+          settings: {
+            prompt: aiModelPrompt,
+            aspect_ratio: '2:3',
+            width: 683,
+            height: 1024
+          }
+        })
+        .select()
+        .single();
+
+      if (projectError) throw projectError;
+
+      // Call Kie.AI for model generation
+      const { data: genResponse, error: genError } = await supabase.functions.invoke('kie-ai', {
+        body: {
+          action: 'generateModel',
+          prompt: aiModelPrompt,
+          aspectRatio: '2:3',
+          projectId: project.id
+        }
+      });
+
+      if (genError) {
+        console.error('Model generation error:', genError);
+        throw new Error(genError.message || 'Failed to generate model');
+      }
+
+      toast({
+        title: 'Berhasil!',
+        description: 'Model AI sedang dibuat. Model akan muncul di area pilih model setelah selesai diproses.',
+      });
+
+      // Reset the AI prompt
+      setAiModelPrompt('');
+
+      // Trigger a custom event to refresh the model gallery
+      const refreshEvent = new CustomEvent('refreshModelGallery');
+      window.dispatchEvent(refreshEvent);
+
+    } catch (error: any) {
+      console.error('Model generation error:', error);
+      toast({
+        title: 'Error',
+        description: error.message || 'Terjadi kesalahan saat membuat model AI',
+        variant: 'destructive',
+      });
+    } finally {
+      setGeneratingModel(false);
+    }
+  };
   return <div className="bg-background p-2 sm:p-4">
       {/* Header */}
       <div className="max-w-7xl mx-auto mb-3 sm:mb-4">
@@ -223,9 +320,22 @@ const VirtualTryOn = ({
                     />
                   </div>
                   
-                  <Button className="w-full bg-yellow-400 hover:bg-yellow-500 text-black font-medium py-3">
-                    <Sparkles className="h-4 w-4 mr-2" />
-                    Generate
+                  <Button 
+                    onClick={handleGenerateModel}
+                    disabled={generatingModel || !aiModelPrompt.trim()}
+                    className="w-full bg-yellow-400 hover:bg-yellow-500 text-black font-medium py-3"
+                  >
+                    {generatingModel ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-black mr-2"></div>
+                        Generating...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="h-4 w-4 mr-2" />
+                        Generate
+                      </>
+                    )}
                   </Button>
                   
                   <div className="relative">
