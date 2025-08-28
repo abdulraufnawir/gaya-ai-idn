@@ -141,6 +141,32 @@ const ProjectHistory = ({ userId }: ProjectHistoryProps) => {
     }
   };
 
+  const downloadImage = async (imageUrl: string, title: string) => {
+    try {
+      const response = await fetch(imageUrl);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${title}_result.png`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      toast({
+        title: 'Berhasil',
+        description: 'Gambar berhasil diunduh',
+      });
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Gagal mengunduh gambar',
+        variant: 'destructive',
+      });
+    }
+  };
+
   const getProjectTypeLabel = (type: string) => {
     switch (type) {
       case 'virtual_tryon':
@@ -263,7 +289,7 @@ const ProjectHistory = ({ userId }: ProjectHistoryProps) => {
                     </div>
                     
                      {/* Overlay with actions */}
-                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
                        <div className="flex gap-2">
                          <Button 
                            variant="secondary" 
@@ -280,6 +306,21 @@ const ProjectHistory = ({ userId }: ProjectHistoryProps) => {
                            className="h-8 w-8 p-0"
                          >
                            <Eye className="h-4 w-4" />
+                         </Button>
+                         <Button 
+                           variant="secondary" 
+                           size="sm"
+                           onClick={(e) => {
+                             e.stopPropagation();
+                             const imageUrl = project.result_image_url || project.settings?.result_url || (project as any).result_url;
+                             if (imageUrl) {
+                               downloadImage(imageUrl, project.title);
+                             }
+                           }}
+                           disabled={!(project.result_image_url || project.settings?.result_url || (project as any).result_url)}
+                           className="h-8 w-8 p-0"
+                         >
+                           <Download className="h-4 w-4" />
                          </Button>
                         {project.status === 'processing' && (
                           <Button 
