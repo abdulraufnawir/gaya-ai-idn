@@ -50,7 +50,7 @@ serve(async (req) => {
   }
 });
 
-async function processVirtualTryOn({ modelImage, garmentImage, projectId }) {
+async function processVirtualTryOn({ modelImage, garmentImage, projectId, clothingCategory }) {
   console.log('Processing virtual try-on with Kie.AI nano-banana for project:', projectId);
   console.log('Model image URL:', modelImage);
   console.log('Garment image URL:', garmentImage);
@@ -71,7 +71,21 @@ async function processVirtualTryOn({ modelImage, garmentImage, projectId }) {
     console.log('Callback URL:', callbackUrl);
     
     // Use nano-banana Edit mode for virtual try-on with correct parameters
-    const prompt = `Virtual try-on: Take the person from the first image and dress them in the clothing from the second image. Maintain the person's pose, body proportions, and facial features while fitting the garment naturally with proper sizing, realistic lighting, shadows, and fabric physics. High quality, photorealistic result.`;
+    let prompt = `Virtual try-on: Take the person from the first image and dress them in the clothing from the second image. Maintain the person's pose, body proportions, and facial features while fitting the garment naturally with proper sizing, realistic lighting, shadows, and fabric physics. High quality, photorealistic result.`;
+    
+    // Add clothing category specific instructions if provided
+    if (clothingCategory) {
+      const categoryInstructions = {
+        'atasan': 'Focus on fitting the top/upper body clothing properly around torso, shoulders, and arms.',
+        'bawahan': 'Focus on fitting the bottom/lower body clothing properly around waist, hips, and legs.',
+        'gaun': 'Focus on fitting the dress properly as a full-body garment from shoulders to appropriate length.',
+        'hijab': 'Focus on fitting the hijab/headscarf properly around the head and neck area, maintaining modest coverage.'
+      };
+      
+      if (categoryInstructions[clothingCategory]) {
+        prompt += ` ${categoryInstructions[clothingCategory]}`;
+      }
+    }
 
     const requestBody = {
       model: 'google/nano-banana',

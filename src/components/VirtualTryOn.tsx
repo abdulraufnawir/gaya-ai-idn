@@ -21,6 +21,7 @@ const VirtualTryOn = ({
   const [clothingImagePreview, setClothingImagePreview] = useState<string | null>(null);
   const [processing, setProcessing] = useState(false);
   const [selectedModel, setSelectedModel] = useState<any>(null);
+  const [clothingCategory, setClothingCategory] = useState<string | null>(null);
   const {
     toast
   } = useToast();
@@ -117,7 +118,8 @@ const VirtualTryOn = ({
           action: 'virtualTryOn',
           modelImage: finalModelImageUrl,
           garmentImage: clothingImageUrl,
-          projectId: project.id
+          projectId: project.id,
+          clothingCategory: clothingCategory
         }
       });
       if (invokeError) {
@@ -151,6 +153,7 @@ const VirtualTryOn = ({
       setModelImagePreview(null);
       setClothingImagePreview(null);
       setSelectedModel(null);
+      setClothingCategory(null);
     } catch (error: any) {
       toast({
         title: 'Error',
@@ -287,6 +290,34 @@ const VirtualTryOn = ({
                   </label>
                 </div>}
             </div>
+          </div>
+
+          {/* Clothing Category Selection */}
+          <div className="mt-4">
+            <p className="text-sm text-muted-foreground mb-2 text-center">Pilih kategori pakaian (opsional)</p>
+            <div className="flex flex-wrap gap-2 justify-center">
+              {[
+                { key: 'atasan', label: 'Atasan' },
+                { key: 'bawahan', label: 'Bawahan' }, 
+                { key: 'gaun', label: 'Gaun' },
+                { key: 'hijab', label: 'Hijab' }
+              ].map((category) => (
+                <Button
+                  key={category.key}
+                  variant={clothingCategory === category.key ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setClothingCategory(clothingCategory === category.key ? null : category.key)}
+                  className="text-xs"
+                >
+                  {category.label}
+                </Button>
+              ))}
+            </div>
+            {clothingCategory && (
+              <p className="text-xs text-muted-foreground text-center mt-1">
+                Dipilih: {clothingCategory.charAt(0).toUpperCase() + clothingCategory.slice(1)}
+              </p>
+            )}
           </div>
 
         </div>
