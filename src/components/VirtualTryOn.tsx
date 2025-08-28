@@ -8,12 +8,12 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Upload, Sparkles, Users, Shirt, Image } from 'lucide-react';
 import ModelGallery from './ModelGallery';
-
 interface VirtualTryOnProps {
   userId: string;
 }
-
-const VirtualTryOn = ({ userId }: VirtualTryOnProps) => {
+const VirtualTryOn = ({
+  userId
+}: VirtualTryOnProps) => {
   const [modelImage, setModelImage] = useState<File | null>(null);
   const [modelImageUrl, setModelImageUrl] = useState<string | null>(null); // For selected models
   const [clothingImage, setClothingImage] = useState<File | null>(null);
@@ -21,8 +21,9 @@ const VirtualTryOn = ({ userId }: VirtualTryOnProps) => {
   const [clothingImagePreview, setClothingImagePreview] = useState<string | null>(null);
   const [processing, setProcessing] = useState(false);
   const [selectedModel, setSelectedModel] = useState<any>(null);
-  const { toast } = useToast();
-
+  const {
+    toast
+  } = useToast();
   useEffect(() => {
     // Listen for model selection from ModelGallery
     const handleSetSelectedModel = (event: any) => {
@@ -33,10 +34,9 @@ const VirtualTryOn = ({ userId }: VirtualTryOnProps) => {
         setModelImageUrl(selectedModel.imageUrl);
         setModelImagePreview(selectedModel.imageUrl);
         setSelectedModel(selectedModel);
-        
         toast({
           title: 'Berhasil',
-          description: 'Model berhasil dipilih untuk virtual try-on',
+          description: 'Model berhasil dipilih untuk virtual try-on'
         });
       }
     };
@@ -50,23 +50,19 @@ const VirtualTryOn = ({ userId }: VirtualTryOnProps) => {
         setModelImageUrl(selectedModel.imageUrl);
         setModelImagePreview(selectedModel.imageUrl);
         setSelectedModel(selectedModel);
-        
         toast({
           title: 'Berhasil',
-          description: 'Model berhasil dipilih untuk virtual try-on',
+          description: 'Model berhasil dipilih untuk virtual try-on'
         });
       }
     };
-
     window.addEventListener('setSelectedModel', handleSetSelectedModel);
     window.addEventListener('selectModelForTryOn', handleSelectModelForTryOn);
-
     return () => {
       window.removeEventListener('setSelectedModel', handleSetSelectedModel);
       window.removeEventListener('selectModelForTryOn', handleSelectModelForTryOn);
     };
   }, [toast]);
-
   const handleModelImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -76,7 +72,6 @@ const VirtualTryOn = ({ userId }: VirtualTryOnProps) => {
       setModelImagePreview(previewUrl);
     }
   };
-
   const handleClothingImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -85,41 +80,39 @@ const VirtualTryOn = ({ userId }: VirtualTryOnProps) => {
       setClothingImagePreview(previewUrl);
     }
   };
-
   const handleProcess = async () => {
-    if ((!modelImage && !modelImageUrl) || !clothingImage) {
+    if (!modelImage && !modelImageUrl || !clothingImage) {
       toast({
         title: 'Error',
         description: 'Silakan upload gambar model dan pakaian',
-        variant: 'destructive',
+        variant: 'destructive'
       });
       return;
     }
-
     setProcessing(true);
-
     try {
       // Get model image URL - either from uploaded file or selected model
-      const finalModelImageUrl = modelImageUrl || await uploadImage(modelImage!, 'model');
+      const finalModelImageUrl = modelImageUrl || (await uploadImage(modelImage!, 'model'));
       const clothingImageUrl = await uploadImage(clothingImage, 'clothing');
 
       // Create project record
-      const { data: project, error: projectError } = await supabase
-        .from('projects')
-        .insert({
-          user_id: userId,
-          title: `Virtual Try-On - ${new Date().toLocaleDateString('id-ID')}`,
-          description: 'Virtual try-on project',
-          project_type: 'virtual_tryon',
-          status: 'processing'
-        })
-        .select()
-        .single();
-
+      const {
+        data: project,
+        error: projectError
+      } = await supabase.from('projects').insert({
+        user_id: userId,
+        title: `Virtual Try-On - ${new Date().toLocaleDateString('id-ID')}`,
+        description: 'Virtual try-on project',
+        project_type: 'virtual_tryon',
+        status: 'processing'
+      }).select().single();
       if (projectError) throw projectError;
 
       // Start Kie.AI virtual try-on
-      const { data: kieResponse, error: invokeError } = await supabase.functions.invoke('kie-ai', {
+      const {
+        data: kieResponse,
+        error: invokeError
+      } = await supabase.functions.invoke('kie-ai', {
         body: {
           action: 'virtualTryOn',
           modelImage: finalModelImageUrl,
@@ -127,35 +120,28 @@ const VirtualTryOn = ({ userId }: VirtualTryOnProps) => {
           projectId: project.id
         }
       });
-
       if (invokeError) {
         throw new Error(`Function invoke error: ${invokeError.message}`);
       }
-
       if (!kieResponse) {
         throw new Error('No response received from Kie.AI');
       }
-
       if (kieResponse.error) {
         throw new Error(kieResponse.error);
       }
 
       // Update project with prediction ID using settings for now
-      await supabase
-        .from('projects')
-        .update({
+      await supabase.from('projects').update({
+        prediction_id: kieResponse.prediction_id,
+        settings: {
           prediction_id: kieResponse.prediction_id,
-          settings: {
-            prediction_id: kieResponse.prediction_id,
-            model_image_url: finalModelImageUrl,
-            garment_image_url: clothingImageUrl
-          }
-        })
-        .eq('id', project.id);
-
+          model_image_url: finalModelImageUrl,
+          garment_image_url: clothingImageUrl
+        }
+      }).eq('id', project.id);
       toast({
         title: 'Berhasil!',
-        description: 'Virtual try-on sedang diproses dengan Kie.AI. Silakan cek riwayat proyek untuk melihat hasilnya.',
+        description: 'Virtual try-on sedang diproses dengan Kie.AI. Silakan cek riwayat proyek untuk melihat hasilnya.'
       });
 
       // Reset form
@@ -169,30 +155,27 @@ const VirtualTryOn = ({ userId }: VirtualTryOnProps) => {
       toast({
         title: 'Error',
         description: error.message,
-        variant: 'destructive',
+        variant: 'destructive'
       });
     } finally {
       setProcessing(false);
     }
   };
-
   const uploadImage = async (file: File, type: string): Promise<string> => {
     const fileName = `${userId}/${type}_${Date.now()}_${file.name}`;
-    const { data, error } = await supabase.storage
-      .from('tryon-images')
-      .upload(fileName, file);
-
+    const {
+      data,
+      error
+    } = await supabase.storage.from('tryon-images').upload(fileName, file);
     if (error) throw error;
-
-    const { data: { publicUrl } } = supabase.storage
-      .from('tryon-images')
-      .getPublicUrl(fileName);
-
+    const {
+      data: {
+        publicUrl
+      }
+    } = supabase.storage.from('tryon-images').getPublicUrl(fileName);
     return publicUrl;
   };
-
-  return (
-    <div className="bg-background p-2 sm:p-4">
+  return <div className="bg-background p-2 sm:p-4">
       {/* Header */}
       <div className="max-w-7xl mx-auto mb-3 sm:mb-4">
         <div className="text-center">
@@ -228,86 +211,46 @@ const VirtualTryOn = ({ userId }: VirtualTryOnProps) => {
             <TabsContent value="upload" className="mt-4">
               <div className="relative">
                 <div className="aspect-[3/4] bg-muted/20 rounded-xl border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 transition-colors overflow-hidden min-h-[200px] sm:min-h-[250px]">
-                  {modelImagePreview ? (
-                    <div className="relative w-full h-full">
-                      <img 
-                        src={modelImagePreview} 
-                        alt="Model preview" 
-                        className="w-full h-full object-cover"
-                      />
-                      <button
-                        onClick={() => {
-                          setModelImage(null);
-                          setModelImageUrl(null);
-                          setModelImagePreview(null);
-                          setSelectedModel(null);
-                        }}
-                        className="absolute top-2 right-2 bg-background/80 backdrop-blur-sm text-foreground rounded-full w-8 h-8 flex items-center justify-center hover:bg-background/90 transition-colors touch-target"
-                      >
+                  {modelImagePreview ? <div className="relative w-full h-full">
+                      <img src={modelImagePreview} alt="Model preview" className="w-full h-full object-cover" />
+                      <button onClick={() => {
+                    setModelImage(null);
+                    setModelImageUrl(null);
+                    setModelImagePreview(null);
+                    setSelectedModel(null);
+                  }} className="absolute top-2 right-2 bg-background/80 backdrop-blur-sm text-foreground rounded-full w-8 h-8 flex items-center justify-center hover:bg-background/90 transition-colors touch-target">
                         ×
                       </button>
-                    </div>
-                  ) : (
-                    <div className="relative w-full h-full">
+                    </div> : <div className="relative w-full h-full">
                       {/* Shadow guide image */}
-                      <img 
-                        src="/lovable-uploads/0d135a5e-fd0c-41e5-a384-1c2ffeabc466.png"
-                        alt="Person positioning guide"
-                        className="absolute inset-0 w-full h-full object-contain opacity-20 pointer-events-none z-10"
-                      />
-                      <label
-                        htmlFor="model-upload"
-                        className="relative w-full h-full flex flex-col items-center justify-center cursor-pointer hover:bg-muted/10 transition-colors p-4 z-20"
-                      >
+                      <img src="/lovable-uploads/0d135a5e-fd0c-41e5-a384-1c2ffeabc466.png" alt="Person positioning guide" className="absolute inset-0 w-full h-full object-contain opacity-20 pointer-events-none z-10" />
+                      <label htmlFor="model-upload" className="relative w-full h-full flex flex-col items-center justify-center cursor-pointer hover:bg-muted/10 transition-colors p-4 z-20">
                         <Upload className="w-10 h-10 sm:w-12 sm:h-12 text-muted-foreground mb-3 sm:mb-4" />
                         <span className="text-base sm:text-lg font-medium text-primary mb-2 text-center">Upload foto model</span>
                         <span className="text-xs sm:text-sm text-muted-foreground text-center">PNG, JPG hingga 10MB</span>
-                        <Input
-                          id="model-upload"
-                          type="file"
-                          accept="image/*"
-                          className="sr-only"
-                          onChange={handleModelImageChange}
-                        />
+                        <Input id="model-upload" type="file" accept="image/*" className="sr-only" onChange={handleModelImageChange} />
                       </label>
-                    </div>
-                  )}
+                    </div>}
                 </div>
               </div>
 
               <div className="flex gap-2 mt-4">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="flex-1 text-xs sm:text-sm"
-                  onClick={() => {
-                    toast({
-                      title: 'Coming Soon',
-                      description: 'Fitur Generate AI Model akan segera hadir',
-                    });
-                  }}
-                >
-                  Generate AI Model
-                </Button>
+                
               </div>
             </TabsContent>
             
             <TabsContent value="gallery" className="mt-4">
               <div className="max-h-[400px] overflow-y-auto">
-                <ModelGallery 
-                  onModelSelect={(model) => {
-                    setModelImage(null);
-                    setModelImageUrl(model.imageUrl);
-                    setModelImagePreview(model.imageUrl);
-                    setSelectedModel(model);
-                    
-                    toast({
-                      title: 'Berhasil',
-                      description: 'Model berhasil dipilih untuk virtual try-on',
-                    });
-                  }}
-                  selectedModel={selectedModel}
-                />
+                <ModelGallery onModelSelect={model => {
+                setModelImage(null);
+                setModelImageUrl(model.imageUrl);
+                setModelImagePreview(model.imageUrl);
+                setSelectedModel(model);
+                toast({
+                  title: 'Berhasil',
+                  description: 'Model berhasil dipilih untuk virtual try-on'
+                });
+              }} selectedModel={selectedModel} />
               </div>
             </TabsContent>
           </Tabs>
@@ -325,48 +268,24 @@ const VirtualTryOn = ({ userId }: VirtualTryOnProps) => {
           
           <div className="relative">
             <div className="aspect-[3/4] bg-muted/20 rounded-xl border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 transition-colors overflow-hidden min-h-[200px] sm:min-h-[250px]">
-              {clothingImagePreview ? (
-                <div className="relative w-full h-full">
-                  <img 
-                    src={clothingImagePreview} 
-                    alt="Clothing preview" 
-                    className="w-full h-full object-cover"
-                  />
-                  <button
-                    onClick={() => {
-                      setClothingImage(null);
-                      setClothingImagePreview(null);
-                    }}
-                    className="absolute top-2 right-2 bg-background/80 backdrop-blur-sm text-foreground rounded-full w-8 h-8 flex items-center justify-center hover:bg-background/90 transition-colors touch-target"
-                  >
+              {clothingImagePreview ? <div className="relative w-full h-full">
+                  <img src={clothingImagePreview} alt="Clothing preview" className="w-full h-full object-cover" />
+                  <button onClick={() => {
+                setClothingImage(null);
+                setClothingImagePreview(null);
+              }} className="absolute top-2 right-2 bg-background/80 backdrop-blur-sm text-foreground rounded-full w-8 h-8 flex items-center justify-center hover:bg-background/90 transition-colors touch-target">
                     ×
                   </button>
-                </div>
-              ) : (
-                <div className="relative w-full h-full">
+                </div> : <div className="relative w-full h-full">
                   {/* Shadow guide image */}
-                  <img 
-                    src="/lovable-uploads/647f3782-e153-4df6-b7b9-ec908912bca5.png"
-                    alt="Clothing positioning guide"
-                    className="absolute inset-0 w-full h-full object-contain opacity-20 pointer-events-none z-10"
-                  />
-                  <label
-                    htmlFor="clothing-upload"
-                    className="relative w-full h-full flex flex-col items-center justify-center cursor-pointer hover:bg-muted/10 transition-colors p-4 z-20"
-                  >
+                  <img src="/lovable-uploads/647f3782-e153-4df6-b7b9-ec908912bca5.png" alt="Clothing positioning guide" className="absolute inset-0 w-full h-full object-contain opacity-20 pointer-events-none z-10" />
+                  <label htmlFor="clothing-upload" className="relative w-full h-full flex flex-col items-center justify-center cursor-pointer hover:bg-muted/10 transition-colors p-4 z-20">
                     <Upload className="w-10 h-10 sm:w-12 sm:h-12 text-muted-foreground mb-3 sm:mb-4" />
                     <span className="text-base sm:text-lg font-medium text-primary mb-2 text-center">Upload foto pakaian</span>
                     <span className="text-xs sm:text-sm text-muted-foreground text-center">PNG, JPG hingga 10MB</span>
-                    <Input
-                      id="clothing-upload"
-                      type="file"
-                      accept="image/*"
-                      className="sr-only"
-                      onChange={handleClothingImageChange}
-                    />
+                    <Input id="clothing-upload" type="file" accept="image/*" className="sr-only" onChange={handleClothingImageChange} />
                   </label>
-                </div>
-              )}
+                </div>}
             </div>
           </div>
 
@@ -377,29 +296,19 @@ const VirtualTryOn = ({ userId }: VirtualTryOnProps) => {
       <div className="max-w-7xl mx-auto mt-4 space-y-3">
         {/* Model Options */}
         <div className="flex flex-col sm:flex-row gap-2 justify-center px-4">
-          <Button
-            variant="outline"
-            size="sm"
-            className="flex items-center gap-2 min-w-[140px]"
-            onClick={() => {
-              toast({
-                title: 'Coming Soon',
-                description: 'Fitur Generate AI Model akan segera hadir',
-              });
-            }}
-          >
+          <Button variant="outline" size="sm" className="flex items-center gap-2 min-w-[140px]" onClick={() => {
+          toast({
+            title: 'Coming Soon',
+            description: 'Fitur Generate AI Model akan segera hadir'
+          });
+        }}>
             <Sparkles className="h-4 w-4" />
             Generate AI Model
           </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="flex items-center gap-2 min-w-[140px]"
-            onClick={() => {
-              const event = new CustomEvent('switchToModelTab');
-              window.dispatchEvent(event);
-            }}
-          >
+          <Button variant="outline" size="sm" className="flex items-center gap-2 min-w-[140px]" onClick={() => {
+          const event = new CustomEvent('switchToModelTab');
+          window.dispatchEvent(event);
+        }}>
             <Users className="h-4 w-4" />
             Model Saya
           </Button>
@@ -409,27 +318,16 @@ const VirtualTryOn = ({ userId }: VirtualTryOnProps) => {
 
       {/* Generate Button */}
       <div className="max-w-7xl mx-auto mt-4 flex justify-center px-4">
-        <Button
-          onClick={handleProcess}
-          disabled={processing || (!modelImage && !modelImageUrl) || !clothingImage}
-          size="lg"
-          className="w-full sm:w-auto sm:min-w-[300px] h-12 text-base"
-        >
-          {processing ? (
-            <>
+        <Button onClick={handleProcess} disabled={processing || !modelImage && !modelImageUrl || !clothingImage} size="lg" className="w-full sm:w-auto sm:min-w-[300px] h-12 text-base">
+          {processing ? <>
               <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div>
               Memproses...
-            </>
-          ) : (
-            <>
+            </> : <>
               <Sparkles className="h-5 w-5 mr-3" />
               Buat Virtual Try-On
-            </>
-          )}
+            </>}
         </Button>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default VirtualTryOn;
