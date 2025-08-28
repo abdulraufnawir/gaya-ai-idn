@@ -271,30 +271,27 @@ const VirtualTryOn = ({
 
           {/* Clothing Category Selection */}
           <div>
-            <p className="text-sm text-muted-foreground mb-2 text-center">Pilih kategori pakaian (opsional)</p>
+            
             <div className="flex flex-wrap gap-2 justify-center">
-              {[
-                { key: 'atasan', label: 'Atasan' },
-                { key: 'bawahan', label: 'Bawahan' }, 
-                { key: 'gaun', label: 'Gaun' },
-                { key: 'hijab', label: 'Hijab' }
-              ].map((category) => (
-                <Button
-                  key={category.key}
-                  variant={clothingCategory === category.key ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setClothingCategory(clothingCategory === category.key ? null : category.key)}
-                  className="text-xs"
-                >
+              {[{
+              key: 'atasan',
+              label: 'Atasan'
+            }, {
+              key: 'bawahan',
+              label: 'Bawahan'
+            }, {
+              key: 'gaun',
+              label: 'Gaun'
+            }, {
+              key: 'hijab',
+              label: 'Hijab'
+            }].map(category => <Button key={category.key} variant={clothingCategory === category.key ? 'default' : 'outline'} size="sm" onClick={() => setClothingCategory(clothingCategory === category.key ? null : category.key)} className="text-xs">
                   {category.label}
-                </Button>
-              ))}
+                </Button>)}
             </div>
-            {clothingCategory && (
-              <p className="text-xs text-muted-foreground text-center mt-1">
+            {clothingCategory && <p className="text-xs text-muted-foreground text-center mt-1">
                 Dipilih: {clothingCategory.charAt(0).toUpperCase() + clothingCategory.slice(1)}
-              </p>
-            )}
+              </p>}
           </div>
           
           <div className="relative">
