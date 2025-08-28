@@ -199,32 +199,7 @@ const VirtualTryOn = ({
             </h2>
           </div>
           
-          <div className="relative">
-            <div className="aspect-[3/4] bg-muted/20 rounded-xl border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 transition-colors overflow-hidden min-h-[200px] sm:min-h-[250px]">
-              {modelImagePreview ? <div className="relative w-full h-full">
-                  <img src={modelImagePreview} alt="Model preview" className="w-full h-full object-cover" />
-                  <button onClick={() => {
-                setModelImage(null);
-                setModelImageUrl(null);
-                setModelImagePreview(null);
-                setSelectedModel(null);
-              }} className="absolute top-2 right-2 bg-background/80 backdrop-blur-sm text-foreground rounded-full w-8 h-8 flex items-center justify-center hover:bg-background/90 transition-colors touch-target">
-                    ×
-                  </button>
-                </div> : <div className="relative w-full h-full">
-                  {/* Shadow guide image */}
-                  <img src="/lovable-uploads/0d135a5e-fd0c-41e5-a384-1c2ffeabc466.png" alt="Person positioning guide" className="absolute inset-0 w-full h-full object-contain opacity-20 pointer-events-none z-10" />
-                  <label htmlFor="model-upload" className="relative w-full h-full flex flex-col items-center justify-center cursor-pointer hover:bg-muted/10 transition-colors p-4 z-20">
-                    <Upload className="w-10 h-10 sm:w-12 sm:h-12 text-muted-foreground mb-3 sm:mb-4" />
-                    <span className="text-base sm:text-lg font-medium text-primary mb-2 text-center">Upload foto model</span>
-                    <span className="text-xs sm:text-sm text-muted-foreground text-center">PNG, JPG hingga 10MB</span>
-                    <Input id="model-upload" type="file" accept="image/*" className="sr-only" onChange={handleModelImageChange} />
-                  </label>
-                </div>}
-            </div>
-          </div>
-
-          <div className="flex gap-2 mt-2 justify-center">
+          <div className="flex gap-2 justify-center">
             <Dialog>
               <DialogTrigger asChild>
                 <Button variant="default" size="sm" className="flex items-center gap-2">
@@ -312,6 +287,32 @@ const VirtualTryOn = ({
               </DialogContent>
             </Dialog>
           </div>
+          
+          <div className="relative">
+            <div className="aspect-[3/4] bg-muted/20 rounded-xl border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 transition-colors overflow-hidden min-h-[200px] sm:min-h-[250px]">
+              {modelImagePreview ? <div className="relative w-full h-full">
+                  <img src={modelImagePreview} alt="Model preview" className="w-full h-full object-cover" />
+                  <button onClick={() => {
+                setModelImage(null);
+                setModelImageUrl(null);
+                setModelImagePreview(null);
+                setSelectedModel(null);
+              }} className="absolute top-2 right-2 bg-background/80 backdrop-blur-sm text-foreground rounded-full w-8 h-8 flex items-center justify-center hover:bg-background/90 transition-colors touch-target">
+                    ×
+                  </button>
+                </div> : <div className="relative w-full h-full">
+                  {/* Shadow guide image */}
+                  <img src="/lovable-uploads/0d135a5e-fd0c-41e5-a384-1c2ffeabc466.png" alt="Person positioning guide" className="absolute inset-0 w-full h-full object-contain opacity-20 pointer-events-none z-10" />
+                  <label htmlFor="model-upload" className="relative w-full h-full flex flex-col items-center justify-center cursor-pointer hover:bg-muted/10 transition-colors p-4 z-20">
+                    <Upload className="w-10 h-10 sm:w-12 sm:h-12 text-muted-foreground mb-3 sm:mb-4" />
+                    <span className="text-base sm:text-lg font-medium text-primary mb-2 text-center">Upload foto model</span>
+                    <span className="text-xs sm:text-sm text-muted-foreground text-center">PNG, JPG hingga 10MB</span>
+                    <Input id="model-upload" type="file" accept="image/*" className="sr-only" onChange={handleModelImageChange} />
+                  </label>
+                </div>}
+            </div>
+          </div>
+
         </div>
 
         {/* Select Garment */}
