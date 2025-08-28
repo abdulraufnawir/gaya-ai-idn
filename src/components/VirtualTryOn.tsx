@@ -98,9 +98,37 @@ const VirtualTryOn = ({
   const handleClothingImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      console.log('Clothing file selected:', file.name, file.size, file.type);
+      
+      // Check if file is valid image
+      if (!file.type.startsWith('image/')) {
+        toast({
+          title: 'Error',
+          description: 'File yang dipilih bukan gambar yang valid',
+          variant: 'destructive'
+        });
+        return;
+      }
+      
+      // Check file size (10MB limit)
+      if (file.size > 10 * 1024 * 1024) {
+        toast({
+          title: 'Error', 
+          description: 'Ukuran file terlalu besar. Maksimal 10MB',
+          variant: 'destructive'
+        });
+        return;
+      }
+      
       setClothingImage(file);
       const previewUrl = URL.createObjectURL(file);
+      console.log('Clothing preview URL created:', previewUrl);
       setClothingImagePreview(previewUrl);
+      
+      toast({
+        title: 'Berhasil',
+        description: 'Gambar pakaian berhasil diupload'
+      });
     }
   };
   const handleProcess = async () => {
@@ -467,7 +495,22 @@ const VirtualTryOn = ({
           <div className="relative">
             <div className="aspect-[3/4] bg-muted/20 rounded-xl border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 transition-colors overflow-hidden min-h-[200px] sm:min-h-[250px]">
               {clothingImagePreview ? <div className="relative w-full h-full">
-                  <img src={clothingImagePreview} alt="Clothing preview" className="w-full h-full object-cover" />
+                  <img 
+                    src={clothingImagePreview} 
+                    alt="Clothing preview" 
+                    className="w-full h-full object-cover" 
+                    onError={(e) => {
+                      console.error('Failed to load clothing image:', clothingImagePreview);
+                      toast({
+                        title: 'Error',
+                        description: 'Gagal memuat gambar. Silakan coba upload ulang.',
+                        variant: 'destructive'
+                      });
+                    }}
+                    onLoad={() => {
+                      console.log('Clothing image loaded successfully');
+                    }}
+                  />
                   <button onClick={() => {
                 setClothingImage(null);
                 setClothingImagePreview(null);
