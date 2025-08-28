@@ -22,6 +22,7 @@ const VirtualTryOn = ({
   const [processing, setProcessing] = useState(false);
   const [selectedModel, setSelectedModel] = useState<any>(null);
   const [clothingCategory, setClothingCategory] = useState<string | null>(null);
+  const [aiModelPrompt, setAiModelPrompt] = useState<string>('');
   const {
     toast
   } = useToast();
@@ -217,6 +218,8 @@ const VirtualTryOn = ({
                     <textarea 
                       className="w-full h-32 p-3 border rounded-lg resize-none text-sm"
                       placeholder="Deskripsikan penampilan model AI Anda (misalnya, pakaian, pose, latar belakang)."
+                      value={aiModelPrompt}
+                      onChange={(e) => setAiModelPrompt(e.target.value)}
                     />
                   </div>
                   
@@ -243,13 +246,14 @@ const VirtualTryOn = ({
                         "Rambut pendek, latar studio biru tua",
                         "Pria, kemeja putih, celana baggy biru tua"
                       ].map((suggestion, index) => (
-                        <Button 
-                          key={index}
-                          variant="outline" 
-                          className="h-auto p-3 text-left text-sm text-muted-foreground hover:text-foreground whitespace-normal"
-                        >
-                          {suggestion}
-                        </Button>
+                         <Button 
+                           key={index}
+                           variant="outline" 
+                           className="h-auto p-3 text-left text-sm text-muted-foreground hover:text-foreground whitespace-normal"
+                           onClick={() => setAiModelPrompt(suggestion)}
+                         >
+                           {suggestion}
+                         </Button>
                       ))}
                     </div>
                   </div>
