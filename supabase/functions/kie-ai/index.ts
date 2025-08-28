@@ -28,6 +28,8 @@ serve(async (req) => {
         return await processModelSwap(params);
       case 'photoEdit':
         return await processPhotoEdit(params);
+      case 'generateModel':
+        return await processGenerateModel(params);
       case 'status':
         return await getStatus(params);
       case 'retry':
@@ -604,6 +606,136 @@ async function processPhotoEdit({ originalImage, editType, prompt, projectId }) 
   }
 }
 
+async function processGenerateModel({ prompt, aspectRatio, referenceImage, projectId }) {
+  console.log('Processing model generation with Kie.AI nano-banana for project:', projectId);
+  
+  try {
+    if (!prompt) {
+      throw new Error('Missing required parameter: prompt is required');
+    }
+
+    const callbackUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/kie-webhook`;
+    
+    // Build comprehensive AI prompt for model generation
+    let finalPrompt = `Generate a high-quality fashion model image: ${prompt}. Professional photography, studio lighting, clean background, high resolution, photorealistic, commercial fashion photography style.`;
+    
+    // Add aspect ratio guidance
+    if (aspectRatio) {
+      const ratioMap = {
+        '1:1': 'square format',
+        '2:3': 'portrait format',
+        '3:4': 'vertical format',  
+        '4:3': 'horizontal format',
+        '4:5': 'vertical portrait format'
+      };
+      finalPrompt += ` ${ratioMap[aspectRatio] || 'standard format'} composition.`;
+    }
+
+    const requestBody = {
+      model: 'google/nano-banana',
+      callBackUrl: callbackUrl,
+      input: {
+        prompt: finalPrompt,
+        num_images: "1",
+        ...(referenceImage && { image_urls: [referenceImage] })
+      },
+      metadata: {
+        projectId: projectId,
+        originalPrompt: prompt,
+        aspectRatio: aspectRatio,
+        referenceImage: referenceImage,
+        action: 'generateModel'
+      }
+    };
+
+    console.log('Using nano-banana for model generation:', JSON.stringify(requestBody, null, 2));
+
+    const response = await fetch('https://api.kie.ai/api/v1/playground/createTask', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${kieApiKey}`
+      },
+      body: JSON.stringify(requestBody)
+    });
+
+    const result = await response.json();
+    
+    if (!response.ok) {
+      console.error('Kie.AI API error for model generation:', result);
+      throw new Error(`Kie.AI API Error (${response.status}): ${result.error || result.message || 'Unknown error'}`);
+    }
+
+    const taskId = result.data?.taskId || result.id || result.taskId || result.task_id;
+    
+    if (!taskId) {
+      throw new Error('No task ID returned from Kie.AI API');
+    }
+
+    // Update project with task ID
+    if (projectId) {
+      const supabaseClient = createClient(
+        Deno.env.get('SUPABASE_URL') ?? '',
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      );
+
+      const { error: updateError } = await supabaseClient
+        .from('projects')
+        .update({
+          prediction_id: taskId,
+          status: 'processing',
+          updated_at: new Date().toISOString(),
+          metadata: {
+            kie_task: result,
+            processing_type: 'model_generation',
+            model_used: 'google/nano-banana',
+            api_provider: 'kie.ai'
+          }
+        })
+        .eq('id', projectId);
+
+      if (updateError) {
+        throw updateError;
+      }
+    }
+
+    return new Response(JSON.stringify({
+      success: true,
+      id: taskId,
+      prediction_id: taskId,
+      status: 'processing',
+      message: 'Model generation task created successfully'
+    }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+
+  } catch (error) {
+    console.error('Error in processGenerateModel:', error);
+    
+    if (projectId) {
+      try {
+        const supabaseClient = createClient(
+          Deno.env.get('SUPABASE_URL') ?? '',
+          Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+        );
+
+        await supabaseClient
+          .from('projects')
+          .update({
+            status: 'failed',
+            error_message: error.message,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', projectId);
+      } catch (updateError) {
+        console.error('Error updating project status to failed:', updateError);
+      }
+    }
+    
+    throw error;
+  }
+}
+
 async function retryProcessing({ projectId }) {
   console.log('Retrying Kie.AI processing for project:', projectId);
   
@@ -666,6 +798,21 @@ async function retryProcessing({ projectId }) {
       originalImage,
       editType,
       prompt,
+      projectId
+    });
+  } else if (projectType === 'model_generation') {
+    const prompt = settings.prompt;
+    const aspectRatio = settings.aspect_ratio;
+    const referenceImage = settings.reference_image_url;
+
+    if (!prompt) {
+      throw new Error('Missing prompt in project settings');
+    }
+
+    return await processGenerateModel({
+      prompt,
+      aspectRatio,
+      referenceImage,
       projectId
     });
   } else {
