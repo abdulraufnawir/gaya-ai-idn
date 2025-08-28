@@ -32,6 +32,18 @@ const ModelGallery = ({ onModelSelect, selectedModel }: ModelGalleryProps) => {
 
   useEffect(() => {
     loadUploadedModels();
+    
+    // Listen for gallery refresh events
+    const handleRefreshGallery = () => {
+      console.log('Refreshing model gallery...');
+      loadUploadedModels();
+    };
+    
+    window.addEventListener('refreshModelGallery', handleRefreshGallery);
+    
+    return () => {
+      window.removeEventListener('refreshModelGallery', handleRefreshGallery);
+    };
   }, []);
 
   const loadUploadedModels = async () => {

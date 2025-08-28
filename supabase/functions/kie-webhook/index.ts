@@ -130,20 +130,33 @@ serve(async (req) => {
           const imageBlob = await imageResponse.blob();
           const imageBuffer = await imageBlob.arrayBuffer();
           
-          // Get project details to determine user ID
+          // Get project details to determine user ID and project type
           const { data: project } = await supabaseClient
             .from('projects')
-            .select('user_id, title')
+            .select('user_id, title, project_type, settings')
             .eq('id', projectId)
             .single();
           
           if (project) {
             // Generate filename
             const timestamp = Date.now();
-            const filename = `results/result_${projectId}_${timestamp}.jpg`;
-            const storagePath = `${project.user_id}/${filename}`;
+            let filename, storagePath;
             
-            console.log('Uploading image to storage path:', storagePath);
+            // For model generation, save to models folder so it appears in gallery
+            if (project.project_type === 'model_generation') {
+              const settings = project.settings || {};
+              const originalPrompt = settings.prompt || 'Generated Model';
+              // Create a clean filename from the prompt
+              const cleanPrompt = originalPrompt.substring(0, 30).replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, '-').toLowerCase();
+              filename = `model-generated-${cleanPrompt}-${timestamp}.jpg`;
+              storagePath = `${project.user_id}/models/${filename}`;
+              console.log('Saving generated model to models folder:', storagePath);
+            } else {
+              // For other project types, save to results folder
+              filename = `results/result_${projectId}_${timestamp}.jpg`;
+              storagePath = `${project.user_id}/${filename}`;
+              console.log('Saving result to results folder:', storagePath);
+            }
             
             // Upload to Supabase storage
             const { data: uploadData, error: uploadError } = await supabaseClient.storage

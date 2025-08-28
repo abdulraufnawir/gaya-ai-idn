@@ -129,13 +129,17 @@ const ModelSwap = ({ userId }: ModelSwapProps) => {
 
       toast({
         title: 'Berhasil!',
-        description: 'Model AI sedang dibuat. Silakan cek riwayat proyek untuk melihat hasilnya.',
+        description: 'Model AI sedang dibuat. Model akan muncul di galeri setelah selesai diproses.',
       });
 
       // Reset form
       setGeneratePrompt('');
       setReferenceImage(null);
       setReferenceImagePreview(null);
+
+      // Trigger a custom event to refresh the model gallery
+      const refreshEvent = new CustomEvent('refreshModelGallery');
+      window.dispatchEvent(refreshEvent);
 
     } catch (error: any) {
       console.error('Model generation error:', error);
