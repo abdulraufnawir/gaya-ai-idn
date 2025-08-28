@@ -143,8 +143,27 @@ const ProjectHistory = ({ userId }: ProjectHistoryProps) => {
 
   const downloadImage = async (imageUrl: string, title: string) => {
     try {
-      const response = await fetch(imageUrl);
+      // Try to fetch the image with a timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+      
+      const response = await fetch(imageUrl, { 
+        signal: controller.signal,
+        mode: 'cors'
+      });
+      clearTimeout(timeoutId);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
       const blob = await response.blob();
+      
+      // Check if we got a valid image
+      if (blob.size === 0 || !blob.type.startsWith('image/')) {
+        throw new Error('Invalid image data received');
+      }
+      
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -158,10 +177,22 @@ const ProjectHistory = ({ userId }: ProjectHistoryProps) => {
         title: 'Berhasil',
         description: 'Gambar berhasil diunduh',
       });
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Download error:', error);
+      
+      let errorMessage = 'Gagal mengunduh gambar';
+      
+      if (error.name === 'AbortError') {
+        errorMessage = 'Download timeout - gambar mungkin sudah tidak tersedia';
+      } else if (error.message?.includes('Failed to fetch') || error.message?.includes('NetworkError')) {
+        errorMessage = 'Gambar sudah tidak tersedia - URL mungkin sudah kedaluwarsa';
+      } else if (error.message?.includes('404')) {
+        errorMessage = 'Gambar tidak ditemukan - file mungkin sudah dihapus';
+      }
+      
       toast({
-        title: 'Error',
-        description: 'Gagal mengunduh gambar',
+        title: 'Error Download',
+        description: errorMessage,
         variant: 'destructive',
       });
     }
