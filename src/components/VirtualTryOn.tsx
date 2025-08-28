@@ -268,32 +268,9 @@ const VirtualTryOn = ({
                </div>
             </h2>
           </div>
-          
-          <div className="relative">
-            <div className="aspect-[3/4] bg-muted/20 rounded-xl border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 transition-colors overflow-hidden min-h-[200px] sm:min-h-[250px]">
-              {clothingImagePreview ? <div className="relative w-full h-full">
-                  <img src={clothingImagePreview} alt="Clothing preview" className="w-full h-full object-cover" />
-                  <button onClick={() => {
-                setClothingImage(null);
-                setClothingImagePreview(null);
-              }} className="absolute top-2 right-2 bg-background/80 backdrop-blur-sm text-foreground rounded-full w-8 h-8 flex items-center justify-center hover:bg-background/90 transition-colors touch-target">
-                    ×
-                  </button>
-                </div> : <div className="relative w-full h-full">
-                  {/* Shadow guide image */}
-                  <img src="/lovable-uploads/647f3782-e153-4df6-b7b9-ec908912bca5.png" alt="Clothing positioning guide" className="absolute inset-0 w-full h-full object-contain opacity-20 pointer-events-none z-10" />
-                  <label htmlFor="clothing-upload" className="relative w-full h-full flex flex-col items-center justify-center cursor-pointer hover:bg-muted/10 transition-colors p-4 z-20">
-                    <Upload className="w-10 h-10 sm:w-12 sm:h-12 text-muted-foreground mb-3 sm:mb-4" />
-                    <span className="text-base sm:text-lg font-medium text-primary mb-2 text-center">Upload foto pakaian</span>
-                    <span className="text-xs sm:text-sm text-muted-foreground text-center">PNG, JPG hingga 10MB</span>
-                    <Input id="clothing-upload" type="file" accept="image/*" className="sr-only" onChange={handleClothingImageChange} />
-                  </label>
-                </div>}
-            </div>
-          </div>
 
           {/* Clothing Category Selection */}
-          <div className="mt-4">
+          <div>
             <p className="text-sm text-muted-foreground mb-2 text-center">Pilih kategori pakaian (opsional)</p>
             <div className="flex flex-wrap gap-2 justify-center">
               {[
@@ -318,6 +295,29 @@ const VirtualTryOn = ({
                 Dipilih: {clothingCategory.charAt(0).toUpperCase() + clothingCategory.slice(1)}
               </p>
             )}
+          </div>
+          
+          <div className="relative">
+            <div className="aspect-[3/4] bg-muted/20 rounded-xl border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 transition-colors overflow-hidden min-h-[200px] sm:min-h-[250px]">
+              {clothingImagePreview ? <div className="relative w-full h-full">
+                  <img src={clothingImagePreview} alt="Clothing preview" className="w-full h-full object-cover" />
+                  <button onClick={() => {
+                setClothingImage(null);
+                setClothingImagePreview(null);
+              }} className="absolute top-2 right-2 bg-background/80 backdrop-blur-sm text-foreground rounded-full w-8 h-8 flex items-center justify-center hover:bg-background/90 transition-colors touch-target">
+                    ×
+                  </button>
+                </div> : <div className="relative w-full h-full">
+                  {/* Shadow guide image */}
+                  <img src="/lovable-uploads/647f3782-e153-4df6-b7b9-ec908912bca5.png" alt="Clothing positioning guide" className="absolute inset-0 w-full h-full object-contain opacity-20 pointer-events-none z-10" />
+                  <label htmlFor="clothing-upload" className="relative w-full h-full flex flex-col items-center justify-center cursor-pointer hover:bg-muted/10 transition-colors p-4 z-20">
+                    <Upload className="w-10 h-10 sm:w-12 sm:h-12 text-muted-foreground mb-3 sm:mb-4" />
+                    <span className="text-base sm:text-lg font-medium text-primary mb-2 text-center">Upload foto pakaian</span>
+                    <span className="text-xs sm:text-sm text-muted-foreground text-center">PNG, JPG hingga 10MB</span>
+                    <Input id="clothing-upload" type="file" accept="image/*" className="sr-only" onChange={handleClothingImageChange} />
+                  </label>
+                </div>}
+            </div>
           </div>
 
         </div>
