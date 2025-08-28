@@ -45,8 +45,65 @@ serve(async (req) => {
 
     // Handle successful completion
     if (status === 'succeeded' && output) {
-      updateData.result_image_url = Array.isArray(output) ? output[0] : output;
-      console.log('Setting result image URL:', updateData.result_image_url);
+      const originalUrl = Array.isArray(output) ? output[0] : output;
+      
+      // Download and store image in Supabase storage
+      let storedImageUrl = originalUrl;
+      try {
+        console.log('Downloading image from:', originalUrl);
+        
+        // Download the image
+        const imageResponse = await fetch(originalUrl);
+        if (!imageResponse.ok) {
+          throw new Error(`Failed to download image: ${imageResponse.status}`);
+        }
+        
+        const imageBlob = await imageResponse.blob();
+        const imageBuffer = await imageBlob.arrayBuffer();
+        
+        // Get project details to determine user ID
+        const { data: project } = await supabaseClient
+          .from('projects')
+          .select('user_id, title')
+          .eq('prediction_id', predictionId)
+          .single();
+        
+        if (project) {
+          // Generate filename
+          const timestamp = Date.now();
+          const filename = `results/result_${project.id || predictionId}_${timestamp}.jpg`;
+          const storagePath = `${project.user_id}/${filename}`;
+          
+          console.log('Uploading image to storage path:', storagePath);
+          
+          // Upload to Supabase storage
+          const { data: uploadData, error: uploadError } = await supabaseClient.storage
+            .from('tryon-images')
+            .upload(storagePath, imageBuffer, {
+              contentType: 'image/jpeg',
+              upsert: true
+            });
+          
+          if (uploadError) {
+            console.error('Storage upload error:', uploadError);
+          } else {
+            // Get public URL
+            const { data: publicUrlData } = supabaseClient.storage
+              .from('tryon-images')
+              .getPublicUrl(storagePath);
+            
+            storedImageUrl = publicUrlData.publicUrl;
+            console.log('Image stored successfully at:', storedImageUrl);
+          }
+        }
+      } catch (error) {
+        console.error('Error storing image:', error);
+        // Continue with original URL if storage fails
+      }
+      
+      updateData.result_image_url = storedImageUrl;
+      updateData.result_url = storedImageUrl;
+      console.log('Setting result image URL:', storedImageUrl);
     }
 
     // Handle errors

@@ -115,8 +115,65 @@ serve(async (req) => {
         }
       }
 
+      // Download and store image in Supabase storage if we have a result URL
+      let storedImageUrl = resultUrl;
+      if (resultUrl) {
+        try {
+          console.log('Downloading image from:', resultUrl);
+          
+          // Download the image
+          const imageResponse = await fetch(resultUrl);
+          if (!imageResponse.ok) {
+            throw new Error(`Failed to download image: ${imageResponse.status}`);
+          }
+          
+          const imageBlob = await imageResponse.blob();
+          const imageBuffer = await imageBlob.arrayBuffer();
+          
+          // Get project details to determine user ID
+          const { data: project } = await supabaseClient
+            .from('projects')
+            .select('user_id, title')
+            .eq('id', projectId)
+            .single();
+          
+          if (project) {
+            // Generate filename
+            const timestamp = Date.now();
+            const filename = `results/result_${projectId}_${timestamp}.jpg`;
+            const storagePath = `${project.user_id}/${filename}`;
+            
+            console.log('Uploading image to storage path:', storagePath);
+            
+            // Upload to Supabase storage
+            const { data: uploadData, error: uploadError } = await supabaseClient.storage
+              .from('tryon-images')
+              .upload(storagePath, imageBuffer, {
+                contentType: 'image/jpeg',
+                upsert: true
+              });
+            
+            if (uploadError) {
+              console.error('Storage upload error:', uploadError);
+            } else {
+              // Get public URL
+              const { data: publicUrlData } = supabaseClient.storage
+                .from('tryon-images')
+                .getPublicUrl(storagePath);
+              
+              storedImageUrl = publicUrlData.publicUrl;
+              console.log('Image stored successfully at:', storedImageUrl);
+            }
+          }
+        } catch (error) {
+          console.error('Error storing image:', error);
+          // Continue with original URL if storage fails
+        }
+      }
+
       updateData.status = 'completed';
-      updateData.result_url = resultUrl;
+      updateData.result_url = storedImageUrl;
+      updateData.result_image_url = storedImageUrl;
       updateData.analysis = 'Virtual try-on completed successfully with Kie.AI';
 
       console.log('Task completed successfully:', {
