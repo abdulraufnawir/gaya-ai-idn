@@ -98,8 +98,8 @@ const ModelSwap = ({ userId }: ModelSwapProps) => {
 
       if (projectError) throw projectError;
 
-      // Call Gemini API for model swap
-      const { data: geminiResponse, error: geminiError } = await supabase.functions.invoke('gemini-api', {
+      // Call Kie.AI for model swap
+      const { data: kieResponse, error: kieError } = await supabase.functions.invoke('kie-ai', {
         body: {
           action: 'modelSwap',
           modelImage: selectedModel.imageUrl,
@@ -108,30 +108,32 @@ const ModelSwap = ({ userId }: ModelSwapProps) => {
         }
       });
 
-      if (geminiError) {
-        console.error('Gemini API Error:', geminiError);
-        throw new Error(geminiError.message || 'Failed to start model swap');
+      if (kieError) {
+        console.error('Kie.AI API Error:', kieError);
+        throw new Error(kieError.message || 'Failed to start model swap');
       }
 
-      if (geminiResponse?.error) {
-        console.error('Gemini Response Error:', geminiResponse.error);
-        throw new Error(geminiResponse.error);
+      if (kieResponse?.error) {
+        console.error('Kie.AI Response Error:', kieResponse.error);
+        throw new Error(kieResponse.error);
       }
 
-      if (!geminiResponse?.prediction_id) {
-        console.error('No prediction ID returned:', geminiResponse);
-        throw new Error('No prediction ID returned from Gemini API');
+      if (!kieResponse?.prediction_id) {
+        console.error('No prediction ID returned:', kieResponse);
+        throw new Error('No prediction ID returned from Kie.AI API');
       }
 
       // Update project with prediction ID
       const { error: updateError } = await supabase
         .from('projects')
         .update({
-          prediction_id: geminiResponse.prediction_id,
+          prediction_id: kieResponse.prediction_id,
           settings: {
             model_image_url: selectedModel.imageUrl,
             model_name: selectedModel.name,
-            model_type: selectedModel.type
+            model_type: selectedModel.type,
+            model_used: 'google/nano-banana',
+            api_provider: 'kie.ai'
           }
         })
         .eq('id', project.id);
@@ -143,7 +145,7 @@ const ModelSwap = ({ userId }: ModelSwapProps) => {
 
       toast({
         title: 'Berhasil!',
-        description: 'Model swap sedang diproses dengan AI. Silakan cek riwayat proyek untuk melihat hasilnya.',
+        description: 'Model swap sedang diproses dengan Kie.AI nano-banana. Silakan cek riwayat proyek untuk melihat hasilnya.',
       });
 
       // Reset form

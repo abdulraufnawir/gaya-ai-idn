@@ -100,39 +100,43 @@ const PhotoEditor = ({ userId }: PhotoEditorProps) => {
 
       if (projectError) throw projectError;
 
-      // Call Replicate API based on edit type
-      const { data: replicateResponse, error: replicateError } = await supabase.functions.invoke('replicate-api', {
+      // Call Kie.AI for photo editing  
+      const { data: kieResponse, error: kieError } = await supabase.functions.invoke('kie-ai', {
         body: {
-          action: editType,
-          imageUrl: publicUrl,
-          ...(editType === 'background_replacement' && { prompt: editPrompt })
+          action: 'photoEdit',
+          originalImage: publicUrl,
+          editType: editType,
+          prompt: editPrompt,
+          projectId: project.id
         }
       });
 
-      if (replicateError) {
-        console.error('Replicate API Error:', replicateError);
-        throw new Error(replicateError.message || 'Failed to start photo editing');
+      if (kieError) {
+        console.error('Kie.AI API Error:', kieError);
+        throw new Error(kieError.message || 'Failed to start image processing');
       }
 
-      if (replicateResponse?.error) {
-        console.error('Replicate Response Error:', replicateResponse.error);
-        throw new Error(replicateResponse.error);
+      if (kieResponse?.error) {
+        console.error('Kie.AI Response Error:', kieResponse.error);
+        throw new Error(kieResponse.error);
       }
 
-      if (!replicateResponse?.predictionId) {
-        console.error('No prediction ID returned:', replicateResponse);
-        throw new Error('No prediction ID returned from Replicate');
+      if (!kieResponse?.prediction_id) {
+        console.error('No prediction ID returned:', kieResponse);
+        throw new Error('No prediction ID returned from Kie.AI API');
       }
 
       // Update project with prediction ID
       const { error: updateError } = await supabase
         .from('projects')
         .update({
+          prediction_id: kieResponse.prediction_id,
           settings: {
             edit_type: editType,
             prompt: editPrompt,
             original_image_url: publicUrl,
-            prediction_id: replicateResponse.predictionId
+            model_used: 'google/nano-banana',
+            api_provider: 'kie.ai'
           }
         })
         .eq('id', project.id);
@@ -144,7 +148,7 @@ const PhotoEditor = ({ userId }: PhotoEditorProps) => {
 
       toast({
         title: 'Berhasil!',
-        description: 'Foto sedang diproses dengan AI. Silakan cek riwayat proyek untuk melihat hasilnya.',
+        description: 'Foto sedang diproses dengan Kie.AI nano-banana. Silakan cek riwayat proyek untuk melihat hasilnya.',
       });
 
       // Reset form

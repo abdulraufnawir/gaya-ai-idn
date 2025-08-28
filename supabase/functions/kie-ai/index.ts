@@ -24,6 +24,10 @@ serve(async (req) => {
     switch (action) {
       case 'virtualTryOn':
         return await processVirtualTryOn(params);
+      case 'modelSwap':
+        return await processModelSwap(params);
+      case 'photoEdit':
+        return await processPhotoEdit(params);
       case 'status':
         return await getStatus(params);
       case 'retry':
@@ -354,6 +358,252 @@ async function getStatus({ predictionId }) {
   });
 }
 
+async function processModelSwap({ modelImage, garmentImage, projectId }) {
+  console.log('Processing model swap with Kie.AI nano-banana for project:', projectId);
+  
+  try {
+    if (!modelImage || !garmentImage) {
+      throw new Error('Missing required images: modelImage and garmentImage are required');
+    }
+
+    const callbackUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/kie-webhook`;
+    
+    const prompt = `Model swap: Replace the model/person in the first image with the model/person from the second image while keeping the same clothing, pose, and composition. Maintain realistic proportions, lighting, and shadows. High quality, photorealistic result.`;
+
+    const requestBody = {
+      model: 'google/nano-banana',
+      callBackUrl: callbackUrl,
+      input: {
+        prompt: prompt,
+        image_urls: [garmentImage, modelImage], // Garment first, new model second
+        num_images: "1"
+      },
+      metadata: {
+        projectId: projectId,
+        modelImage: modelImage,
+        garmentImage: garmentImage,
+        action: 'modelSwap'
+      }
+    };
+
+    console.log('Using nano-banana for model swap:', JSON.stringify(requestBody, null, 2));
+
+    const response = await fetch('https://api.kie.ai/api/v1/playground/createTask', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${kieApiKey}`
+      },
+      body: JSON.stringify(requestBody)
+    });
+
+    const result = await response.json();
+    
+    if (!response.ok) {
+      console.error('Kie.AI API error for model swap:', result);
+      throw new Error(`Kie.AI API Error (${response.status}): ${result.error || result.message || 'Unknown error'}`);
+    }
+
+    const taskId = result.data?.taskId || result.id || result.taskId || result.task_id;
+    
+    if (!taskId) {
+      throw new Error('No task ID returned from Kie.AI API');
+    }
+
+    // Update project with task ID
+    if (projectId) {
+      const supabaseClient = createClient(
+        Deno.env.get('SUPABASE_URL') ?? '',
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      );
+
+      const { error: updateError } = await supabaseClient
+        .from('projects')
+        .update({
+          prediction_id: taskId,
+          status: 'processing',
+          updated_at: new Date().toISOString(),
+          metadata: {
+            kie_task: result,
+            processing_type: 'model_swap',
+            model_used: 'google/nano-banana',
+            api_provider: 'kie.ai'
+          }
+        })
+        .eq('id', projectId);
+
+      if (updateError) {
+        throw updateError;
+      }
+    }
+
+    return new Response(JSON.stringify({
+      success: true,
+      id: taskId,
+      prediction_id: taskId,
+      status: 'processing',
+      message: 'Model swap task created successfully'
+    }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+
+  } catch (error) {
+    console.error('Error in processModelSwap:', error);
+    
+    if (projectId) {
+      try {
+        const supabaseClient = createClient(
+          Deno.env.get('SUPABASE_URL') ?? '',
+          Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+        );
+
+        await supabaseClient
+          .from('projects')
+          .update({
+            status: 'failed',
+            error_message: error.message,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', projectId);
+      } catch (updateError) {
+        console.error('Error updating project status to failed:', updateError);
+      }
+    }
+    
+    throw error;
+  }
+}
+
+async function processPhotoEdit({ originalImage, editType, prompt, projectId }) {
+  console.log('Processing photo edit with Kie.AI nano-banana for project:', projectId);
+  
+  try {
+    if (!originalImage) {
+      throw new Error('Missing required image: originalImage is required');
+    }
+
+    const callbackUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/kie-webhook`;
+    
+    let finalPrompt = '';
+    
+    switch (editType) {
+      case 'background_removal':
+        finalPrompt = 'Remove the background from this image while keeping the subject intact. Create a clean, transparent background.';
+        break;
+      case 'background_replacement':
+        finalPrompt = prompt || 'Replace the background with a modern, clean environment while keeping the subject intact.';
+        break;
+      case 'enhancement':
+        finalPrompt = 'Enhance this image quality, improve lighting, colors, and sharpness while maintaining natural appearance.';
+        break;
+      default:
+        finalPrompt = prompt || 'Improve this image quality and appearance.';
+    }
+
+    const requestBody = {
+      model: 'google/nano-banana',
+      callBackUrl: callbackUrl,
+      input: {
+        prompt: finalPrompt,
+        image_urls: [originalImage],
+        num_images: "1"
+      },
+      metadata: {
+        projectId: projectId,
+        originalImage: originalImage,
+        editType: editType,
+        action: 'photoEdit'
+      }
+    };
+
+    console.log('Using nano-banana for photo edit:', JSON.stringify(requestBody, null, 2));
+
+    const response = await fetch('https://api.kie.ai/api/v1/playground/createTask', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${kieApiKey}`
+      },
+      body: JSON.stringify(requestBody)
+    });
+
+    const result = await response.json();
+    
+    if (!response.ok) {
+      console.error('Kie.AI API error for photo edit:', result);
+      throw new Error(`Kie.AI API Error (${response.status}): ${result.error || result.message || 'Unknown error'}`);
+    }
+
+    const taskId = result.data?.taskId || result.id || result.taskId || result.task_id;
+    
+    if (!taskId) {
+      throw new Error('No task ID returned from Kie.AI API');
+    }
+
+    // Update project with task ID
+    if (projectId) {
+      const supabaseClient = createClient(
+        Deno.env.get('SUPABASE_URL') ?? '',
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      );
+
+      const { error: updateError } = await supabaseClient
+        .from('projects')
+        .update({
+          prediction_id: taskId,
+          status: 'processing',
+          updated_at: new Date().toISOString(),
+          metadata: {
+            kie_task: result,
+            processing_type: 'photo_edit',
+            model_used: 'google/nano-banana',
+            api_provider: 'kie.ai'
+          }
+        })
+        .eq('id', projectId);
+
+      if (updateError) {
+        throw updateError;
+      }
+    }
+
+    return new Response(JSON.stringify({
+      success: true,
+      id: taskId,
+      prediction_id: taskId,
+      status: 'processing',
+      message: 'Photo edit task created successfully'
+    }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+
+  } catch (error) {
+    console.error('Error in processPhotoEdit:', error);
+    
+    if (projectId) {
+      try {
+        const supabaseClient = createClient(
+          Deno.env.get('SUPABASE_URL') ?? '',
+          Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+        );
+
+        await supabaseClient
+          .from('projects')
+          .update({
+            status: 'failed',
+            error_message: error.message,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', projectId);
+      } catch (updateError) {
+        console.error('Error updating project status to failed:', updateError);
+      }
+    }
+    
+    throw error;
+  }
+}
+
 async function retryProcessing({ projectId }) {
   console.log('Retrying Kie.AI processing for project:', projectId);
   
@@ -375,17 +625,50 @@ async function retryProcessing({ projectId }) {
 
   // Extract image URLs from project settings
   const settings = project.settings || {};
-  const modelImage = settings.model_image_url;
-  const garmentImage = settings.garment_image_url;
+  const projectType = project.project_type;
 
-  if (!modelImage || !garmentImage) {
-    throw new Error('Missing image URLs in project settings');
+  if (projectType === 'virtual_tryon') {
+    const modelImage = settings.model_image_url;
+    const garmentImage = settings.garment_image_url;
+
+    if (!modelImage || !garmentImage) {
+      throw new Error('Missing image URLs in project settings');
+    }
+
+    return await processVirtualTryOn({
+      modelImage,
+      garmentImage,
+      projectId
+    });
+  } else if (projectType === 'model_swap') {
+    const modelImage = settings.model_image_url;
+    const garmentImage = settings.garment_image_url;
+
+    if (!modelImage || !garmentImage) {
+      throw new Error('Missing image URLs in project settings');
+    }
+
+    return await processModelSwap({
+      modelImage,
+      garmentImage,
+      projectId
+    });
+  } else if (projectType === 'photo_edit') {
+    const originalImage = project.original_image_url;
+    const editType = settings.edit_type;
+    const prompt = settings.prompt;
+
+    if (!originalImage) {
+      throw new Error('Missing original image URL in project');
+    }
+
+    return await processPhotoEdit({
+      originalImage,
+      editType,
+      prompt,
+      projectId
+    });
+  } else {
+    throw new Error(`Unsupported project type for retry: ${projectType}`);
   }
-
-  // Retry the virtual try-on process
-  return await processVirtualTryOn({
-    modelImage,
-    garmentImage,
-    projectId
-  });
 }
