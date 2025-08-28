@@ -198,7 +198,7 @@ const AdminOverview = () => {
           <CardContent className="space-y-2">
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Version:</span>
-              <span>GayaAI v1.0.0</span>
+              <span>BUSANA.AI v1.0.0</span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Uptime:</span>

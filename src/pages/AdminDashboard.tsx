@@ -160,7 +160,7 @@ const AdminDashboard = () => {
               <h1 className="text-xl font-bold bg-gradient-primary bg-clip-text text-transparent">
                 Admin Panel
               </h1>
-              <span className="hidden sm:inline text-sm text-muted-foreground">GayaAI</span>
+              <span className="hidden sm:inline text-sm text-muted-foreground">BUSANA.AI</span>
             </div>
             <div className="flex items-center space-x-3">
               <Button variant="ghost" size="sm" onClick={() => navigate('/dashboard')}>
@@ -182,7 +182,7 @@ const AdminDashboard = () => {
         <div className="mb-6">
           <h2 className="text-2xl font-bold mb-2">Admin Dashboard</h2>
           <p className="text-muted-foreground">
-            Monitor, manage, and analyze your GayaAI application
+            Monitor, manage, and analyze your BUSANA.AI application
           </p>
         </div>
 

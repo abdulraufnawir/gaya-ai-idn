@@ -42,7 +42,7 @@ const Footer = () => {
                 <Sparkles className="w-5 h-5 text-primary-foreground" />
               </div>
               <span className="text-xl font-bold">
-                Gaya<span className="text-primary">AI</span>
+                BUSANA<span className="text-primary">.AI</span>
               </span>
             </div>
             <p className="text-background/70 mb-6 leading-relaxed">
@@ -53,7 +53,7 @@ const Footer = () => {
             <div className="space-y-3">
               <div className="flex items-center gap-3">
                 <Mail className="w-4 h-4 text-primary" />
-                <span className="text-sm text-background/70">hello@gayaai.id</span>
+                <span className="text-sm text-background/70">hello@busana.ai</span>
               </div>
               <div className="flex items-center gap-3">
                 <Phone className="w-4 h-4 text-primary" />
@@ -91,7 +91,7 @@ const Footer = () => {
           <div className="flex flex-col lg:flex-row justify-between items-center gap-4">
             {/* Copyright */}
             <div className="text-background/70 text-sm">
-              © 2024 GayaAI. All rights reserved. Made with ❤️ in Indonesia.
+              © 2024 BUSANA.AI. All rights reserved. Made with ❤️ in Indonesia.
             </div>
             
             {/* Social Links */}

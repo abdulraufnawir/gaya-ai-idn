@@ -92,7 +92,7 @@ const Auth = () => {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-            GayaAI
+            BUSANA.AI
           </CardTitle>
           <CardDescription>
             Bergabung dengan revolusi fashion AI untuk UMKM Indonesia

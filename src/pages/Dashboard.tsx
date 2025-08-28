@@ -100,7 +100,7 @@ const Dashboard = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <h1 className="text-xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-                GayaAI
+                BUSANA.AI
               </h1>
               <span className="hidden sm:inline text-sm text-muted-foreground">Dashboard</span>
             </div>
@@ -120,7 +120,7 @@ const Dashboard = () => {
 
       <div className="container mx-auto px-4 py-3">
         <div className="mb-4">
-          <h2 className="text-xl sm:text-2xl font-bold mb-1">Selamat datang di GayaAI</h2>
+          <h2 className="text-xl sm:text-2xl font-bold mb-1">Selamat datang di BUSANA.AI</h2>
           <p className="text-sm text-muted-foreground">
             Gunakan AI untuk mengembangkan bisnis fashion Anda
           </p>
