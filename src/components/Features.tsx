@@ -28,8 +28,8 @@ const Features = () => {
     color: "text-primary-glow"
   }, {
     icon: Zap,
-    title: "Proses Super Cepat",
-    description: "Dapatkan hasil dalam 5-10 detik. Tidak perlu menunggu lama untuk melihat hasilnya.",
+    title: "Proses Cepat",
+    description: "Dapatkan hasil dalam hitungan detik. Tidak perlu menunggu lama untuk melihat hasilnya.",
     badge: "",
     color: "text-primary"
   }, {
