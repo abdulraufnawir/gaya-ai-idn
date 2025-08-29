@@ -241,9 +241,9 @@ const UserProfile = ({ user }: UserProfileProps) => {
           <Coins className="h-4 w-4" />
           Kredit & Billing
         </TabsTrigger>
-        <TabsTrigger value="purchase" className="flex items-center gap-2">
+        <TabsTrigger value="purchase" className="flex items-center gap-2" disabled>
           <ShoppingCart className="h-4 w-4" />
-          Beli Kredit
+          Beli Kredit (Coming Soon)
         </TabsTrigger>
         <TabsTrigger value="profile" className="flex items-center gap-2">
           <UserIcon className="h-4 w-4" />
@@ -403,7 +403,23 @@ const UserProfile = ({ user }: UserProfileProps) => {
       </TabsContent>
 
       <TabsContent value="purchase">
-        <CreditPurchase />
+        <Card className="bg-muted/50 border-dashed">
+          <CardContent className="pt-12 pb-12">
+            <div className="text-center">
+              <ShoppingCart className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-xl font-semibold mb-2">Sistem Pembelian Kredit</h3>
+              <p className="text-muted-foreground mb-4">
+                Fitur pembelian kredit sedang dalam tahap pengembangan
+              </p>
+              <Badge variant="outline" className="bg-yellow-50 border-yellow-200 text-yellow-700">
+                Coming Soon - Beta Testing
+              </Badge>
+              <div className="mt-4 text-sm text-muted-foreground">
+                Saat ini semua fitur AI dapat digunakan gratis selama masa beta testing
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </TabsContent>
 
       <TabsContent value="profile">

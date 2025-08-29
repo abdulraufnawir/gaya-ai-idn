@@ -163,31 +163,9 @@ const VirtualTryOn = ({
       return;
     }
 
-    // Check if user has enough credits
-    if (userCredits < VIRTUAL_TRYON_COST) {
-      toast({
-        title: 'Kredit Tidak Cukup',
-        description: `Anda membutuhkan ${VIRTUAL_TRYON_COST} kredit untuk virtual try-on. Sisa kredit Anda: ${userCredits}`,
-        variant: 'destructive'
-      });
-      return;
-    }
-
     setProcessing(true);
     try {
-      // Deduct credits before processing
-      const creditUsed = await useCreditsHook(
-        VIRTUAL_TRYON_COST, 
-        'Virtual Try-On AI Processing',
-        `virtual_tryon_${Date.now()}`
-      );
-      
-      if (!creditUsed) {
-        return; // useCreditsHook already shows error toast
-      }
-
-      // Update local credit balance
-      setUserCredits(prev => prev - VIRTUAL_TRYON_COST);
+      // Beta testing: Credits system disabled
 
       // Get model image URL - either from uploaded file or selected model
       const finalModelImageUrl = modelImageUrl || (await uploadImage(modelImage!, 'model'));
@@ -358,38 +336,16 @@ const VirtualTryOn = ({
           <h1 className="text-xl sm:text-2xl font-bold mb-1">Virtual Try-On AI</h1>
           <p className="text-sm text-muted-foreground">Upload foto model dan pakaian untuk melihat hasil virtual try-on</p>
           
-          {/* Credits Display */}
+          {/* Beta Notice */}
           <div className="mt-3 flex items-center justify-center gap-2">
-            {loadingCredits ? (
-              <div className="flex items-center gap-2">
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
-                <span className="text-sm text-muted-foreground">Memuat kredit...</span>
-              </div>
-            ) : (
-              <>
-                <Badge variant="outline" className="flex items-center gap-1">
-                  <Coins className="h-3 w-3" />
-                  {userCredits} Kredit
-                </Badge>
-                <Badge variant="secondary" className="text-xs">
-                  Biaya: {VIRTUAL_TRYON_COST} kredit
-                </Badge>
-              </>
-            )}
+            <Badge variant="outline" className="flex items-center gap-1 bg-green-50 border-green-200 text-green-700">
+              <Sparkles className="h-3 w-3" />
+              Beta Testing - Gratis
+            </Badge>
+            <Badge variant="secondary" className="text-xs">
+              Sistem kredit akan datang
+            </Badge>
           </div>
-          
-          {userCredits < VIRTUAL_TRYON_COST && (
-            <Alert className="mt-3 max-w-md mx-auto">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription className="text-sm">
-                Kredit tidak mencukupi untuk virtual try-on. 
-                <Button variant="link" className="p-0 h-auto ml-1 text-primary" 
-                  onClick={() => window.dispatchEvent(new CustomEvent('switchTab', { detail: { tab: 'purchase' } }))}>
-                  Beli kredit
-                </Button>
-              </AlertDescription>
-            </Alert>
-          )}
         </div>
       </div>
 
@@ -617,7 +573,7 @@ const VirtualTryOn = ({
       <div className="max-w-7xl mx-auto mt-4 flex justify-center px-4">
         <Button 
           onClick={handleProcess} 
-          disabled={processing || (!modelImage && !modelImageUrl) || !clothingImage || userCredits < VIRTUAL_TRYON_COST} 
+          disabled={processing || (!modelImage && !modelImageUrl) || !clothingImage} 
           size="lg" 
           className="w-full sm:w-auto sm:min-w-[300px] h-12 text-base"
         >
@@ -626,15 +582,10 @@ const VirtualTryOn = ({
               <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div>
               Memproses...
             </>
-          ) : userCredits < VIRTUAL_TRYON_COST ? (
-            <>
-              <AlertCircle className="h-5 w-5 mr-3" />
-              Kredit Tidak Cukup
-            </>
           ) : (
             <>
               <Sparkles className="h-5 w-5 mr-3" />
-              Buat Virtual Try-On ({VIRTUAL_TRYON_COST} Kredit)
+              Buat Virtual Try-On (Gratis - Beta)
             </>
           )}
         </Button>
