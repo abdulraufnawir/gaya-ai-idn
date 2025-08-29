@@ -31,7 +31,7 @@ const Hero = () => {
           </h1>
 
           {/* Subtitle */}
-          <p className="text-lg sm:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto animate-slide-up">Teknologi AI canggih untuk virtual try-on pakaian. Perfect untuk brand fashion, UMKM, dan online shop Indonesia yang ingin meningkatkan penjualan dan menekan biaya marketing.</p>
+          <p className="text-lg sm:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto animate-slide-up">Teknologi AI canggih untuk virtual try-on pakaian. Sangat cocok untuk brand fashion, UMKM, dan online shop, Affiliate marketing Indonesia yang ingin meningkatkan penjualan dan menekan biaya marketing.</p>
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12 animate-slide-up">
