@@ -71,11 +71,7 @@ const Hero = () => {
           <div className="mt-12 animate-fade-in">
             <p className="text-sm text-muted-foreground mb-4">
           </p>
-            <div className="flex flex-wrap justify-center items-center gap-6 opacity-60">
-              {['Batik Keris', 'Alleira', 'Cottonink', 'Berrybenka'].map(brand => (
-                <span key={brand} className="text-sm font-medium">{brand}</span>
-              ))}
-            </div>
+            
           </div>
         </div>
       </div>
