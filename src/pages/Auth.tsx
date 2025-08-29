@@ -8,6 +8,21 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
+const cleanupAuthState = () => {
+  // Remove all Supabase auth keys from localStorage
+  Object.keys(localStorage).forEach((key) => {
+    if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+      localStorage.removeItem(key);
+    }
+  });
+  // Remove from sessionStorage if in use
+  Object.keys(sessionStorage || {}).forEach((key) => {
+    if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+      sessionStorage.removeItem(key);
+    }
+  });
+};
+
 const Auth = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -139,6 +154,31 @@ const Auth = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {/* Emergency auth reset button */}
+          <div className="mb-4 text-center space-y-2">
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => {
+                cleanupAuthState();
+                window.location.href = '/dashboard';
+              }}
+              className="text-xs w-full"
+            >
+              Already logged in? Go to Dashboard
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={() => {
+                window.location.href = '/';
+              }}
+              className="text-xs w-full"
+            >
+              Back to Landing Page
+            </Button>
+          </div>
+          
           <Tabs defaultValue="signin" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="signin">Masuk</TabsTrigger>
