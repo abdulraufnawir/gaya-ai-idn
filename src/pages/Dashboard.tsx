@@ -261,7 +261,7 @@ const Dashboard = () => {
             </div>
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsContent value="virtual-tryon">
+              <TabsContent value="AI Try-On">
                 <VirtualTryOn userId={user.id} />
               </TabsContent>
 
