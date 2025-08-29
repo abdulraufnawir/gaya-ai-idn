@@ -8,6 +8,21 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
+const cleanupAuthState = () => {
+  // Remove all Supabase auth keys from localStorage
+  Object.keys(localStorage).forEach((key) => {
+    if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+      localStorage.removeItem(key);
+    }
+  });
+  // Remove from sessionStorage if in use
+  Object.keys(sessionStorage || {}).forEach((key) => {
+    if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+      sessionStorage.removeItem(key);
+    }
+  });
+};
+
 const Auth = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -66,6 +81,16 @@ const Auth = () => {
     setLoading(true);
 
     try {
+      // Clean up existing state first
+      cleanupAuthState();
+      
+      // Attempt global sign out before new login
+      try {
+        await supabase.auth.signOut({ scope: 'global' });
+      } catch (err) {
+        // Continue even if this fails
+      }
+
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -74,7 +99,8 @@ const Auth = () => {
       if (error) throw error;
 
       if (data.user) {
-        navigate('/dashboard');
+        // Force page reload for clean state
+        window.location.href = '/dashboard';
       }
     } catch (error: any) {
       toast({
@@ -90,6 +116,16 @@ const Auth = () => {
   const handleGoogleAuth = async () => {
     setLoading(true);
     try {
+      // Clean up existing state first
+      cleanupAuthState();
+      
+      // Attempt global sign out before new login
+      try {
+        await supabase.auth.signOut({ scope: 'global' });
+      } catch (err) {
+        // Continue even if this fails
+      }
+
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
