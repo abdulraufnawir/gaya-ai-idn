@@ -33,6 +33,8 @@ const Auth = () => {
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('Auth state change:', event, session?.user?.email);
+      
       if (session?.user) {
         navigate('/dashboard');
       }
@@ -81,16 +83,6 @@ const Auth = () => {
     setLoading(true);
 
     try {
-      // Clean up existing state first
-      cleanupAuthState();
-      
-      // Attempt global sign out before new login
-      try {
-        await supabase.auth.signOut({ scope: 'global' });
-      } catch (err) {
-        // Continue even if this fails
-      }
-
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -99,10 +91,15 @@ const Auth = () => {
       if (error) throw error;
 
       if (data.user) {
-        // Force page reload for clean state
-        window.location.href = '/dashboard';
+        navigate('/dashboard');
       }
     } catch (error: any) {
+      // Only cleanup on error to prevent auth limbo
+      if (error.message?.includes('Invalid login credentials') || 
+          error.message?.includes('already registered')) {
+        cleanupAuthState();
+      }
+      
       toast({
         title: 'Error',
         description: error.message,
@@ -116,16 +113,6 @@ const Auth = () => {
   const handleGoogleAuth = async () => {
     setLoading(true);
     try {
-      // Clean up existing state first
-      cleanupAuthState();
-      
-      // Attempt global sign out before new login
-      try {
-        await supabase.auth.signOut({ scope: 'global' });
-      } catch (err) {
-        // Continue even if this fails
-      }
-
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -135,6 +122,9 @@ const Auth = () => {
 
       if (error) throw error;
     } catch (error: any) {
+      // Only cleanup on error
+      cleanupAuthState();
+      
       toast({
         title: 'Error',
         description: error.message,
