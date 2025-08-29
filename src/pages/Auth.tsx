@@ -31,7 +31,8 @@ const Auth = () => {
     setLoading(true);
 
     try {
-      const redirectUrl = `${window.location.origin}/dashboard`;
+      // Ensure HTTPS protocol for email redirects
+      const redirectUrl = `${window.location.protocol}//${window.location.host}/dashboard`.replace('http:', 'https:');
       
       const { error } = await supabase.auth.signUp({
         email,
@@ -90,10 +91,17 @@ const Auth = () => {
   const handleGoogleAuth = async () => {
     setLoading(true);
     try {
+      // Ensure HTTPS protocol for redirects
+      const currentUrl = window.location.href;
+      const httpsUrl = currentUrl.replace(/^http:/, 'https:');
+      const redirectUrl = httpsUrl.includes('/auth') 
+        ? httpsUrl.replace('/auth', '/dashboard')
+        : `${window.location.protocol}//${window.location.host}/dashboard`.replace('http:', 'https:');
+
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/dashboard`
+          redirectTo: redirectUrl
         }
       });
 
