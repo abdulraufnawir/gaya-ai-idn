@@ -127,6 +127,45 @@ const Dashboard = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          {/* Bottom Navigation - Mobile First */}
+          <TabsList className="fixed bottom-0 left-0 right-0 z-50 grid w-full grid-cols-5 h-auto bg-background/95 backdrop-blur-lg border-t border-border pb-safe rounded-none">
+            <TabsTrigger 
+              value="virtual-tryon" 
+              className="flex flex-col items-center gap-1 p-3 text-xs data-[state=active]:bg-primary/10 data-[state=active]:text-primary rounded-none border-0"
+            >
+              <Upload className="h-5 w-5" />
+              <span className="text-center leading-tight">Virtual Try-On</span>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="model-swap" 
+              className="flex flex-col items-center gap-1 p-3 text-xs data-[state=active]:bg-primary/10 data-[state=active]:text-primary rounded-none border-0"
+            >
+              <Users className="h-5 w-5" />
+              <span className="text-center leading-tight">Ganti Model</span>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="photo-edit" 
+              className="flex flex-col items-center gap-1 p-3 text-xs data-[state=active]:bg-primary/10 data-[state=active]:text-primary rounded-none border-0"
+            >
+              <Edit3 className="h-5 w-5" />
+              <span className="text-center leading-tight">Edit Foto</span>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="history" 
+              className="flex flex-col items-center gap-1 p-3 text-xs data-[state=active]:bg-primary/10 data-[state=active]:text-primary rounded-none border-0"
+            >
+              <Sparkles className="h-5 w-5" />
+              <span className="text-center leading-tight">Riwayat</span>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="profile" 
+              className="flex flex-col items-center gap-1 p-3 text-xs data-[state=active]:bg-primary/10 data-[state=active]:text-primary rounded-none border-0"
+            >
+              <UserIcon className="h-5 w-5" />
+              <span className="text-center leading-tight">Profil</span>
+            </TabsTrigger>
+          </TabsList>
+
           <TabsContent value="virtual-tryon">
             <VirtualTryOn userId={user.id} />
           </TabsContent>
@@ -147,47 +186,6 @@ const Dashboard = () => {
             <UserProfile user={user} />
           </TabsContent>
         </Tabs>
-      </div>
-
-      {/* Bottom Navigation - Mobile First */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-lg border-t border-border pb-safe">
-        <TabsList className="grid w-full grid-cols-5 h-auto bg-transparent border-0 rounded-none">
-          <TabsTrigger 
-            value="virtual-tryon" 
-            className="flex flex-col items-center gap-1 p-3 text-xs data-[state=active]:bg-primary/10 data-[state=active]:text-primary rounded-none border-0"
-          >
-            <Upload className="h-5 w-5" />
-            <span className="text-center leading-tight">Virtual Try-On</span>
-          </TabsTrigger>
-          <TabsTrigger 
-            value="model-swap" 
-            className="flex flex-col items-center gap-1 p-3 text-xs data-[state=active]:bg-primary/10 data-[state=active]:text-primary rounded-none border-0"
-          >
-            <Users className="h-5 w-5" />
-            <span className="text-center leading-tight">Ganti Model</span>
-          </TabsTrigger>
-          <TabsTrigger 
-            value="photo-edit" 
-            className="flex flex-col items-center gap-1 p-3 text-xs data-[state=active]:bg-primary/10 data-[state=active]:text-primary rounded-none border-0"
-          >
-            <Edit3 className="h-5 w-5" />
-            <span className="text-center leading-tight">Edit Foto</span>
-          </TabsTrigger>
-          <TabsTrigger 
-            value="history" 
-            className="flex flex-col items-center gap-1 p-3 text-xs data-[state=active]:bg-primary/10 data-[state=active]:text-primary rounded-none border-0"
-          >
-            <Sparkles className="h-5 w-5" />
-            <span className="text-center leading-tight">Riwayat</span>
-          </TabsTrigger>
-          <TabsTrigger 
-            value="profile" 
-            className="flex flex-col items-center gap-1 p-3 text-xs data-[state=active]:bg-primary/10 data-[state=active]:text-primary rounded-none border-0"
-          >
-            <UserIcon className="h-5 w-5" />
-            <span className="text-center leading-tight">Profil</span>
-          </TabsTrigger>
-        </TabsList>
       </div>
     </div>
   );
