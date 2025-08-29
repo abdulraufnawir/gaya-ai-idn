@@ -8,21 +8,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
-const cleanupAuthState = () => {
-  // Remove all Supabase auth keys from localStorage
-  Object.keys(localStorage).forEach((key) => {
-    if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
-      localStorage.removeItem(key);
-    }
-  });
-  // Remove from sessionStorage if in use
-  Object.keys(sessionStorage || {}).forEach((key) => {
-    if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
-      sessionStorage.removeItem(key);
-    }
-  });
-};
-
 const Auth = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -33,8 +18,6 @@ const Auth = () => {
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log('Auth state change:', event, session?.user?.email);
-      
       if (session?.user) {
         navigate('/dashboard');
       }
@@ -94,12 +77,6 @@ const Auth = () => {
         navigate('/dashboard');
       }
     } catch (error: any) {
-      // Only cleanup on error to prevent auth limbo
-      if (error.message?.includes('Invalid login credentials') || 
-          error.message?.includes('already registered')) {
-        cleanupAuthState();
-      }
-      
       toast({
         title: 'Error',
         description: error.message,
@@ -122,9 +99,6 @@ const Auth = () => {
 
       if (error) throw error;
     } catch (error: any) {
-      // Only cleanup on error
-      cleanupAuthState();
-      
       toast({
         title: 'Error',
         description: error.message,
