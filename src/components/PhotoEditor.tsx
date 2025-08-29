@@ -86,6 +86,8 @@ const PhotoEditor = ({ userId }: PhotoEditorProps) => {
             ? 'Hapus background foto' 
             : editType === 'image_enhancement'
             ? 'Tingkatkan kualitas foto'
+            : editType === 'custom_edit'
+            ? `Edit kustom: ${editPrompt}`
             : editPrompt,
           project_type: 'photo_edit',
           status: 'processing',
@@ -239,11 +241,12 @@ const PhotoEditor = ({ userId }: PhotoEditorProps) => {
                 <SelectItem value="background_removal">Hapus Background</SelectItem>
                 <SelectItem value="background_replacement">Ganti Background</SelectItem>
                 <SelectItem value="image_enhancement">Tingkatkan Kualitas</SelectItem>
+                <SelectItem value="custom_edit">Edit Kustom</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
-          {/* Edit Description (only for background replacement) */}
+          {/* Edit Description (for background replacement and custom edit) */}
           {editType === 'background_replacement' && (
             <div className="space-y-4">
               <Label htmlFor="edit-prompt">Deskripsi Background Baru</Label>
@@ -275,11 +278,28 @@ const PhotoEditor = ({ userId }: PhotoEditorProps) => {
             </div>
           )}
 
+          {/* Custom Edit Prompt */}
+          {editType === 'custom_edit' && (
+            <div className="space-y-4">
+              <Label htmlFor="custom-edit-prompt">Instruksi Edit Kustom</Label>
+              <Textarea
+                id="custom-edit-prompt"
+                placeholder="Tulis instruksi edit Anda sendiri, contoh: ubah warna menjadi merah, tambahkan efek vintage, hilangkan objek tertentu..."
+                value={editPrompt}
+                onChange={(e) => setEditPrompt(e.target.value)}
+                rows={4}
+              />
+              <p className="text-sm text-muted-foreground">
+                Tulis dengan detail apa yang ingin Anda ubah dari gambar ini.
+              </p>
+            </div>
+          )}
+
           {/* Process Button */}
           <div className="flex justify-center">
             <Button
               onClick={handleProcess}
-              disabled={processing || !originalImage || !editType || (editType === 'background_replacement' && !editPrompt.trim())}
+              disabled={processing || !originalImage || !editType || ((editType === 'background_replacement' || editType === 'custom_edit') && !editPrompt.trim())}
               size="lg"
               className="min-w-[200px]"
             >
