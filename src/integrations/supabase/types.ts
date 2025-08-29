@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      credit_transactions: {
+        Row: {
+          created_at: string
+          credits_after: number
+          credits_amount: number
+          credits_before: number
+          description: string | null
+          expires_at: string | null
+          id: string
+          reference_id: string | null
+          transaction_type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          credits_after?: number
+          credits_amount: number
+          credits_before?: number
+          description?: string | null
+          expires_at?: string | null
+          id?: string
+          reference_id?: string | null
+          transaction_type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          credits_after?: number
+          credits_amount?: number
+          credits_before?: number
+          description?: string | null
+          expires_at?: string | null
+          id?: string
+          reference_id?: string | null
+          transaction_type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -107,6 +146,42 @@ export type Database = {
         }
         Relationships: []
       }
+      user_credits: {
+        Row: {
+          created_at: string
+          credits_balance: number
+          free_credits: number
+          id: string
+          last_reset_date: string | null
+          total_purchased: number
+          total_used: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          credits_balance?: number
+          free_credits?: number
+          id?: string
+          last_reset_date?: string | null
+          total_purchased?: number
+          total_used?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          credits_balance?: number
+          free_credits?: number
+          id?: string
+          last_reset_date?: string | null
+          total_purchased?: number
+          total_used?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -131,14 +206,73 @@ export type Database = {
         }
         Relationships: []
       }
+      user_subscriptions: {
+        Row: {
+          auto_renew: boolean
+          created_at: string
+          credits_per_month: number
+          id: string
+          monthly_price: number
+          payment_reference: string | null
+          plan_type: string
+          status: string
+          subscription_end: string | null
+          subscription_start: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          auto_renew?: boolean
+          created_at?: string
+          credits_per_month?: number
+          id?: string
+          monthly_price?: number
+          payment_reference?: string | null
+          plan_type?: string
+          status?: string
+          subscription_end?: string | null
+          subscription_start?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          auto_renew?: boolean
+          created_at?: string
+          credits_per_month?: number
+          id?: string
+          monthly_price?: number
+          payment_reference?: string | null
+          plan_type?: string
+          status?: string
+          subscription_end?: string | null
+          subscription_start?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      add_credits: {
+        Args: {
+          p_credits_amount: number
+          p_description?: string
+          p_reference_id?: string
+          p_transaction_type?: string
+          p_user_id: string
+        }
+        Returns: boolean
+      }
       check_admin_access: {
         Args: Record<PropertyKey, never>
         Returns: boolean
+      }
+      expire_old_credits: {
+        Args: Record<PropertyKey, never>
+        Returns: number
       }
       has_role: {
         Args: {
@@ -149,6 +283,15 @@ export type Database = {
       }
       is_admin: {
         Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      use_credits: {
+        Args: {
+          p_credits_amount: number
+          p_description?: string
+          p_reference_id?: string
+          p_user_id: string
+        }
         Returns: boolean
       }
     }
