@@ -17,6 +17,17 @@ const Auth = () => {
   const { toast } = useToast();
 
   useEffect(() => {
+    // Check for existing session first
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        navigate('/dashboard');
+      }
+    };
+
+    checkSession();
+
+    // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session?.user) {
         navigate('/dashboard');
