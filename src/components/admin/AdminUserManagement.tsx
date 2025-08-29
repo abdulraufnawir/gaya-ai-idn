@@ -20,6 +20,7 @@ interface UserProfile {
   created_at: string;
   updated_at: string;
   project_count?: number;
+  email?: string;
 }
 
 const AdminUserManagement = () => {
@@ -56,7 +57,7 @@ const AdminUserManagement = () => {
 
       if (profilesError) throw profilesError;
 
-      // Get project counts for each user
+      // Get project counts and email for each user
       const usersWithProjectCounts = await Promise.all(
         (profiles || []).map(async (profile) => {
           const { count } = await supabase
@@ -64,9 +65,19 @@ const AdminUserManagement = () => {
             .select('*', { count: 'exact', head: true })
             .eq('user_id', profile.user_id);
 
+          // Try to get email from auth.users using admin access
+          let email = null;
+          try {
+            const { data: authUser } = await supabase.auth.admin.getUserById(profile.user_id);
+            email = authUser.user?.email || null;
+          } catch (error) {
+            console.log('Could not fetch email for user:', profile.user_id);
+          }
+
           return {
             ...profile,
-            project_count: count || 0
+            project_count: count || 0,
+            email
           };
         })
       );
@@ -89,7 +100,8 @@ const AdminUserManagement = () => {
   const filteredUsers = users.filter(user =>
     user.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.business_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.phone?.includes(searchTerm)
+    user.phone?.includes(searchTerm) ||
+    user.email?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const getUserStatus = (user: UserProfile) => {
@@ -133,7 +145,7 @@ const AdminUserManagement = () => {
           <div className="flex items-center space-x-2 mb-4">
             <Search className="h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search users by name, business, or phone..."
+              placeholder="Search users by name, business, phone, or email..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="max-w-sm"
@@ -146,6 +158,7 @@ const AdminUserManagement = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead>User</TableHead>
+                  <TableHead>Email</TableHead>
                   <TableHead>Business</TableHead>
                   <TableHead>Contact</TableHead>
                   <TableHead>Projects</TableHead>
@@ -169,6 +182,9 @@ const AdminUserManagement = () => {
                             <div className="text-sm text-muted-foreground">{user.user_id.substring(0, 8)}...</div>
                           </div>
                         </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm">{user.email || 'N/A'}</div>
                       </TableCell>
                       <TableCell>
                         <div>
@@ -229,6 +245,7 @@ const AdminUserManagement = () => {
                 <h4 className="font-semibold mb-2">Personal Information</h4>
                 <div className="space-y-2 text-sm">
                   <div><span className="font-medium">Full Name:</span> {selectedUser.full_name || 'N/A'}</div>
+                  <div><span className="font-medium">Email:</span> {selectedUser.email || 'N/A'}</div>
                   <div><span className="font-medium">Phone:</span> {selectedUser.phone || 'N/A'}</div>
                   <div><span className="font-medium">User ID:</span> {selectedUser.user_id}</div>
                 </div>
