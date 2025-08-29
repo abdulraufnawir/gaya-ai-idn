@@ -127,28 +127,8 @@ const Dashboard = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 mb-4 h-auto">
-            <TabsTrigger value="virtual-tryon" className="flex flex-col sm:flex-row items-center gap-1 p-2 text-xs sm:text-sm">
-              <Upload className="h-4 w-4" />
-              <span className="text-center">Virtual Try-On</span>
-            </TabsTrigger>
-            <TabsTrigger value="model-swap" className="flex flex-col sm:flex-row items-center gap-1 p-2 text-xs sm:text-sm">
-              <Users className="h-4 w-4" />
-              <span className="text-center">Ganti Model</span>
-            </TabsTrigger>
-            <TabsTrigger value="photo-edit" className="flex flex-col sm:flex-row items-center gap-1 p-2 text-xs sm:text-sm">
-              <Edit3 className="h-4 w-4" />
-              <span className="text-center">Edit Foto</span>
-            </TabsTrigger>
-            <TabsTrigger value="history" className="flex flex-col sm:flex-row items-center gap-1 p-2 text-xs sm:text-sm">
-              <Sparkles className="h-4 w-4" />
-              <span className="text-center">Riwayat</span>
-            </TabsTrigger>
-            <TabsTrigger value="profile" className="flex flex-col sm:flex-row items-center gap-1 p-2 text-xs sm:text-sm">
-              <UserIcon className="h-4 w-4" />
-              <span className="text-center">Profil</span>
-            </TabsTrigger>
-          </TabsList>
+          {/* Content area with bottom padding for fixed nav */}
+          <div className="pb-20 md:pb-4">
 
           <TabsContent value="virtual-tryon">
             <VirtualTryOn userId={user.id} />
@@ -169,6 +149,48 @@ const Dashboard = () => {
           <TabsContent value="profile">
             <UserProfile user={user} />
           </TabsContent>
+          </div>
+
+          {/* Bottom Navigation - Mobile Style */}
+          <div className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-t border-border z-50">
+            <TabsList className="grid w-full grid-cols-5 h-16 bg-transparent rounded-none border-none p-0">
+              <TabsTrigger 
+                value="virtual-tryon" 
+                className="flex flex-col items-center justify-center gap-1 p-2 text-xs data-[state=active]:bg-primary/10 data-[state=active]:text-primary rounded-none border-none h-full"
+              >
+                <Upload className="h-4 w-4" />
+                <span className="text-[10px] leading-tight">Virtual Try-On</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="model-swap" 
+                className="flex flex-col items-center justify-center gap-1 p-2 text-xs data-[state=active]:bg-primary/10 data-[state=active]:text-primary rounded-none border-none h-full"
+              >
+                <Users className="h-4 w-4" />
+                <span className="text-[10px] leading-tight">Ganti Model</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="photo-edit" 
+                className="flex flex-col items-center justify-center gap-1 p-2 text-xs data-[state=active]:bg-primary/10 data-[state=active]:text-primary rounded-none border-none h-full"
+              >
+                <Edit3 className="h-4 w-4" />
+                <span className="text-[10px] leading-tight">Edit Foto</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="history" 
+                className="flex flex-col items-center justify-center gap-1 p-2 text-xs data-[state=active]:bg-primary/10 data-[state=active]:text-primary rounded-none border-none h-full"
+              >
+                <Sparkles className="h-4 w-4" />
+                <span className="text-[10px] leading-tight">Riwayat</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="profile" 
+                className="flex flex-col items-center justify-center gap-1 p-2 text-xs data-[state=active]:bg-primary/10 data-[state=active]:text-primary rounded-none border-none h-full"
+              >
+                <UserIcon className="h-4 w-4" />
+                <span className="text-[10px] leading-tight">Profil</span>
+              </TabsTrigger>
+            </TabsList>
+          </div>
         </Tabs>
       </div>
     </div>
