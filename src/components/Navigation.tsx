@@ -11,48 +11,8 @@ const Navigation = () => {
 
   return (
     <>
-      {/* Desktop Navigation - Top */}
-      <nav className="hidden md:block fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            {/* Logo */}
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center">
-                <Sparkles className="w-5 h-5 text-primary-foreground" />
-              </div>
-              <span className="text-xl font-bold text-foreground">
-                BUSANA<span className="text-primary">.AI</span>
-              </span>
-            </div>
-
-            {/* Desktop Navigation */}
-            <div className="flex items-center space-x-8">
-              {navItems.map((item) => (
-                <a
-                  key={item.label}
-                  href={item.href}
-                  className="text-muted-foreground hover:text-foreground transition-colors duration-200 font-medium"
-                >
-                  {item.label}
-                </a>
-              ))}
-            </div>
-
-            {/* Desktop CTA */}
-            <div className="flex items-center space-x-4">
-              <Button variant="ghost" size="sm" asChild>
-                <a href="/auth">Masuk</a>
-              </Button>
-              <Button variant="hero" size="sm" asChild>
-                <a href="/auth">Coba Gratis</a>
-              </Button>
-            </div>
-          </div>
-        </div>
-      </nav>
-
-      {/* Mobile Logo Bar - Top */}
-      <nav className="md:hidden fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border">
+      {/* Logo Only - Top */}
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border">
         <div className="flex items-center justify-center h-16 px-4">
           <div className="flex items-center space-x-2">
             <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center">
@@ -65,8 +25,8 @@ const Navigation = () => {
         </div>
       </nav>
 
-      {/* Mobile Bottom Navigation */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-lg border-t border-border pb-safe">
+      {/* Bottom Navigation - All Devices */}
+      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-lg border-t border-border pb-safe">
         <div className="grid grid-cols-4 gap-1 px-2 py-2">
           {navItems.map((item) => (
             <a
