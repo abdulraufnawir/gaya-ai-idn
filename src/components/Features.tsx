@@ -26,19 +26,7 @@ const Features = () => {
     description: "Edit foto dengan AI - ubah background, pencahayaan, dan style dengan mudah.",
     badge: "",
     color: "text-primary-glow"
-  }, {
-    icon: Zap,
-    title: "Proses Cepat",
-    description: "Dapatkan hasil dalam hitungan detik. Tidak perlu menunggu lama untuk melihat hasilnya.",
-    badge: "",
-    color: "text-primary"
-  }, {
-    icon: Shield,
-    title: "Data Aman",
-    description: "Foto dan data Anda tersimpan aman dengan enkripsi tingkat enterprise.",
-    badge: "",
-    color: "text-success"
-  }, {
+  },{
     icon: Smartphone,
     title: "Mobile Friendly",
     description: "Optimized untuk mobile. Gunakan langsung dari smartphone untuk kemudahan maksimal.",
