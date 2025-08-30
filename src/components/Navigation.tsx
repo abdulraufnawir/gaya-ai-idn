@@ -1,23 +1,20 @@
 import { Button } from "@/components/ui/button";
 import { Sparkles } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+
 const Navigation = () => {
   const isMobile = useIsMobile();
-  const navItems = [{
-    label: "Fitur",
-    href: "#features"
-  }, {
-    label: "Cara Kerja",
-    href: "#how-it-works"
-  }, {
-    label: "Harga",
-    href: "#pricing"
-  }, {
-    label: "Kontak",
-    href: "#contact"
-  }];
+  
+  const navItems = [
+    { label: "Fitur", href: "#features" },
+    { label: "Cara Kerja", href: "#how-it-works" },
+    { label: "Harga", href: "#pricing" },
+    { label: "Kontak", href: "#contact" }
+  ];
+
   if (isMobile) {
-    return <>
+    return (
+      <>
         {/* Mobile: Logo Only - Top */}
         <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border">
           <div className="flex items-center justify-center h-16 px-4">
@@ -35,12 +32,18 @@ const Navigation = () => {
         {/* Mobile: Bottom Navigation */}
         <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-lg border-t border-border pb-safe">
           <div className="grid grid-cols-4 gap-1 px-2 py-2">
-            {navItems.map(item => <a key={item.label} href={item.href} className="flex flex-col items-center justify-center py-2 px-1 text-xs text-muted-foreground hover:text-foreground transition-colors duration-200 rounded-lg hover:bg-muted/50">
+            {navItems.map((item) => (
+              <a
+                key={item.label}
+                href={item.href}
+                className="flex flex-col items-center justify-center py-2 px-1 text-xs text-muted-foreground hover:text-foreground transition-colors duration-200 rounded-lg hover:bg-muted/50"
+              >
                 <div className="w-6 h-6 mb-1 flex items-center justify-center">
                   <div className="w-2 h-2 bg-current rounded-full"></div>
                 </div>
                 <span className="truncate">{item.label}</span>
-              </a>)}
+              </a>
+            ))}
           </div>
           
           {/* Mobile: Bottom CTA Buttons */}
@@ -53,9 +56,12 @@ const Navigation = () => {
             </Button>
           </div>
         </nav>
-      </>;
+      </>
+    );
   }
-  return <>
+
+  return (
+    <>
       {/* Desktop: Full Navigation - Top */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border">
         <div className="flex items-center justify-between h-16 px-8 max-w-7xl mx-auto">
@@ -71,11 +77,11 @@ const Navigation = () => {
 
           {/* Desktop Navigation Items */}
           <div className="hidden md:flex items-center space-x-8">
-            {navItems.map(item => (
+            {navItems.map((item) => (
               <a
                 key={item.label}
                 href={item.href}
-                className="text-muted-foreground hover:text-foreground transition-colors duration-200"
+                className="text-muted-foreground hover:text-foreground transition-colors duration-200 font-medium"
               >
                 {item.label}
               </a>
@@ -93,6 +99,8 @@ const Navigation = () => {
           </div>
         </div>
       </nav>
-    </>;
+    </>
+  );
 };
+
 export default Navigation;
