@@ -71,7 +71,15 @@ const Navigation = () => {
 
           {/* Desktop Navigation Items */}
           <div className="hidden md:flex items-center space-x-8">
-            {navItems.map(item => {})}
+            {navItems.map(item => (
+              <a
+                key={item.label}
+                href={item.href}
+                className="text-muted-foreground hover:text-foreground transition-colors duration-200"
+              >
+                {item.label}
+              </a>
+            ))}
           </div>
 
           {/* Desktop CTA Buttons */}
