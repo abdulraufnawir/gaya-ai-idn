@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Upload, Edit3, Wand2, Loader2 } from 'lucide-react';
+import { Upload, Edit3, Wand2, Loader2, Image, Palette } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface PhotoEditorProps {
@@ -16,8 +16,11 @@ interface PhotoEditorProps {
 const PhotoEditor = ({ userId }: PhotoEditorProps) => {
   const [originalImage, setOriginalImage] = useState<File | null>(null);
   const [originalImagePreview, setOriginalImagePreview] = useState<string | null>(null);
+  const [backgroundImage, setBackgroundImage] = useState<File | null>(null);
+  const [backgroundImagePreview, setBackgroundImagePreview] = useState<string | null>(null);
   const [editType, setEditType] = useState<string>('');
   const [editPrompt, setEditPrompt] = useState('');
+  const [selectedColor, setSelectedColor] = useState<string>('');
   const [processing, setProcessing] = useState(false);
   const { toast } = useToast();
 
@@ -31,11 +34,24 @@ const PhotoEditor = ({ userId }: PhotoEditorProps) => {
     }
   };
 
+  const handleBackgroundImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setBackgroundImage(file);
+      // Create preview URL
+      const previewUrl = URL.createObjectURL(file);
+      setBackgroundImagePreview(previewUrl);
+      // Clear text prompt when background image is uploaded
+      setEditPrompt('');
+      setSelectedColor('');
+    }
+  };
+
   const handleProcess = async () => {
-    if (!originalImage || (!editPrompt.trim() && editType !== 'background_removal' && editType !== 'image_enhancement')) {
+    if (!originalImage) {
       toast({
         title: 'Error',
-        description: 'Silakan upload gambar dan pilih jenis edit',
+        description: 'Silakan upload gambar terlebih dahulu',
         variant: 'destructive',
       });
       return;
@@ -45,6 +61,26 @@ const PhotoEditor = ({ userId }: PhotoEditorProps) => {
       toast({
         title: 'Error',
         description: 'Silakan pilih jenis edit yang diinginkan',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Validation for background replacement
+    if (editType === 'background_replacement' && !backgroundImage && !editPrompt.trim() && !selectedColor) {
+      toast({
+        title: 'Error',
+        description: 'Silakan upload background image, pilih warna, atau tulis deskripsi background',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Validation for custom edit
+    if (editType === 'custom_edit' && !editPrompt.trim()) {
+      toast({
+        title: 'Error',
+        description: 'Silakan tulis instruksi edit kustom',
         variant: 'destructive',
       });
       return;
@@ -76,6 +112,23 @@ const PhotoEditor = ({ userId }: PhotoEditorProps) => {
         .from('tryon-images')
         .getPublicUrl(fileName);
 
+      // Upload background image if provided
+      let backgroundUrl = null;
+      if (backgroundImage) {
+        const backgroundFileName = `${user.id}/background-${Date.now()}-${backgroundImage.name}`;
+        const { data: backgroundUploadData, error: backgroundUploadError } = await supabase.storage
+          .from('tryon-images')
+          .upload(backgroundFileName, backgroundImage);
+
+        if (backgroundUploadError) throw backgroundUploadError;
+
+        const { data: { publicUrl: backgroundPublicUrl } } = supabase.storage
+          .from('tryon-images')
+          .getPublicUrl(backgroundFileName);
+        
+        backgroundUrl = backgroundPublicUrl;
+      }
+
       // Create project in database
       const { data: project, error: projectError } = await supabase
         .from('projects')
@@ -94,6 +147,8 @@ const PhotoEditor = ({ userId }: PhotoEditorProps) => {
           settings: { 
             edit_type: editType,
             prompt: editPrompt,
+            selected_color: selectedColor,
+            background_image_url: backgroundUrl,
             original_image_url: publicUrl
           }
         })
@@ -107,8 +162,10 @@ const PhotoEditor = ({ userId }: PhotoEditorProps) => {
         body: {
           action: 'photoEdit',
           originalImage: publicUrl,
+          backgroundImage: backgroundUrl,
           editType: editType,
           prompt: editPrompt,
+          selectedColor: selectedColor,
           projectId: project.id
         }
       });
@@ -136,6 +193,8 @@ const PhotoEditor = ({ userId }: PhotoEditorProps) => {
           settings: {
             edit_type: editType,
             prompt: editPrompt,
+            selected_color: selectedColor,
+            background_image_url: backgroundUrl,
             original_image_url: publicUrl,
             model_used: 'google/nano-banana',
             api_provider: 'kie.ai'
@@ -156,8 +215,11 @@ const PhotoEditor = ({ userId }: PhotoEditorProps) => {
       // Reset form
       setOriginalImage(null);
       setOriginalImagePreview(null);
+      setBackgroundImage(null);
+      setBackgroundImagePreview(null);
       setEditType('');
       setEditPrompt('');
+      setSelectedColor('');
       
     } catch (error: any) {
       console.error('Photo editing error:', error);
@@ -246,18 +308,135 @@ const PhotoEditor = ({ userId }: PhotoEditorProps) => {
             </Select>
           </div>
 
-          {/* Edit Description (for background replacement and custom edit) */}
+          {/* Background Replacement Options */}
           {editType === 'background_replacement' && (
-            <div className="space-y-4">
-              <Label htmlFor="edit-prompt">Deskripsi Background Baru</Label>
-              <Textarea
-                id="edit-prompt"
-                placeholder="Jelaskan background yang diinginkan, contoh: studio putih bersih, pemandangan pantai, ruang kantor modern..."
-                value={editPrompt}
-                onChange={(e) => setEditPrompt(e.target.value)}
-                rows={3}
-              />
+            <div className="space-y-6">
+              {/* Upload Background Image */}
+              <div className="space-y-3">
+                <Label className="text-sm font-medium flex items-center gap-2">
+                  <Image className="h-4 w-4" />
+                  Upload Background Image
+                </Label>
+                <div className="flex justify-center px-4 py-4 border-2 border-dashed border-muted-foreground/25 rounded-lg hover:border-primary/50 transition-colors">
+                  <div className="space-y-1 text-center">
+                    <Upload className="mx-auto h-6 w-6 text-muted-foreground" />
+                    <div className="flex text-sm text-muted-foreground">
+                      <label
+                        htmlFor="background-upload"
+                        className="relative cursor-pointer rounded-md font-medium text-primary hover:text-primary/80"
+                      >
+                        <span>Upload background image</span>
+                        <Input
+                          id="background-upload"
+                          type="file"
+                          accept="image/*"
+                          className="sr-only"
+                          onChange={handleBackgroundImageChange}
+                        />
+                      </label>
+                    </div>
+                    <p className="text-xs text-muted-foreground">PNG, JPG hingga 10MB</p>
+                  </div>
+                </div>
+                {backgroundImagePreview && (
+                  <div className="mt-3">
+                    <img 
+                      src={backgroundImagePreview} 
+                      alt="Background Preview" 
+                      className="w-full max-w-xs mx-auto rounded-lg shadow-md"
+                    />
+                    <p className="text-sm text-green-600 mt-2 text-center">
+                      ✓ {backgroundImage?.name}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* OR Divider */}
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t border-muted-foreground/25" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-background px-2 text-muted-foreground">ATAU</span>
+                </div>
+              </div>
+
+              {/* Color Palette */}
+              <div className="space-y-3">
+                <Label className="text-sm font-medium flex items-center gap-2">
+                  <Palette className="h-4 w-4" />
+                  Pilih Warna Background
+                </Label>
+                <div className="grid grid-cols-6 gap-2">
+                  {[
+                    { name: 'Putih', color: '#FFFFFF', textColor: 'text-gray-800' },
+                    { name: 'Abu Terang', color: '#F5F5F5', textColor: 'text-gray-800' },
+                    { name: 'Abu', color: '#9CA3AF', textColor: 'text-white' },
+                    { name: 'Hitam', color: '#000000', textColor: 'text-white' },
+                    { name: 'Biru Muda', color: '#DBEAFE', textColor: 'text-blue-700' },
+                    { name: 'Biru', color: '#3B82F6', textColor: 'text-white' },
+                    { name: 'Hijau Muda', color: '#D1FAE5', textColor: 'text-green-700' },
+                    { name: 'Hijau', color: '#10B981', textColor: 'text-white' },
+                    { name: 'Merah Muda', color: '#FCE7F3', textColor: 'text-pink-700' },
+                    { name: 'Merah', color: '#EF4444', textColor: 'text-white' },
+                    { name: 'Kuning Muda', color: '#FEF3C7', textColor: 'text-yellow-800' },
+                    { name: 'Ungu', color: '#8B5CF6', textColor: 'text-white' }
+                  ].map((colorOption, index) => (
+                    <button
+                      key={index}
+                      type="button"
+                      onClick={() => {
+                        setSelectedColor(colorOption.color);
+                        setEditPrompt(`Background warna ${colorOption.name.toLowerCase()}`);
+                        setBackgroundImage(null);
+                        setBackgroundImagePreview(null);
+                      }}
+                      className={`aspect-square rounded-lg border-2 transition-all ${
+                        selectedColor === colorOption.color 
+                          ? 'border-primary ring-2 ring-primary/20' 
+                          : 'border-muted-foreground/25 hover:border-primary/50'
+                      }`}
+                      style={{ backgroundColor: colorOption.color }}
+                      title={colorOption.name}
+                    />
+                  ))}
+                </div>
+                {selectedColor && (
+                  <p className="text-sm text-green-600 text-center">
+                    ✓ Warna dipilih: {editPrompt}
+                  </p>
+                )}
+              </div>
+
+              {/* OR Divider */}
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t border-muted-foreground/25" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-background px-2 text-muted-foreground">ATAU</span>
+                </div>
+              </div>
+
+              {/* Text Description */}
+              <div className="space-y-3">
+                <Label htmlFor="edit-prompt">Deskripsi Background Baru</Label>
+                <Textarea
+                  id="edit-prompt"
+                  placeholder="Jelaskan background yang diinginkan, contoh: studio putih bersih, pemandangan pantai, ruang kantor modern..."
+                  value={editPrompt}
+                  onChange={(e) => {
+                    setEditPrompt(e.target.value);
+                    setSelectedColor('');
+                    setBackgroundImage(null);
+                    setBackgroundImagePreview(null);
+                  }}
+                  rows={3}
+                />
+              </div>
               
+              {/* Background Suggestions */}
               <div className="space-y-2">
                 <Label className="text-sm font-medium">Saran Background:</Label>
                 <div className="flex flex-wrap gap-2">
@@ -266,7 +445,12 @@ const PhotoEditor = ({ userId }: PhotoEditorProps) => {
                       key={index}
                       variant="outline"
                       size="sm"
-                      onClick={() => setEditPrompt(suggestion)}
+                      onClick={() => {
+                        setEditPrompt(suggestion);
+                        setSelectedColor('');
+                        setBackgroundImage(null);
+                        setBackgroundImagePreview(null);
+                      }}
                       className="text-xs"
                     >
                       <Wand2 className="h-3 w-3 mr-1" />
@@ -299,7 +483,9 @@ const PhotoEditor = ({ userId }: PhotoEditorProps) => {
           <div className="flex justify-center">
             <Button
               onClick={handleProcess}
-              disabled={processing || !originalImage || !editType || ((editType === 'background_replacement' || editType === 'custom_edit') && !editPrompt.trim())}
+              disabled={processing || !originalImage || !editType || 
+                (editType === 'background_replacement' && !backgroundImage && !editPrompt.trim() && !selectedColor) ||
+                (editType === 'custom_edit' && !editPrompt.trim())}
               size="lg"
               className="min-w-[200px]"
             >
