@@ -363,25 +363,25 @@ const PhotoEditor = ({ userId }: PhotoEditorProps) => {
               </div>
 
               {/* Color Palette */}
-              <div className="space-y-3">
+              <div className="space-y-2">
                 <Label className="text-sm font-medium flex items-center gap-2">
-                  <Palette className="h-4 w-4" />
-                  Pilih Warna Background
+                  <Palette className="h-3 w-3" />
+                  Pilih Warna
                 </Label>
-                <div className="grid grid-cols-6 gap-2">
+                <div className="grid grid-cols-8 gap-1.5">
                   {[
-                    { name: 'Putih', color: '#FFFFFF', textColor: 'text-gray-800' },
-                    { name: 'Abu Terang', color: '#F5F5F5', textColor: 'text-gray-800' },
-                    { name: 'Abu', color: '#9CA3AF', textColor: 'text-white' },
-                    { name: 'Hitam', color: '#000000', textColor: 'text-white' },
-                    { name: 'Biru Muda', color: '#DBEAFE', textColor: 'text-blue-700' },
-                    { name: 'Biru', color: '#3B82F6', textColor: 'text-white' },
-                    { name: 'Hijau Muda', color: '#D1FAE5', textColor: 'text-green-700' },
-                    { name: 'Hijau', color: '#10B981', textColor: 'text-white' },
-                    { name: 'Merah Muda', color: '#FCE7F3', textColor: 'text-pink-700' },
-                    { name: 'Merah', color: '#EF4444', textColor: 'text-white' },
-                    { name: 'Kuning Muda', color: '#FEF3C7', textColor: 'text-yellow-800' },
-                    { name: 'Ungu', color: '#8B5CF6', textColor: 'text-white' }
+                    { name: 'Putih', color: '#FFFFFF' },
+                    { name: 'Abu Terang', color: '#F5F5F5' },
+                    { name: 'Abu', color: '#9CA3AF' },
+                    { name: 'Hitam', color: '#000000' },
+                    { name: 'Biru Muda', color: '#DBEAFE' },
+                    { name: 'Biru', color: '#3B82F6' },
+                    { name: 'Hijau Muda', color: '#D1FAE5' },
+                    { name: 'Hijau', color: '#10B981' },
+                    { name: 'Merah Muda', color: '#FCE7F3' },
+                    { name: 'Merah', color: '#EF4444' },
+                    { name: 'Kuning Muda', color: '#FEF3C7' },
+                    { name: 'Ungu', color: '#8B5CF6' }
                   ].map((colorOption, index) => (
                     <button
                       key={index}
@@ -392,10 +392,10 @@ const PhotoEditor = ({ userId }: PhotoEditorProps) => {
                         setBackgroundImage(null);
                         setBackgroundImagePreview(null);
                       }}
-                      className={`aspect-square rounded-lg border-2 transition-all ${
+                      className={`w-6 h-6 rounded-md border transition-all ${
                         selectedColor === colorOption.color 
-                          ? 'border-primary ring-2 ring-primary/20' 
-                          : 'border-muted-foreground/25 hover:border-primary/50'
+                          ? 'border-primary ring-1 ring-primary scale-110' 
+                          : 'border-muted-foreground/30 hover:border-primary/60 hover:scale-105'
                       }`}
                       style={{ backgroundColor: colorOption.color }}
                       title={colorOption.name}
@@ -403,8 +403,8 @@ const PhotoEditor = ({ userId }: PhotoEditorProps) => {
                   ))}
                 </div>
                 {selectedColor && (
-                  <p className="text-sm text-green-600 text-center">
-                    ✓ Warna dipilih: {editPrompt}
+                  <p className="text-xs text-green-600">
+                    ✓ {editPrompt}
                   </p>
                 )}
               </div>
