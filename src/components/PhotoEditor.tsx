@@ -368,7 +368,7 @@ const PhotoEditor = ({ userId }: PhotoEditorProps) => {
                   <Palette className="h-3 w-3" />
                   Pilih Warna
                 </Label>
-                <div className="grid grid-cols-8 gap-1.5">
+                <div className="grid grid-cols-8 gap-0.5">
                   {[
                     { name: 'Putih', color: '#FFFFFF' },
                     { name: 'Abu Terang', color: '#F5F5F5' },
@@ -392,10 +392,10 @@ const PhotoEditor = ({ userId }: PhotoEditorProps) => {
                         setBackgroundImage(null);
                         setBackgroundImagePreview(null);
                       }}
-                      className={`w-6 h-6 rounded-md border transition-all ${
+                      className={`w-5 h-5 rounded border transition-all ${
                         selectedColor === colorOption.color 
-                          ? 'border-primary ring-1 ring-primary scale-110' 
-                          : 'border-muted-foreground/30 hover:border-primary/60 hover:scale-105'
+                          ? 'border-primary ring-1 ring-primary scale-110 z-10 relative' 
+                          : 'border-muted-foreground/30 hover:border-primary/60 hover:scale-105 hover:z-10 hover:relative'
                       }`}
                       style={{ backgroundColor: colorOption.color }}
                       title={colorOption.name}
