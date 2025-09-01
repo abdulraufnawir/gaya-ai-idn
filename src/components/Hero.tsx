@@ -23,7 +23,7 @@ const Hero = () => {
 
           {/* Main Heading */}
           <h1 className="text-4xl sm:text-5xl lg:text-7xl font-bold text-foreground mb-6 animate-slide-up">
-            Buat foto dan video produkmu
+            Coba Outfit Impian
             <br />
             <span className="bg-gradient-primary bg-clip-text text-transparent">
               Tanpa Ribet
