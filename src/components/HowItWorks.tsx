@@ -89,39 +89,40 @@ const HowItWorks = () => {
         </div>
 
         {/* Demo Images */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
-          {/* Before */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12 max-w-4xl mx-auto">
+          {/* Foto Model */}
           <div className="text-center">
-            <h3 className="text-xl font-semibold text-foreground mb-4">Input</h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="relative group">
-                <div className="aspect-[3/4] bg-muted/30 rounded-xl overflow-hidden">
-                  <img 
-                    src="/lovable-uploads/fd27fcb8-ae87-47e0-b679-15c126a8a037.png" 
-                    alt="Model Demo" 
-                    className="w-full h-full object-contain shadow-soft group-hover:shadow-warm transition-all duration-300"
-                  />
-                </div>
-                <div className="absolute inset-0 bg-gradient-primary/10 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                <p className="text-sm text-muted-foreground mt-2">Foto Model</p>
+            <h3 className="text-lg font-semibold text-foreground mb-4">Foto Model</h3>
+            <div className="relative group">
+              <div className="aspect-[3/4] bg-muted/30 rounded-xl overflow-hidden">
+                <img 
+                  src="/lovable-uploads/fd27fcb8-ae87-47e0-b679-15c126a8a037.png" 
+                  alt="Model Demo" 
+                  className="w-full h-full object-contain shadow-soft group-hover:shadow-warm transition-all duration-300"
+                />
               </div>
-              <div className="relative group">
-                <div className="aspect-[3/4] bg-muted/30 rounded-xl overflow-hidden">
-                  <img 
-                    src="/lovable-uploads/a839faf5-7242-43f8-a727-a443b570cd40.png" 
-                    alt="Clothing Samples" 
-                    className="w-full h-full object-contain shadow-soft group-hover:shadow-warm transition-all duration-300"
-                  />
-                </div>
-                <div className="absolute inset-0 bg-gradient-primary/10 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                <p className="text-sm text-muted-foreground mt-2">Foto Pakaian</p>
-              </div>
+              <div className="absolute inset-0 bg-gradient-primary/10 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             </div>
           </div>
 
-          {/* After */}
+          {/* Foto Pakaian */}
           <div className="text-center">
-            <h3 className="text-xl font-semibold text-foreground mb-4">Output</h3>
+            <h3 className="text-lg font-semibold text-foreground mb-4">Foto Pakaian</h3>
+            <div className="relative group">
+              <div className="aspect-[3/4] bg-muted/30 rounded-xl overflow-hidden">
+                <img 
+                  src="/lovable-uploads/a839faf5-7242-43f8-a727-a443b570cd40.png" 
+                  alt="Clothing Samples" 
+                  className="w-full h-full object-contain shadow-soft group-hover:shadow-warm transition-all duration-300"
+                />
+              </div>
+              <div className="absolute inset-0 bg-gradient-primary/10 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            </div>
+          </div>
+
+          {/* Output */}
+          <div className="text-center">
+            <h3 className="text-lg font-semibold text-foreground mb-4">Hasil AI Try-On</h3>
             <div className="relative group">
               <div className="aspect-[3/4] bg-muted/30 rounded-xl overflow-hidden">
                 <img 
@@ -131,7 +132,6 @@ const HowItWorks = () => {
                 />
               </div>
               <div className="absolute inset-0 bg-gradient-primary/10 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              <p className="text-sm text-muted-foreground mt-2">Hasil AI Try-On</p>
             </div>
           </div>
         </div>
