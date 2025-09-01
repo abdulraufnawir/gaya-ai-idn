@@ -95,20 +95,24 @@ const HowItWorks = () => {
             <h3 className="text-xl font-semibold text-foreground mb-4">Input</h3>
             <div className="grid grid-cols-2 gap-4">
               <div className="relative group">
-                <img 
-                  src="/lovable-uploads/fd27fcb8-ae87-47e0-b679-15c126a8a037.png" 
-                  alt="Model Demo" 
-                  className="w-full h-48 object-cover rounded-xl shadow-soft group-hover:shadow-warm transition-all duration-300"
-                />
+                <div className="aspect-[3/4] bg-muted/30 rounded-xl overflow-hidden">
+                  <img 
+                    src="/lovable-uploads/fd27fcb8-ae87-47e0-b679-15c126a8a037.png" 
+                    alt="Model Demo" 
+                    className="w-full h-full object-contain shadow-soft group-hover:shadow-warm transition-all duration-300"
+                  />
+                </div>
                 <div className="absolute inset-0 bg-gradient-primary/10 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 <p className="text-sm text-muted-foreground mt-2">Foto Model</p>
               </div>
               <div className="relative group">
-                <img 
-                  src="/lovable-uploads/a839faf5-7242-43f8-a727-a443b570cd40.png" 
-                  alt="Clothing Samples" 
-                  className="w-full h-48 object-cover rounded-xl shadow-soft group-hover:shadow-warm transition-all duration-300"
-                />
+                <div className="aspect-[3/4] bg-muted/30 rounded-xl overflow-hidden">
+                  <img 
+                    src="/lovable-uploads/a839faf5-7242-43f8-a727-a443b570cd40.png" 
+                    alt="Clothing Samples" 
+                    className="w-full h-full object-contain shadow-soft group-hover:shadow-warm transition-all duration-300"
+                  />
+                </div>
                 <div className="absolute inset-0 bg-gradient-primary/10 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 <p className="text-sm text-muted-foreground mt-2">Foto Pakaian</p>
               </div>
@@ -119,11 +123,13 @@ const HowItWorks = () => {
           <div className="text-center">
             <h3 className="text-xl font-semibold text-foreground mb-4">Output</h3>
             <div className="relative group">
-              <img 
-                src="/lovable-uploads/a25c8745-cf7c-4f87-9c57-138b5a976ea9.png" 
-                alt="AI Try-On Result" 
-                className="w-full h-48 object-cover rounded-xl shadow-soft group-hover:shadow-warm transition-all duration-300"
-              />
+              <div className="aspect-[3/4] bg-muted/30 rounded-xl overflow-hidden">
+                <img 
+                  src="/lovable-uploads/a25c8745-cf7c-4f87-9c57-138b5a976ea9.png" 
+                  alt="AI Try-On Result" 
+                  className="w-full h-full object-contain shadow-soft group-hover:shadow-warm transition-all duration-300"
+                />
+              </div>
               <div className="absolute inset-0 bg-gradient-primary/10 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               <p className="text-sm text-muted-foreground mt-2">Hasil AI Try-On</p>
             </div>
