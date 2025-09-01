@@ -17,13 +17,13 @@ const Hero = () => {
           <div className="animate-fade-in">
             <Badge variant="secondary" className="mb-6 px-4 py-2 text-sm font-medium">
               <Sparkles className="w-4 h-4 mr-2" />
-              Platform AI Fashion Terdepan di Indonesia
+              Platform AI Try-On Fashion & Produk Terdepan di Indonesia
             </Badge>
           </div>
 
           {/* Main Heading */}
           <h1 className="text-4xl sm:text-5xl font-bold text-foreground mb-6 animate-slide-up lg:text-6xl">
-           Buat Foto+Video Fashion dan Produkmu
+           Buat Foto & Video Produkmu
             <br />
             <span className="bg-gradient-primary bg-clip-text text-transparent">
               Tanpa Ribet
