@@ -21,7 +21,7 @@ import {
   SidebarTrigger,
   SidebarInset,
 } from '@/components/ui/sidebar';
-import VirtualTryOn from '@/components/VirtualTryOn';
+import Studio from '@/components/Studio';
 import ModelSwap from '@/components/ModelSwap';
 import PhotoEditor from '@/components/PhotoEditor';
 import ProjectHistory from '@/components/ProjectHistory';
@@ -31,7 +31,7 @@ import AdminAccess from '@/components/AdminAccess';
 const Dashboard = () => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('virtual-tryon');
+  const [activeTab, setActiveTab] = useState('studio');
   const navigate = useNavigate();
   const { toast } = useToast();
   const isMobile = useIsMobile();
@@ -60,9 +60,9 @@ const Dashboard = () => {
       setActiveTab('model-swap');
     };
 
-    // Listen for model selection event to switch to virtual try-on
+    // Listen for model selection event to switch to studio
     const handleSelectModelForTryOn = (event: any) => {
-      setActiveTab('virtual-tryon');
+      setActiveTab('studio');
       // Dispatch the model data to VirtualTryOn component
       const virtualTryOnEvent = new CustomEvent('setSelectedModel', {
         detail: { model: event.detail.model }
@@ -108,7 +108,7 @@ const Dashboard = () => {
   }
 
   const menuItems = [
-    { id: 'virtual-tryon', label: 'Virtual Try-On', icon: Upload },
+    { id: 'studio', label: 'Studio', icon: Upload },
     { id: 'model-swap', label: 'Ganti Model', icon: Users },
     { id: 'photo-edit', label: 'Edit Foto', icon: Edit3 },
     { id: 'history', label: 'Riwayat', icon: Sparkles },
@@ -150,8 +150,8 @@ const Dashboard = () => {
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             {/* Content area with bottom padding for fixed nav */}
             <div className="pb-20">
-              <TabsContent value="virtual-tryon">
-                <VirtualTryOn userId={user.id} />
+              <TabsContent value="studio">
+                <Studio userId={user.id} />
               </TabsContent>
 
               <TabsContent value="model-swap">
@@ -261,8 +261,8 @@ const Dashboard = () => {
             </div>
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsContent value="virtual-tryon">
-                <VirtualTryOn userId={user.id} />
+              <TabsContent value="studio">
+                <Studio userId={user.id} />
               </TabsContent>
 
               <TabsContent value="model-swap">
