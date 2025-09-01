@@ -2,8 +2,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Upload, Sparkles, Download, ArrowRight } from "lucide-react";
-import modelDemo from "@/assets/model-demo.jpg";
-import clothingSamples from "@/assets/clothing-samples.jpg";
 
 const HowItWorks = () => {
   const steps = [
@@ -98,7 +96,7 @@ const HowItWorks = () => {
             <div className="grid grid-cols-2 gap-4">
               <div className="relative group">
                 <img 
-                  src={modelDemo} 
+                  src="/lovable-uploads/fd27fcb8-ae87-47e0-b679-15c126a8a037.png" 
                   alt="Model Demo" 
                   className="w-full h-48 object-cover rounded-xl shadow-soft group-hover:shadow-warm transition-all duration-300"
                 />
@@ -107,7 +105,7 @@ const HowItWorks = () => {
               </div>
               <div className="relative group">
                 <img 
-                  src={clothingSamples} 
+                  src="/lovable-uploads/a839faf5-7242-43f8-a727-a443b570cd40.png" 
                   alt="Clothing Samples" 
                   className="w-full h-48 object-cover rounded-xl shadow-soft group-hover:shadow-warm transition-all duration-300"
                 />
@@ -121,13 +119,13 @@ const HowItWorks = () => {
           <div className="text-center">
             <h3 className="text-xl font-semibold text-foreground mb-4">Output</h3>
             <div className="relative group">
-              <div className="w-full h-48 bg-gradient-secondary rounded-xl shadow-soft group-hover:shadow-warm transition-all duration-300 flex items-center justify-center">
-                <div className="text-center">
-                  <Sparkles className="w-12 h-12 text-primary mx-auto mb-2" />
-                  <p className="text-foreground font-medium">Hasil AI Try-On</p>
-                  <p className="text-sm text-muted-foreground">Foto siap pakai berkualitas tinggi</p>
-                </div>
-              </div>
+              <img 
+                src="/lovable-uploads/a25c8745-cf7c-4f87-9c57-138b5a976ea9.png" 
+                alt="AI Try-On Result" 
+                className="w-full h-48 object-cover rounded-xl shadow-soft group-hover:shadow-warm transition-all duration-300"
+              />
+              <div className="absolute inset-0 bg-gradient-primary/10 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <p className="text-sm text-muted-foreground mt-2">Hasil AI Try-On</p>
             </div>
           </div>
         </div>
