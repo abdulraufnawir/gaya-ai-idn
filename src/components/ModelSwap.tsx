@@ -348,7 +348,7 @@ const ModelSwap = ({
               <div className="flex gap-2 flex-wrap">
                 {aspectRatios.map(ratio => <Button key={ratio.value} variant={selectedAspectRatio === ratio.value ? "default" : "outline"} size="sm" onClick={() => setSelectedAspectRatio(ratio.value)} className="flex flex-col h-auto py-2">
                     <div className="w-8 h-8 border border-current mb-1" style={{
-                  aspectRatio: ratio.value === '1:1' ? '1' : ratio.value === '2:3' ? '2/3' : ratio.value === '3:4' ? '3/4' : ratio.value === '4:3' ? '4/3' : '4/5'
+                  aspectRatio: `${ratio.width} / ${ratio.height}`
                 }} />
                     <span className="text-xs">{ratio.label}</span>
                   </Button>)}
