@@ -1,38 +1,46 @@
 import { Sparkles, Mail, Phone, MapPin, Instagram, Youtube, MessageCircle } from "lucide-react";
-
 const Footer = () => {
-  const footerSections = [
-    {
-      title: "Produk",
-      links: [
-        { label: "Virtual Try-On", href: "#" },
-        { label: "Model AI", href: "#" },
-        { label: "Photo Editor", href: "#" },
-       ]
-    },
-    {
-      title: "Solusi",
-      links: [
-        { label: "Fashion Retail", href: "#" },
-        { label: "UMKM", href: "#" },
-        { label: "Online Shop", href: "#" },
-        { label: "Fashion Brand", href: "#" }
-      ]
-    },
-    
-    {
-      title: "Dukungan",
-      links: [
-        { label: "Help Center", href: "#" },
-        { label: "Kontak", href: "#" },
-        { label: "Live Chat", href: "#" },
-       
-      ]
-    }
-  ];
-
-  return (
-    <footer className="bg-foreground text-background">
+  const footerSections = [{
+    title: "Produk",
+    links: [{
+      label: "Virtual Try-On",
+      href: "#"
+    }, {
+      label: "Model AI",
+      href: "#"
+    }, {
+      label: "Photo Editor",
+      href: "#"
+    }]
+  }, {
+    title: "Solusi",
+    links: [{
+      label: "Fashion Retail",
+      href: "#"
+    }, {
+      label: "UMKM",
+      href: "#"
+    }, {
+      label: "Online Shop",
+      href: "#"
+    }, {
+      label: "Fashion Brand",
+      href: "#"
+    }]
+  }, {
+    title: "Dukungan",
+    links: [{
+      label: "Help Center",
+      href: "#"
+    }, {
+      label: "Kontak",
+      href: "#"
+    }, {
+      label: "Live Chat",
+      href: "#"
+    }]
+  }];
+  return <footer className="bg-foreground text-background">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
           {/* Brand Section */}
@@ -57,7 +65,7 @@ const Footer = () => {
               </div>
               <div className="flex items-center gap-3">
                 <Phone className="w-4 h-4 text-primary" />
-                <span className="text-sm text-background/70">+62 21 1234 5678</span>
+                
               </div>
               <div className="flex items-center gap-3">
                 <MapPin className="w-4 h-4 text-primary" />
@@ -67,23 +75,16 @@ const Footer = () => {
           </div>
 
           {/* Links Sections */}
-          {footerSections.map((section) => (
-            <div key={section.title}>
+          {footerSections.map(section => <div key={section.title}>
               <h3 className="font-semibold text-background mb-4">{section.title}</h3>
               <ul className="space-y-2">
-                {section.links.map((link) => (
-                  <li key={link.label}>
-                    <a 
-                      href={link.href}
-                      className="text-background/70 hover:text-primary transition-colors duration-200 text-sm"
-                    >
+                {section.links.map(link => <li key={link.label}>
+                    <a href={link.href} className="text-background/70 hover:text-primary transition-colors duration-200 text-sm">
                       {link.label}
                     </a>
-                  </li>
-                ))}
+                  </li>)}
               </ul>
-            </div>
-          ))}
+            </div>)}
         </div>
 
         {/* Bottom Section */}
@@ -119,8 +120,6 @@ const Footer = () => {
           </div>
         </div>
       </div>
-    </footer>
-  );
+    </footer>;
 };
-
 export default Footer;
