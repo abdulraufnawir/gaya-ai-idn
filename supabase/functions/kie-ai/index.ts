@@ -30,6 +30,8 @@ serve(async (req) => {
         return await processPhotoEdit(params);
       case 'generateModel':
         return await processGenerateModel(params);
+      case 'enhanceProduct':
+        return await processEnhanceProduct(params);
       case 'status':
         return await getStatus(params);
       case 'retry':
@@ -750,6 +752,142 @@ async function processGenerateModel({ prompt, aspectRatio, referenceImage, proje
   }
 }
 
+async function processEnhanceProduct({ productImage, prompt, style, projectId }) {
+  console.log('Processing product enhancement with Kie.AI nano-banana for project:', projectId);
+  
+  try {
+    if (!productImage) {
+      throw new Error('Missing required image: productImage is required');
+    }
+
+    const callbackUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/kie-webhook`;
+    
+    // Build comprehensive AI prompt for product marketing enhancement
+    let finalPrompt = prompt || 'Transform this product into an attractive marketing image with professional styling, appealing background, and commercial photography quality.';
+    
+    // Add style-specific enhancements
+    if (style) {
+      const styleEnhancements = {
+        'lifestyle': 'Add lifestyle elements, natural settings, warm lighting, and casual atmosphere.',
+        'luxury': 'Add premium background, elegant lighting, sophisticated composition, and high-end feel.',
+        'minimalist': 'Clean white background, simple composition, soft shadows, and minimal distractions.',
+        'vintage': 'Add retro elements, warm tones, classic styling, and nostalgic atmosphere.',
+        'sporty': 'Dynamic composition, energetic feel, modern background, and active lifestyle elements.',
+        'elegant': 'Sophisticated background, refined lighting, formal presentation, and premium quality feel.'
+      };
+      
+      if (styleEnhancements[style]) {
+        finalPrompt += ` ${styleEnhancements[style]}`;
+      }
+    }
+    
+    finalPrompt += ' High quality, professional marketing photography, commercial grade, attractive and eye-catching result.';
+
+    const requestBody = {
+      model: 'google/nano-banana',
+      callBackUrl: callbackUrl,
+      input: {
+        prompt: finalPrompt,
+        image_urls: [productImage],
+        num_images: "1"
+      },
+      metadata: {
+        projectId: projectId,
+        productImage: productImage,
+        style: style,
+        originalPrompt: prompt,
+        action: 'enhanceProduct'
+      }
+    };
+
+    console.log('Using nano-banana for product enhancement:', JSON.stringify(requestBody, null, 2));
+
+    const response = await fetch('https://api.kie.ai/api/v1/playground/createTask', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${kieApiKey}`
+      },
+      body: JSON.stringify(requestBody)
+    });
+
+    const result = await response.json();
+    
+    if (!response.ok) {
+      console.error('Kie.AI API error for product enhancement:', result);
+      throw new Error(`Kie.AI API Error (${response.status}): ${result.error || result.message || 'Unknown error'}`);
+    }
+
+    const taskId = result.data?.taskId || result.id || result.taskId || result.task_id;
+    
+    if (!taskId) {
+      throw new Error('No task ID returned from Kie.AI API');
+    }
+
+    // Update project with task ID
+    if (projectId) {
+      const supabaseClient = createClient(
+        Deno.env.get('SUPABASE_URL') ?? '',
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      );
+
+      const { error: updateError } = await supabaseClient
+        .from('projects')
+        .update({
+          prediction_id: taskId,
+          status: 'processing',
+          updated_at: new Date().toISOString(),
+          metadata: {
+            kie_task: result,
+            processing_type: 'product_enhancement',
+            model_used: 'google/nano-banana',
+            api_provider: 'kie.ai'
+          }
+        })
+        .eq('id', projectId);
+
+      if (updateError) {
+        throw updateError;
+      }
+    }
+
+    return new Response(JSON.stringify({
+      success: true,
+      id: taskId,
+      prediction_id: taskId,
+      status: 'processing',
+      message: 'Product enhancement task created successfully'
+    }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+
+  } catch (error) {
+    console.error('Error in processEnhanceProduct:', error);
+    
+    if (projectId) {
+      try {
+        const supabaseClient = createClient(
+          Deno.env.get('SUPABASE_URL') ?? '',
+          Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+        );
+
+        await supabaseClient
+          .from('projects')
+          .update({
+            status: 'failed',
+            error_message: error.message,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', projectId);
+      } catch (updateError) {
+        console.error('Error updating project status to failed:', updateError);
+      }
+    }
+    
+    throw error;
+  }
+}
+
 async function retryProcessing({ projectId }) {
   console.log('Retrying Kie.AI processing for project:', projectId);
   
@@ -827,6 +965,21 @@ async function retryProcessing({ projectId }) {
       prompt,
       aspectRatio,
       referenceImage,
+      projectId
+    });
+  } else if (projectType === 'product_marketing') {
+    const productImage = settings.product_image_url;
+    const prompt = settings.marketing_prompt || settings.prompt;
+    const style = settings.marketing_style || settings.style;
+
+    if (!productImage) {
+      throw new Error('Missing product image URL in project settings');
+    }
+
+    return await processEnhanceProduct({
+      productImage,
+      prompt,
+      style,
       projectId
     });
   } else {
