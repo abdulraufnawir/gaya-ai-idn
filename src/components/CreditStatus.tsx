@@ -53,7 +53,7 @@ const CreditStatus = ({ userId }: CreditStatusProps) => {
             Aktivasi Kredit Diperlukan
           </CardTitle>
           <CardDescription>
-            Akun Anda belum diaktifkan. Klik tombol di bawah untuk mendapatkan 5 kredit gratis!
+            Akun Anda belum diaktifkan. Klik tombol di bawah untuk mendapatkan 10 kredit gratis!
           </CardDescription>
         </CardHeader>
         <CardContent>
