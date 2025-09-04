@@ -12,7 +12,8 @@ import {
   FileImage, 
   LogOut, 
   Activity,
-  Shield
+  Shield,
+  Coins
 } from 'lucide-react';
 import AdminOverview from '@/components/admin/AdminOverview';
 import AdminUserManagement from '@/components/admin/AdminUserManagement';
@@ -22,6 +23,7 @@ import AdminSystemHealth from '@/components/admin/AdminSystemHealth';
 import AdminRoleManager from '@/components/admin/AdminRoleManager';
 import AdminAIModelManagement from '@/components/admin/AdminAIModelManagement';
 import AdminAIModels from '@/components/admin/AdminAIModels';
+import AdminCreditManager from '@/components/admin/AdminCreditManager';
 
 const AdminDashboard = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -187,7 +189,7 @@ const AdminDashboard = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 lg:grid-cols-7 mb-6">
+          <TabsList className="grid w-full grid-cols-2 lg:grid-cols-8 mb-6">
             <TabsTrigger value="overview" className="flex items-center gap-2">
               <BarChart3 className="h-4 w-4" />
               Overview
@@ -211,6 +213,10 @@ const AdminDashboard = () => {
             <TabsTrigger value="roles" className="flex items-center gap-2">
               <Shield className="h-4 w-4" />
               Roles
+            </TabsTrigger>
+            <TabsTrigger value="credits" className="flex items-center gap-2">
+              <Coins className="h-4 w-4" />
+              Credits
             </TabsTrigger>
             <TabsTrigger value="system" className="flex items-center gap-2">
               <Activity className="h-4 w-4" />
@@ -240,6 +246,10 @@ const AdminDashboard = () => {
 
           <TabsContent value="roles">
             <AdminRoleManager />
+          </TabsContent>
+
+          <TabsContent value="credits">
+            <AdminCreditManager />
           </TabsContent>
 
           <TabsContent value="system">

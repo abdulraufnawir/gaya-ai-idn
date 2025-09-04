@@ -266,6 +266,14 @@ export type Database = {
         }
         Returns: boolean
       }
+      admin_add_credits: {
+        Args: {
+          p_credits_amount: number
+          p_description?: string
+          p_target_user_id: string
+        }
+        Returns: boolean
+      }
       check_admin_access: {
         Args: Record<PropertyKey, never>
         Returns: boolean

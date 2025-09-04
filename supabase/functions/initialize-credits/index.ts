@@ -59,8 +59,8 @@ serve(async (req) => {
       .from('user_credits')
       .insert({
         user_id: user.id,
-        credits_balance: 5,
-        free_credits: 5,
+        credits_balance: 10,
+        free_credits: 10,
         total_purchased: 0,
         total_used: 0
       });
@@ -73,9 +73,9 @@ serve(async (req) => {
       .insert({
         user_id: user.id,
         transaction_type: 'free',
-        credits_amount: 5,
+        credits_amount: 10,
         credits_before: 0,
-        credits_after: 5,
+        credits_after: 10,
         description: 'Manual credit initialization - Welcome bonus'
       });
 
@@ -88,7 +88,7 @@ serve(async (req) => {
         user_id: user.id,
         plan_type: 'free',
         status: 'active',
-        credits_per_month: 5,
+        credits_per_month: 10,
         monthly_price: 0
       });
 
@@ -99,8 +99,8 @@ serve(async (req) => {
         success: true, 
         message: 'Credits initialized successfully!',
         credits: {
-          credits_balance: 5,
-          free_credits: 5,
+          credits_balance: 10,
+          free_credits: 10,
           total_purchased: 0,
           total_used: 0
         }
