@@ -1,8 +1,11 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Play, Sparkles, Zap, Users } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import heroImage from "@/assets/hero-bg.jpg";
 const Hero = () => {
+  const navigate = useNavigate();
+
   return <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-10" style={{
@@ -35,7 +38,7 @@ const Hero = () => {
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12 animate-slide-up">
-            <Button variant="hero" size="xl" className="shadow-glow">
+            <Button variant="hero" size="xl" className="shadow-glow" onClick={() => navigate('/auth')}>
               <Zap className="w-5 h-5 mr-2" />
               Mulai Coba Gratis
             </Button>
