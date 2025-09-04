@@ -27,6 +27,7 @@ import PhotoEditor from '@/components/PhotoEditor';
 import ProjectHistory from '@/components/ProjectHistory';
 import UserProfile from '@/components/UserProfile';
 import AdminAccess from '@/components/AdminAccess';
+import CreditStatus from '@/components/CreditStatus';
 
 const Dashboard = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -147,6 +148,11 @@ const Dashboard = () => {
             </p>
           </div>
 
+          {/* Credit Status - Mobile */}
+          <div className="mb-4">
+            <CreditStatus userId={user.id} />
+          </div>
+
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             {/* Content area with bottom padding for fixed nav */}
             <div className="pb-20">
@@ -253,12 +259,17 @@ const Dashboard = () => {
           </header>
 
           <div className="flex-1 p-4">
-            <div className="mb-6">
-              <h2 className="text-2xl font-bold mb-1">Selamat datang di BUSANA.AI</h2>
-              <p className="text-muted-foreground">
-                Gunakan AI untuk mengembangkan bisnis fashion Anda
-              </p>
-            </div>
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold mb-1">Selamat datang di BUSANA.AI</h2>
+            <p className="text-muted-foreground">
+              Gunakan AI untuk mengembangkan bisnis fashion Anda
+            </p>
+          </div>
+
+          {/* Credit Status - Desktop */}
+          <div className="mb-6">
+            <CreditStatus userId={user.id} />
+          </div>
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <TabsContent value="studio">

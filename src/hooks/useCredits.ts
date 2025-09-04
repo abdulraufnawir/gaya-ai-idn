@@ -156,11 +156,38 @@ export function useCredits() {
     }
   }, [toast]);
 
+  const initializeCredits = useCallback(async (): Promise<boolean> => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('initialize-credits');
+
+      if (error) throw error;
+      if (!data.success) throw new Error(data.error);
+
+      toast({
+        title: 'Kredit Diaktifkan!',
+        description: 'Akun Anda telah diaktifkan dengan 5 kredit gratis',
+      });
+      
+      return true;
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message || 'Gagal mengaktifkan kredit',
+        variant: 'destructive',
+      });
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  }, [toast]);
+
   return {
     loading,
     checkBalance,
     useCredits,
     addCredits,
-    getTransactions
+    getTransactions,
+    initializeCredits
   };
 }
