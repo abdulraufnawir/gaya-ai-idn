@@ -217,7 +217,7 @@ const Auth = () => {
                   {loading ? 'Memproses...' : 'Masuk'}
                 </Button>
                 
-                <div className="relative">
+                <div className="relative hidden">
                   <div className="absolute inset-0 flex items-center">
                     <span className="w-full border-t" />
                   </div>
@@ -231,7 +231,7 @@ const Auth = () => {
                 <Button 
                   type="button"
                   variant="outline" 
-                  className="w-full" 
+                  className="w-full hidden" 
                   disabled={loading}
                   onClick={handleGoogleAuth}
                 >
@@ -302,7 +302,7 @@ const Auth = () => {
                   {loading ? 'Membuat akun...' : 'Daftar'}
                 </Button>
                 
-                <div className="relative">
+                <div className="relative hidden">
                   <div className="absolute inset-0 flex items-center">
                     <span className="w-full border-t" />
                   </div>
@@ -316,7 +316,7 @@ const Auth = () => {
                 <Button 
                   type="button"
                   variant="outline" 
-                  className="w-full" 
+                  className="w-full hidden" 
                   disabled={loading}
                   onClick={handleGoogleAuth}
                 >
