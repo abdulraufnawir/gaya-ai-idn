@@ -12,6 +12,12 @@ verify_jwt = true
 [functions.kie-ai]
 verify_jwt = true
 
+[functions.credit-manager]
+verify_jwt = true
+
+[functions.midtrans-payment]
+verify_jwt = true
+
 [functions.fashn-webhook]
 verify_jwt = false
 
@@ -22,4 +28,7 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.kie-webhook]
+verify_jwt = false
+
+[functions.midtrans-webhook]
 verify_jwt = false

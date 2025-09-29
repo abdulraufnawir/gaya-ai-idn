@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { useCredits } from '@/hooks/useCredits';
+import { supabase } from '@/integrations/supabase/client';
 import { Coins, Crown, Sparkles, Zap, Star, Check } from 'lucide-react';
 
 interface CreditPackage {
@@ -20,7 +20,6 @@ interface CreditPackage {
 const CreditPurchase = () => {
   const [selectedPackage, setSelectedPackage] = useState<string | null>(null);
   const [purchasing, setPurchasing] = useState(false);
-  const { addCredits } = useCredits();
   const { toast } = useToast();
 
   const creditPackages: CreditPackage[] = [
@@ -76,26 +75,47 @@ const CreditPurchase = () => {
     setSelectedPackage(pkg.id);
 
     try {
-      // For now, simulate a successful purchase
-      // In real implementation, this would integrate with Midtrans or other payment gateway
-      
-      // Simulate payment processing delay
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Add credits to user account
-      const totalCredits = pkg.credits + pkg.bonus_credits;
-      const success = await addCredits(
-        totalCredits,
-        'purchase',
-        `Pembelian ${pkg.name} - ${pkg.credits} kredit + ${pkg.bonus_credits} bonus`,
-        `purchase_${pkg.id}_${Date.now()}`
-      );
+      // Get user session for authentication
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('Anda harus login untuk melakukan pembelian');
+      }
 
-      if (success) {
+      // Get user profile for payment details
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('user_id', session.user.id)
+        .single();
+
+      // Create Midtrans payment
+      const response = await supabase.functions.invoke('midtrans-payment', {
+        body: {
+          packageId: pkg.id,
+          packageName: pkg.name,
+          credits: pkg.credits + pkg.bonus_credits,
+          price: pkg.price,
+          userEmail: session.user.email,
+          userName: profile?.full_name || 'User'
+        }
+      });
+
+      if (response.error) {
+        throw new Error(response.error.message || 'Gagal membuat pembayaran');
+      }
+
+      const { paymentUrl, orderId } = response.data;
+
+      if (paymentUrl) {
+        // Redirect to Midtrans payment page
+        window.open(paymentUrl, '_blank');
+        
         toast({
-          title: 'Pembelian Berhasil! 🎉',
-          description: `${totalCredits} kredit telah ditambahkan ke akun Anda`,
+          title: 'Pembayaran Dimulai',
+          description: 'Silakan selesaikan pembayaran di halaman yang baru dibuka. Kredit akan ditambahkan otomatis setelah pembayaran berhasil.',
         });
+      } else {
+        throw new Error('URL pembayaran tidak tersedia');
       }
 
     } catch (error: any) {

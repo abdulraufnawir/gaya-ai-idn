@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -86,6 +86,12 @@ serve(async (req) => {
         break;
 
       case 'add_credits':
+        // Only allow admin users or service role to add credits directly
+        // Regular credit additions should go through payment verification
+        if (transaction_type !== 'admin_grant' && transaction_type !== 'free') {
+          throw new Error('Direct credit addition not allowed. Use payment system instead.');
+        }
+        
         // Add credits (purchase or bonus)
         if (!credits || credits <= 0) throw new Error("Invalid credits amount");
         
