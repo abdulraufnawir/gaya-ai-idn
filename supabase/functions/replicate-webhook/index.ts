@@ -45,6 +45,7 @@ serve(async (req) => {
 
     // Handle successful completion
     if (status === 'succeeded' && output) {
+      updateData.status = 'completed'; // Map Replicate's 'succeeded' to our 'completed' status
       const originalUrl = Array.isArray(output) ? output[0] : output;
       
       // Download and store image in Supabase storage
