@@ -2,12 +2,12 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Save, Plus } from "lucide-react";
+import { Loader2, Save, Plus, Trash2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -28,10 +28,11 @@ interface AIPrompt {
   updated_at: string;
 }
 
-export default function AdminPromptManager() {
+const AdminPromptManager = () => {
   const [prompts, setPrompts] = useState<AIPrompt[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<string | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newPrompt, setNewPrompt] = useState({
     feature_name: "",
     system_prompt: "",
@@ -39,7 +40,6 @@ export default function AdminPromptManager() {
     description: "",
     is_active: true,
   });
-  const [showNewDialog, setShowNewDialog] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -57,7 +57,7 @@ export default function AdminPromptManager() {
       setPrompts(data || []);
     } catch (error: any) {
       toast({
-        title: "Error",
+        title: "Error loading prompts",
         description: error.message,
         variant: "destructive",
       });
@@ -66,25 +66,28 @@ export default function AdminPromptManager() {
     }
   };
 
-  const handleUpdatePrompt = async (promptId: string, updates: Partial<AIPrompt>) => {
-    setSaving(promptId);
+  const handleSave = async (prompt: AIPrompt) => {
+    setSaving(prompt.id);
     try {
       const { error } = await supabase
         .from("ai_prompts")
-        .update(updates)
-        .eq("id", promptId);
+        .update({
+          system_prompt: prompt.system_prompt,
+          user_prompt_template: prompt.user_prompt_template,
+          description: prompt.description,
+          is_active: prompt.is_active,
+        })
+        .eq("id", prompt.id);
 
       if (error) throw error;
 
       toast({
-        title: "Success",
-        description: "Prompt updated successfully",
+        title: "Prompt updated",
+        description: `Successfully updated ${prompt.feature_name} prompt`,
       });
-
-      loadPrompts();
     } catch (error: any) {
       toast({
-        title: "Error",
+        title: "Error updating prompt",
         description: error.message,
         variant: "destructive",
       });
@@ -93,28 +96,27 @@ export default function AdminPromptManager() {
     }
   };
 
-  const handleCreatePrompt = async () => {
+  const handleCreate = async () => {
     if (!newPrompt.feature_name || !newPrompt.system_prompt) {
       toast({
-        title: "Validation Error",
+        title: "Missing required fields",
         description: "Feature name and system prompt are required",
         variant: "destructive",
       });
       return;
     }
 
-    setSaving("new");
     try {
       const { error } = await supabase.from("ai_prompts").insert([newPrompt]);
 
       if (error) throw error;
 
       toast({
-        title: "Success",
-        description: "New prompt created successfully",
+        title: "Prompt created",
+        description: "Successfully created new AI prompt",
       });
-
-      setShowNewDialog(false);
+      
+      setIsDialogOpen(false);
       setNewPrompt({
         feature_name: "",
         system_prompt: "",
@@ -125,18 +127,46 @@ export default function AdminPromptManager() {
       loadPrompts();
     } catch (error: any) {
       toast({
-        title: "Error",
+        title: "Error creating prompt",
         description: error.message,
         variant: "destructive",
       });
-    } finally {
-      setSaving(null);
     }
+  };
+
+  const handleDelete = async (id: string, featureName: string) => {
+    if (!confirm(`Are you sure you want to delete the prompt for ${featureName}?`)) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase.from("ai_prompts").delete().eq("id", id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Prompt deleted",
+        description: `Successfully deleted ${featureName} prompt`,
+      });
+      loadPrompts();
+    } catch (error: any) {
+      toast({
+        title: "Error deleting prompt",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const updatePrompt = (id: string, field: keyof AIPrompt, value: any) => {
+    setPrompts(
+      prompts.map((p) => (p.id === id ? { ...p, [field]: value } : p))
+    );
   };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
+      <div className="flex items-center justify-center p-8">
         <Loader2 className="h-8 w-8 animate-spin" />
       </div>
     );
@@ -144,21 +174,21 @@ export default function AdminPromptManager() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold">AI Prompt Management</h2>
           <p className="text-muted-foreground">
-            Configure system prompts for AI features in Busana.ai
+            Configure AI prompts for each feature in Busana.AI
           </p>
         </div>
-        <Dialog open={showNewDialog} onOpenChange={setShowNewDialog}>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button>
               <Plus className="mr-2 h-4 w-4" />
               Add New Prompt
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogContent className="max-w-2xl">
             <DialogHeader>
               <DialogTitle>Create New AI Prompt</DialogTitle>
               <DialogDescription>
@@ -167,14 +197,14 @@ export default function AdminPromptManager() {
             </DialogHeader>
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="new-feature-name">Feature Name *</Label>
+                <Label htmlFor="new-feature-name">Feature Name</Label>
                 <Input
                   id="new-feature-name"
                   value={newPrompt.feature_name}
                   onChange={(e) =>
                     setNewPrompt({ ...newPrompt, feature_name: e.target.value })
                   }
-                  placeholder="e.g., virtual_tryon"
+                  placeholder="e.g., virtual_tryon, model_generation"
                 />
               </div>
 
@@ -186,53 +216,53 @@ export default function AdminPromptManager() {
                   onChange={(e) =>
                     setNewPrompt({ ...newPrompt, description: e.target.value })
                   }
-                  placeholder="Brief description of this feature"
+                  placeholder="Brief description of this prompt"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="new-system-prompt">System Prompt *</Label>
+                <Label htmlFor="new-system-prompt">System Prompt</Label>
                 <Textarea
                   id="new-system-prompt"
                   value={newPrompt.system_prompt}
                   onChange={(e) =>
                     setNewPrompt({ ...newPrompt, system_prompt: e.target.value })
                   }
-                  placeholder="Enter the system prompt for the AI"
-                  rows={6}
+                  placeholder="Enter the system prompt..."
+                  className="min-h-[120px]"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="new-user-template">User Prompt Template</Label>
+                <Label htmlFor="new-user-prompt-template">
+                  User Prompt Template
+                </Label>
                 <Textarea
-                  id="new-user-template"
+                  id="new-user-prompt-template"
                   value={newPrompt.user_prompt_template}
                   onChange={(e) =>
-                    setNewPrompt({ ...newPrompt, user_prompt_template: e.target.value })
+                    setNewPrompt({
+                      ...newPrompt,
+                      user_prompt_template: e.target.value,
+                    })
                   }
-                  placeholder="Optional template for user prompts (use {variable} for dynamic values)"
-                  rows={3}
+                  placeholder="Enter the user prompt template (optional)..."
+                  className="min-h-[80px]"
                 />
               </div>
 
               <div className="flex items-center space-x-2">
                 <Switch
-                  id="new-active"
+                  id="new-is-active"
                   checked={newPrompt.is_active}
                   onCheckedChange={(checked) =>
                     setNewPrompt({ ...newPrompt, is_active: checked })
                   }
                 />
-                <Label htmlFor="new-active">Active</Label>
+                <Label htmlFor="new-is-active">Active</Label>
               </div>
 
-              <Button
-                onClick={handleCreatePrompt}
-                disabled={saving === "new"}
-                className="w-full"
-              >
-                {saving === "new" && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              <Button onClick={handleCreate} className="w-full">
                 Create Prompt
               </Button>
             </div>
@@ -244,19 +274,29 @@ export default function AdminPromptManager() {
         {prompts.map((prompt) => (
           <Card key={prompt.id}>
             <CardHeader>
-              <div className="flex justify-between items-start">
+              <div className="flex items-start justify-between">
                 <div>
                   <CardTitle className="text-xl">{prompt.feature_name}</CardTitle>
                   <CardDescription>{prompt.description}</CardDescription>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Switch
-                    checked={prompt.is_active}
-                    onCheckedChange={(checked) =>
-                      handleUpdatePrompt(prompt.id, { is_active: checked })
-                    }
-                  />
-                  <Label className="text-sm">Active</Label>
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id={`active-${prompt.id}`}
+                      checked={prompt.is_active}
+                      onCheckedChange={(checked) =>
+                        updatePrompt(prompt.id, "is_active", checked)
+                      }
+                    />
+                    <Label htmlFor={`active-${prompt.id}`}>Active</Label>
+                  </div>
+                  <Button
+                    variant="destructive"
+                    size="icon"
+                    onClick={() => handleDelete(prompt.id, prompt.feature_name)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                 </div>
               </div>
             </CardHeader>
@@ -265,54 +305,55 @@ export default function AdminPromptManager() {
                 <Label htmlFor={`system-${prompt.id}`}>System Prompt</Label>
                 <Textarea
                   id={`system-${prompt.id}`}
-                  defaultValue={prompt.system_prompt}
-                  onBlur={(e) =>
-                    handleUpdatePrompt(prompt.id, { system_prompt: e.target.value })
+                  value={prompt.system_prompt}
+                  onChange={(e) =>
+                    updatePrompt(prompt.id, "system_prompt", e.target.value)
                   }
-                  rows={6}
+                  className="min-h-[120px]"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor={`user-${prompt.id}`}>User Prompt Template</Label>
+                <Label htmlFor={`user-${prompt.id}`}>
+                  User Prompt Template
+                </Label>
                 <Textarea
                   id={`user-${prompt.id}`}
-                  defaultValue={prompt.user_prompt_template || ""}
-                  onBlur={(e) =>
-                    handleUpdatePrompt(prompt.id, {
-                      user_prompt_template: e.target.value || null,
-                    })
+                  value={prompt.user_prompt_template || ""}
+                  onChange={(e) =>
+                    updatePrompt(
+                      prompt.id,
+                      "user_prompt_template",
+                      e.target.value
+                    )
                   }
-                  placeholder="Optional template (use {variable} for dynamic values)"
-                  rows={3}
+                  placeholder="Optional user prompt template"
+                  className="min-h-[80px]"
                 />
               </div>
 
-              <div className="flex justify-between items-center text-xs text-muted-foreground">
-                <span>Last updated: {new Date(prompt.updated_at).toLocaleString()}</span>
-                {saving === prompt.id && (
-                  <div className="flex items-center gap-2">
-                    <Loader2 className="h-3 w-3 animate-spin" />
-                    <span>Saving...</span>
-                  </div>
+              <Button
+                onClick={() => handleSave(prompt)}
+                disabled={saving === prompt.id}
+              >
+                {saving === prompt.id ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Save className="mr-2 h-4 w-4" />
+                    Save Changes
+                  </>
                 )}
-              </div>
+              </Button>
             </CardContent>
           </Card>
         ))}
       </div>
-
-      {prompts.length === 0 && (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <p className="text-muted-foreground mb-4">No prompts configured yet</p>
-            <Button onClick={() => setShowNewDialog(true)}>
-              <Plus className="mr-2 h-4 w-4" />
-              Add Your First Prompt
-            </Button>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
-}
+};
+
+export default AdminPromptManager;
