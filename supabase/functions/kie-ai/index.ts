@@ -622,8 +622,9 @@ async function processPhotoEdit({ originalImage, editType, prompt, projectId }) 
   }
 }
 
-async function processGenerateModel({ prompt, aspectRatio, referenceImage, projectId }) {
+async function processGenerateModel({ prompt, aspectRatio, referenceImage, projectId, clothingType }) {
   console.log('Processing model generation with Kie.AI nano-banana for project:', projectId);
+  console.log('Clothing type:', clothingType);
   
   try {
     if (!prompt) {
@@ -632,8 +633,29 @@ async function processGenerateModel({ prompt, aspectRatio, referenceImage, proje
 
     const callbackUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/kie-webhook`;
     
-    // Build comprehensive AI prompt for model generation
-    let finalPrompt = `Generate a high-quality fashion model image: ${prompt}. Professional photography, studio lighting, clean background, high resolution, photorealistic, commercial fashion photography style.`;
+    // Build comprehensive AI prompt for model generation with clothing type context
+    let finalPrompt = '';
+    
+    // Add clothing type specific instructions
+    if (clothingType) {
+      const clothingInstructions = {
+        'Atasan': 'Generate a fashion model wearing a top/upper body garment (shirt, blouse, or jacket). Show full body with focus on the upper garment. The model should be wearing appropriate bottom wear (pants or skirt) to complete the outfit.',
+        'Bawahan': 'Generate a fashion model wearing bottom garments (pants, trousers, or skirt). Show full body with the model wearing a simple neutral top to highlight the bottom wear.',
+        'Gaun': 'Generate a fashion model wearing a full-length dress or gown. Show the complete dress from top to bottom, full body shot.',
+        'Hijab': 'Generate a fashion model wearing a hijab/headscarf with modest clothing. Show the hijab properly draped and styled with appropriate modest outfit.'
+      };
+      
+      if (clothingInstructions[clothingType]) {
+        finalPrompt = `${clothingInstructions[clothingType]} ${prompt}. `;
+      } else {
+        finalPrompt = `Generate a high-quality fashion model image: ${prompt}. `;
+      }
+    } else {
+      finalPrompt = `Generate a high-quality fashion model image: ${prompt}. `;
+    }
+    
+    // Add professional quality instructions
+    finalPrompt += 'Professional photography, studio lighting, clean background, high resolution, photorealistic, commercial fashion photography style.';
     
     // Add aspect ratio guidance
     if (aspectRatio) {
@@ -658,6 +680,7 @@ async function processGenerateModel({ prompt, aspectRatio, referenceImage, proje
       metadata: {
         projectId: projectId,
         originalPrompt: prompt,
+        clothingType: clothingType,
         aspectRatio: aspectRatio,
         referenceImage: referenceImage,
         action: 'generateModel'
@@ -954,6 +977,7 @@ async function retryProcessing({ projectId }) {
     });
   } else if (projectType === 'model_generation') {
     const prompt = settings.prompt;
+    const clothingType = settings.clothing_type;
     const aspectRatio = settings.aspect_ratio;
     const referenceImage = settings.reference_image_url;
 
@@ -963,6 +987,7 @@ async function retryProcessing({ projectId }) {
 
     return await processGenerateModel({
       prompt,
+      clothingType,
       aspectRatio,
       referenceImage,
       projectId
