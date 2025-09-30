@@ -28,6 +28,7 @@ const ModelSwap = ({
 
   // AI Generation states
   const [generatePrompt, setGeneratePrompt] = useState('');
+  const [generateClothingType, setGenerateClothingType] = useState('');
   const [selectedAspectRatio, setSelectedAspectRatio] = useState('2:3');
   const [generatingModel, setGeneratingModel] = useState(false);
   const [referenceImage, setReferenceImage] = useState<File | null>(null);
@@ -89,6 +90,14 @@ const ModelSwap = ({
       });
       return;
     }
+    if (!generateClothingType) {
+      toast({
+        title: 'Error',
+        description: 'Silakan pilih tipe pakaian',
+        variant: 'destructive'
+      });
+      return;
+    }
     setGeneratingModel(true);
     try {
       const {
@@ -115,6 +124,7 @@ const ModelSwap = ({
         status: 'processing',
         settings: {
           prompt: generatePrompt,
+          clothing_type: generateClothingType,
           aspect_ratio: selectedAspectRatio,
           width: selectedRatio?.width || 683,
           height: selectedRatio?.height || 1024,
@@ -131,6 +141,7 @@ const ModelSwap = ({
         body: {
           action: 'generateModel',
           prompt: generatePrompt,
+          clothingType: generateClothingType,
           aspectRatio: selectedAspectRatio,
           referenceImage: referenceImageUrl,
           projectId: project.id
@@ -147,6 +158,7 @@ const ModelSwap = ({
 
       // Reset form
       setGeneratePrompt('');
+      setGenerateClothingType('');
       setReferenceImage(null);
       setReferenceImagePreview(null);
 
@@ -310,6 +322,24 @@ const ModelSwap = ({
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            {/* Clothing Type Selection */}
+            <div className="space-y-2">
+              <Label>Pilih Pakaian</Label>
+              <div className="flex gap-2 flex-wrap">
+                {['Atasan', 'Bawahan', 'Gaun', 'Hijab'].map((type) => (
+                  <Button
+                    key={type}
+                    type="button"
+                    variant={generateClothingType === type ? 'default' : 'outline'}
+                    onClick={() => setGenerateClothingType(type)}
+                    className="flex-1 min-w-[100px]"
+                  >
+                    {type}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
             {/* Prompt Input */}
             <div className="space-y-2">
               <Label htmlFor="generate-prompt">What do you want to generate?</Label>
@@ -356,7 +386,7 @@ const ModelSwap = ({
             </div>
 
             {/* Generate Button */}
-            <Button onClick={handleGenerateModel} disabled={generatingModel || !generatePrompt.trim()} className="w-full" size="lg">
+            <Button onClick={handleGenerateModel} disabled={generatingModel || !generatePrompt.trim() || !generateClothingType} className="w-full" size="lg">
               {generatingModel ? <>
                   <Loader2 className="w-4 h-4 animate-spin mr-2" />
                   Generating AI Model...

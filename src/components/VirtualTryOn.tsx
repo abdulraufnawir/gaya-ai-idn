@@ -26,6 +26,7 @@ const VirtualTryOn = ({
   const [selectedModel, setSelectedModel] = useState<any>(null);
   const [clothingCategory, setClothingCategory] = useState<string | null>(null);
   const [aiModelPrompt, setAiModelPrompt] = useState<string>('');
+  const [aiModelClothingType, setAiModelClothingType] = useState<string>('');
   const [generatingModel, setGeneratingModel] = useState(false);
   const [userCredits, setUserCredits] = useState<number>(0);
   const [loadingCredits, setLoadingCredits] = useState(true);
@@ -355,6 +356,7 @@ const VirtualTryOn = ({
           status: 'processing',
           settings: {
             prompt: aiModelPrompt,
+            clothing_type: aiModelClothingType,
             aspect_ratio: '2:3',
             width: 683,
             height: 1024
@@ -370,6 +372,7 @@ const VirtualTryOn = ({
         body: {
           action: 'generateModel',
           prompt: aiModelPrompt,
+          clothingType: aiModelClothingType,
           aspectRatio: '2:3',
           projectId: project.id
         }
@@ -387,6 +390,7 @@ const VirtualTryOn = ({
 
       // Reset the AI prompt
       setAiModelPrompt('');
+      setAiModelClothingType('');
 
       // Trigger a custom event to refresh the model gallery
       const refreshEvent = new CustomEvent('refreshModelGallery');
@@ -449,6 +453,23 @@ const VirtualTryOn = ({
                 </DialogHeader>
                 <div className="space-y-6 p-2">
                   <div>
+                    <h3 className="text-lg font-medium mb-3">Pilih Pakaian</h3>
+                    <div className="flex gap-2 flex-wrap">
+                      {['Atasan', 'Bawahan', 'Gaun', 'Hijab'].map((type) => (
+                        <Button
+                          key={type}
+                          type="button"
+                          variant={aiModelClothingType === type ? 'default' : 'outline'}
+                          onClick={() => setAiModelClothingType(type)}
+                          className="flex-1 min-w-[100px]"
+                        >
+                          {type}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
                     <h3 className="text-lg font-medium mb-3">Tambahkan prompt Anda</h3>
                     <textarea 
                       className="w-full h-32 p-3 border rounded-lg resize-none text-sm"
@@ -460,7 +481,7 @@ const VirtualTryOn = ({
                   
                   <Button 
                     onClick={handleGenerateModel}
-                    disabled={generatingModel || !aiModelPrompt.trim()}
+                    disabled={generatingModel || !aiModelPrompt.trim() || !aiModelClothingType}
                     className="w-full bg-yellow-400 hover:bg-yellow-500 text-black font-medium py-3"
                   >
                     {generatingModel ? (
