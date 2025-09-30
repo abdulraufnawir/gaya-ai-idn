@@ -15,6 +15,7 @@ import {
   Shield,
   Coins
 } from 'lucide-react';
+// Admin Components
 import AdminOverview from '@/components/admin/AdminOverview';
 import AdminUserManagement from '@/components/admin/AdminUserManagement';
 import AdminAnalytics from '@/components/admin/AdminAnalytics';
@@ -24,7 +25,7 @@ import AdminRoleManager from '@/components/admin/AdminRoleManager';
 import AdminAIModelManagement from '@/components/admin/AdminAIModelManagement';
 import AdminAIModels from '@/components/admin/AdminAIModels';
 import AdminCreditManager from '@/components/admin/AdminCreditManager';
-import AdminPromptManager from '@/components/admin/AdminPromptManager';
+import { default as AdminPromptManager } from '@/components/admin/AdminPromptManager';
 
 const AdminDashboard = () => {
   const [user, setUser] = useState<User | null>(null);
