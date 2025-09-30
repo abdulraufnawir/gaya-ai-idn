@@ -143,6 +143,7 @@ const ModelSwap = ({
           prompt: generatePrompt,
           clothingType: generateClothingType,
           aspectRatio: selectedAspectRatio,
+          referenceImage: referenceImageUrl,
           projectId: project.id
         }
       });
