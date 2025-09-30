@@ -76,24 +76,26 @@ async function processVirtualTryOn({ modelImage, garmentImage, projectId, clothi
     let prompt = `Virtual try-on: Take the person from the first image and dress them in the clothing from the second image. Maintain the person's pose, body proportions, and facial features while fitting the garment naturally with proper sizing, realistic lighting, shadows, and fabric physics. High quality, photorealistic result.`;
 
     // Enforce HARD RULES by clothing category (atasan, bawahan, gaun, hijab)
+    let negativePrompt = '';
     if (clothingCategory) {
       const typeRules: Record<string, string> = {
         atasan: 'HARD RULE: This is a TOP/ATASAN only. Replace only the upper garment. Do NOT generate a dress/gown/abaya. Keep bottoms simple and unchanged.',
         bawahan: 'HARD RULE: This is a BOTTOM/BAWAHAN only. Emphasize pants/skirt. Keep the top plain and unchanged. Do NOT convert to a dress.',
-        gaun: 'HARD RULE: This is a GAUN (full-length dress). One-piece from shoulders to ankles, no pants visible, no split between top and bottom, no shirts.',
+        gaun: 'HARD RULE: This is a GAUN (full-length dress). One-piece from shoulders to ankles, no pants visible, no split between top and bottom, no shirts. Hemline must reach the ankles. HARD FAIL if pants/jeans/shorts/shirts appear.',
         hijab: 'HARD RULE: This is a HIJAB. Head must be covered with a proper hijab; maintain modest coverage around head and neck.'
       };
 
       const negativeByType: Record<string, string> = {
-        atasan: 'Avoid: dress, gown, abaya, long robe.',
-        bawahan: 'Avoid: long dress, gown, elaborate tops.',
-        gaun: 'Avoid: shirt, blouse, jacket, pants, jeans, shorts, two-piece outfit, visible split, visible trousers.',
-        hijab: 'Avoid: uncovered hair, exposed hairline.'
+        atasan: 'dress, gown, abaya, long robe',
+        bawahan: 'long dress, gown, elaborate tops',
+        gaun: 't-shirt, shirt, blouse, jacket, blazer, coat, cardigan, pants, jeans, trousers, shorts, leggings, two-piece outfit, split between top and bottom, waistband, belt loops, visible trousers',
+        hijab: 'uncovered hair, exposed hairline'
       };
 
       const key = String(clothingCategory).toLowerCase();
       if (typeRules[key as keyof typeof typeRules]) {
-        prompt += ` ${typeRules[key as keyof typeof typeRules]} ${negativeByType[key as keyof typeof negativeByType]}`;
+        prompt += ` ${typeRules[key as keyof typeof typeRules]}`;
+        negativePrompt = negativeByType[key as keyof typeof negativeByType] || '';
       }
     }
 
@@ -102,13 +104,17 @@ async function processVirtualTryOn({ modelImage, garmentImage, projectId, clothi
       callBackUrl: callbackUrl,
       input: {
         prompt: prompt,
-        image_urls: [modelImage, garmentImage], // Array of input images: person first, clothing second
+        // Provide both keys to maximize compatibility with provider adapters
+        image_input: [modelImage, garmentImage], // person first, clothing second
+        image_urls: [modelImage, garmentImage],
+        negative_prompt: negativePrompt || undefined,
         num_images: "1"
       },
       metadata: {
         projectId: projectId,
         modelImage: modelImage,
         garmentImage: garmentImage,
+        clothingCategory,
         action: 'virtualTryOn'
       }
     };
