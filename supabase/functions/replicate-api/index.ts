@@ -160,11 +160,20 @@ async function generateModel(
 
   // Build prompt with clothing type context and strict constraints
   let finalPrompt = '';
+
   const typeRules: Record<string, string> = {
-    'Atasan': 'Generate a fashion model wearing a TOP only (shirt, blouse, jacket). Do not generate a dress or gown. Show full body. Bottoms should be simple neutral to keep focus on the top.',
-    'Bawahan': 'Generate a fashion model wearing BOTTOMS (pants, trousers, skirt). Do not change the top significantly; keep it neutral to highlight the bottoms. Full body shot.',
-    'Gaun': 'Generate a fashion model wearing a long DRESS/GOWN. Do not generate shirts, jackets, or pants. Ensure the dress extends below the knees. Full body shot.',
-    'Hijab': 'Generate a fashion model wearing a HIJAB/headscarf with modest clothing. Ensure hijab is clearly visible and correctly draped. Full body shot.'
+    'Atasan': 'HARD RULE: Generate a fashion model wearing a TOP only (shirt, blouse, jacket). Do NOT generate a dress or gown. Full-body framing. Bottoms should stay simple and neutral to keep focus on the top.',
+    'Bawahan': 'HARD RULE: Generate a fashion model emphasizing BOTTOMS (pants, trousers, skirt). Keep the top plain/neutral; do not redesign the top. Full-body framing.',
+    'Gaun': 'HARD RULE: Generate a fashion model wearing a full-length DRESS/GOWN reaching the ankles. Do NOT generate any shirt, blouse, jacket, pants, jeans or shorts. The garment must be one continuous silhouette from chest to ankles with no visible split between top and bottom. Full-body framing.',
+    'Hijab': 'HARD RULE: Generate a fashion model wearing a clearly visible HIJAB/headscarf with modest clothing. Hijab must cover the hair properly. Full-body framing.'
+  };
+
+  // Negative constraints to avoid incorrect items
+  const negativeRules: Record<string, string> = {
+    'Atasan': 'dress, gown, long robe, abaya, ball gown, skirt below knee',
+    'Bawahan': 'gown, long dress, elaborate tops, jacket focus',
+    'Gaun': 'shirt, blouse, jacket, pants, jeans, shorts, two-piece outfit, visible legs, exposed ankles, cropped top',
+    'Hijab': 'uncovered hair, exposed hairline, messy scarf, short scarf'
   };
 
   if (clothingType && typeRules[clothingType]) finalPrompt += `${typeRules[clothingType]} `;
@@ -173,6 +182,7 @@ async function generateModel(
 
   const input: any = {
     prompt: finalPrompt,
+    negative_prompt: clothingType && negativeRules[clothingType] ? negativeRules[clothingType] : undefined,
     output_format: 'webp'
   };
   if (referenceImage) input.image_input = [referenceImage];
@@ -202,14 +212,22 @@ async function processModelSwap(
 
   const webhookUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/replicate-webhook`;
 
-  let prompt = 'First image is the PRODUCT photo. Second image is the NEW MODEL reference. Replace only the person in the product photo with the model reference while preserving the product exactly (shape, color, texture, fit). Natural shadows and lighting.';
-  if (clothingType === 'Gaun') prompt += ' Ensure the outfit remains a full dress/gown; do not convert to shirts or pants.';
-  if (clothingType === 'Atasan') prompt += ' Ensure the top is replaced while bottoms remain unchanged.';
-  if (clothingType === 'Bawahan') prompt += ' Ensure the bottoms are replaced or highlighted while the top stays neutral.';
-  if (clothingType === 'Hijab') prompt += ' Ensure the model wears a visible hijab with modest styling.';
+  let prompt = 'First image is the PRODUCT photo. Second image is the NEW MODEL reference. Replace only the person in the product photo with the model reference while preserving the PRODUCT ITEM exactly (shape, color, texture, fit). Keep composition, lighting, and shadows natural.';
+  if (clothingType === 'Gaun') prompt += ' HARD RULE: The product is a full-length dress/gown to the ankles. Do NOT convert to a shirt or pants. No visible split between top and bottom. No trousers visible.';
+  if (clothingType === 'Atasan') prompt += ' HARD RULE: Only the top is changed. Bottoms remain unchanged and neutral.';
+  if (clothingType === 'Bawahan') prompt += ' HARD RULE: Emphasize the bottoms. Keep the top simple and unchanged.';
+  if (clothingType === 'Hijab') prompt += ' HARD RULE: The model must wear a clearly visible hijab with modest styling.';
+
+  const negativeByType: Record<string, string> = {
+    'Gaun': 'shirt, blouse, jacket, pants, jeans, shorts, two-piece outfit, visible legs, mini skirt',
+    'Atasan': 'dress, gown, long robe, abaya',
+    'Bawahan': 'gown, long dress, complex tops',
+    'Hijab': 'uncovered hair, visible hairline'
+  };
 
   const input: any = {
     prompt,
+    negative_prompt: clothingType && negativeByType[clothingType] ? negativeByType[clothingType] : undefined,
     image_input: [garmentImage, modelImage],
     output_format: 'webp'
   };

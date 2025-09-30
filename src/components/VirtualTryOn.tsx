@@ -368,12 +368,14 @@ const VirtualTryOn = ({
       if (projectError) throw projectError;
 
       // Use Replicate API with nano-banana for model generation
-      const { data: genResponse, error: genError } = await supabase.functions.invoke('replicate-api', {
+const { data: genResponse, error: genError } = await supabase.functions.invoke('replicate-api', {
         body: {
           action: 'generateModel',
           prompt: aiModelPrompt,
           clothingType: aiModelClothingType,
           aspectRatio: '2:3',
+          // If user has already uploaded a garment image in this session, use it as a reference
+          referenceImage: (window as any)?.lastUploadedGarmentImageUrl,
           projectId: project.id
         }
       });

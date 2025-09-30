@@ -31,11 +31,12 @@ const ModelSwap = ({
   const [generateClothingType, setGenerateClothingType] = useState('');
   const [selectedAspectRatio, setSelectedAspectRatio] = useState('2:3');
   const [generatingModel, setGeneratingModel] = useState(false);
-  const [referenceImage, setReferenceImage] = useState<File | null>(null);
-  const [referenceImagePreview, setReferenceImagePreview] = useState<string | null>(null);
-  const {
-    toast
-  } = useToast();
+const [referenceImage, setReferenceImage] = useState<File | null>(null);
+const [referenceImagePreview, setReferenceImagePreview] = useState<string | null>(null);
+const [swapClothingType, setSwapClothingType] = useState('');
+const {
+  toast
+} = useToast();
   const aspectRatios = [{
     label: '1:1',
     value: '1:1',
@@ -196,16 +197,24 @@ const ModelSwap = ({
     } = supabase.storage.from('tryon-images').getPublicUrl(fileName);
     return publicUrl;
   };
-  const handleProcess = async () => {
-    if (!originalImage || !selectedModel) {
-      toast({
-        title: 'Error',
-        description: 'Silakan upload gambar produk dan pilih model terlebih dahulu',
-        variant: 'destructive'
-      });
-      return;
-    }
-    setProcessing(true);
+const handleProcess = async () => {
+  if (!originalImage || !selectedModel) {
+    toast({
+      title: 'Error',
+      description: 'Silakan upload gambar produk dan pilih model terlebih dahulu',
+      variant: 'destructive'
+    });
+    return;
+  }
+  if (!swapClothingType) {
+    toast({
+      title: 'Error',
+      description: 'Silakan pilih tipe pakaian (Atasan/Bawahan/Gaun/Hijab) untuk hasil yang akurat',
+      variant: 'destructive'
+    });
+    return;
+  }
+  setProcessing(true);
     try {
       const {
         data: {
@@ -228,10 +237,11 @@ const ModelSwap = ({
         project_type: 'model_swap',
         status: 'processing',
         original_image_url: originalImageUrl,
-        settings: {
+settings: {
           model_image_url: selectedModel.imageUrl,
           model_name: selectedModel.name,
-          model_type: selectedModel.type
+          model_type: selectedModel.type,
+          clothing_type: swapClothingType
         }
       }).select().single();
       if (projectError) throw projectError;
@@ -241,11 +251,12 @@ const ModelSwap = ({
         data: kieResponse,
         error: kieError
       } = await supabase.functions.invoke('replicate-api', {
-        body: {
+body: {
           action: 'modelSwap',
           modelImage: selectedModel.imageUrl,
           garmentImage: originalImageUrl,
-          projectId: project.id
+          projectId: project.id,
+          clothingType: swapClothingType
         }
       });
       if (kieError) {
@@ -449,6 +460,24 @@ const ModelSwap = ({
                     <img src={selectedModel.imageUrl} alt={selectedModel.name} className="w-full h-full object-contain rounded" />
                   </div>
                   <p className="text-sm text-center font-medium">{selectedModel.name}</p>
+                </div>
+              </div>
+
+{/* Clothing Type Selection for Swap */}
+              <div className="space-y-2">
+                <Label>Pilih Tipe Pakaian untuk Produk</Label>
+                <div className="flex gap-2 flex-wrap">
+                  {['Atasan', 'Bawahan', 'Gaun', 'Hijab'].map((type) => (
+                    <Button
+                      key={type}
+                      type="button"
+                      variant={swapClothingType === type ? 'default' : 'outline'}
+                      onClick={() => setSwapClothingType(type)}
+                      className="flex-1 min-w-[100px]"
+                    >
+                      {type}
+                    </Button>
+                  ))}
                 </div>
               </div>
 
