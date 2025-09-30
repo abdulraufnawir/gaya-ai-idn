@@ -184,41 +184,40 @@ const VirtualTryOn = ({
       }).select().single();
       if (projectError) throw projectError;
 
-      // Start Kie.AI virtual try-on
+      // Start Replicate virtual try-on
       const {
-        data: kieResponse,
+        data: replicateResponse,
         error: invokeError
-      } = await supabase.functions.invoke('kie-ai', {
+      } = await supabase.functions.invoke('replicate-api', {
         body: {
-          action: 'virtualTryOn',
+          action: 'virtual_tryon',
           modelImage: finalModelImageUrl,
           garmentImage: clothingImageUrl,
-          projectId: project.id,
-          clothingCategory: clothingCategory
+          projectId: project.id
         }
       });
       if (invokeError) {
         throw new Error(`Function invoke error: ${invokeError.message}`);
       }
-      if (!kieResponse) {
-        throw new Error('No response received from Kie.AI');
+      if (!replicateResponse) {
+        throw new Error('No response received from Replicate');
       }
-      if (kieResponse.error) {
-        throw new Error(kieResponse.error);
+      if (replicateResponse.error) {
+        throw new Error(replicateResponse.error);
       }
 
-      // Update project with prediction ID using settings for now
+      // Update project with prediction ID
       await supabase.from('projects').update({
-        prediction_id: kieResponse.prediction_id,
+        prediction_id: replicateResponse.predictionId,
         settings: {
-          prediction_id: kieResponse.prediction_id,
+          prediction_id: replicateResponse.predictionId,
           model_image_url: finalModelImageUrl,
           garment_image_url: clothingImageUrl
         }
       }).eq('id', project.id);
       toast({
         title: 'Berhasil!',
-        description: 'Virtual try-on sedang diproses dengan Kie.AI. Silakan cek riwayat proyek untuk melihat hasilnya.'
+        description: 'Virtual try-on sedang diproses dengan Replicate Nano Banana. Silakan cek riwayat proyek untuk melihat hasilnya.'
       });
 
       // Reset form
@@ -291,7 +290,7 @@ const VirtualTryOn = ({
 
       if (projectError) throw projectError;
 
-      // Call Kie.AI for model generation
+      // Note: Model generation still uses Kie.AI as Replicate doesn't have this feature yet
       const { data: genResponse, error: genError } = await supabase.functions.invoke('kie-ai', {
         body: {
           action: 'generateModel',

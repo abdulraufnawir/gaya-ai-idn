@@ -25,6 +25,8 @@ serve(async (req) => {
     const { action, ...params } = await req.json();
 
     switch (action) {
+      case 'virtual_tryon':
+        return await processVirtualTryOn(replicate, params);
       case 'background_removal':
         return await removeBackground(replicate, params);
       case 'background_replacement':
@@ -48,6 +50,33 @@ serve(async (req) => {
     );
   }
 });
+
+async function processVirtualTryOn(replicate: any, { modelImage, garmentImage, projectId }: { modelImage: string; garmentImage: string; projectId: string }) {
+  console.log('Processing virtual try-on with Replicate');
+  
+  const webhookUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/replicate-webhook`;
+  console.log('Setting webhook URL:', webhookUrl);
+  
+  const prediction = await replicate.predictions.create({
+    version: "c871bb9b046607b680449ecbae55fd8c6d945e0a1948644bf2361b3d021d3ff4",
+    input: {
+      human_img: modelImage,
+      garm_img: garmentImage,
+      garment_des: "Virtual try-on result"
+    },
+    webhook: webhookUrl,
+    webhook_events_filter: ["start", "output", "logs", "completed"]
+  });
+
+  console.log('Virtual try-on prediction created:', prediction.id);
+
+  return new Response(JSON.stringify({ 
+    predictionId: prediction.id,
+    projectId: projectId 
+  }), {
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+  });
+}
 
 async function removeBackground(replicate: any, { imageUrl }: { imageUrl: string }) {
   console.log('Removing background for image:', imageUrl);
