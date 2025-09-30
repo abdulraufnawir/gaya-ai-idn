@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       ai_prompts: {
         Row: {
+          clothing_types: string[] | null
           created_at: string
           description: string | null
           feature_name: string
@@ -26,6 +27,7 @@ export type Database = {
           user_prompt_template: string | null
         }
         Insert: {
+          clothing_types?: string[] | null
           created_at?: string
           description?: string | null
           feature_name: string
@@ -36,6 +38,7 @@ export type Database = {
           user_prompt_template?: string | null
         }
         Update: {
+          clothing_types?: string[] | null
           created_at?: string
           description?: string | null
           feature_name?: string

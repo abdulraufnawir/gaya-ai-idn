@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Save, Plus, Trash2 } from "lucide-react";
 import {
@@ -24,9 +25,17 @@ interface AIPrompt {
   user_prompt_template: string | null;
   description: string | null;
   is_active: boolean;
+  clothing_types: string[];
   created_at: string;
   updated_at: string;
 }
+
+const CLOTHING_TYPES = [
+  { id: 'atasan', label: 'Atasan (Tops)' },
+  { id: 'bawahan', label: 'Bawahan (Bottoms)' },
+  { id: 'gaun', label: 'Gaun (Dress)' },
+  { id: 'hijab', label: 'Hijab' },
+];
 
 const AdminPromptManager = () => {
   const [prompts, setPrompts] = useState<AIPrompt[]>([]);
@@ -39,6 +48,7 @@ const AdminPromptManager = () => {
     user_prompt_template: "",
     description: "",
     is_active: true,
+    clothing_types: [] as string[],
   });
   const { toast } = useToast();
 
@@ -76,6 +86,7 @@ const AdminPromptManager = () => {
           user_prompt_template: prompt.user_prompt_template,
           description: prompt.description,
           is_active: prompt.is_active,
+          clothing_types: prompt.clothing_types,
         })
         .eq("id", prompt.id);
 
@@ -123,6 +134,7 @@ const AdminPromptManager = () => {
         user_prompt_template: "",
         description: "",
         is_active: true,
+        clothing_types: [],
       });
       loadPrompts();
     } catch (error: any) {
@@ -251,6 +263,29 @@ const AdminPromptManager = () => {
                 />
               </div>
 
+              <div className="space-y-2">
+                <Label>Applicable Clothing Types</Label>
+                <div className="grid grid-cols-2 gap-3">
+                  {CLOTHING_TYPES.map((type) => (
+                    <div key={type.id} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`new-type-${type.id}`}
+                        checked={newPrompt.clothing_types.includes(type.id)}
+                        onCheckedChange={(checked) => {
+                          const updatedTypes = checked
+                            ? [...newPrompt.clothing_types, type.id]
+                            : newPrompt.clothing_types.filter((t) => t !== type.id);
+                          setNewPrompt({ ...newPrompt, clothing_types: updatedTypes });
+                        }}
+                      />
+                      <Label htmlFor={`new-type-${type.id}`} className="font-normal cursor-pointer">
+                        {type.label}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
               <div className="flex items-center space-x-2">
                 <Switch
                   id="new-is-active"
@@ -330,6 +365,30 @@ const AdminPromptManager = () => {
                   placeholder="Optional user prompt template"
                   className="min-h-[80px]"
                 />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Applicable Clothing Types</Label>
+                <div className="grid grid-cols-2 gap-3">
+                  {CLOTHING_TYPES.map((type) => (
+                    <div key={type.id} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`${prompt.id}-type-${type.id}`}
+                        checked={prompt.clothing_types?.includes(type.id) || false}
+                        onCheckedChange={(checked) => {
+                          const currentTypes = prompt.clothing_types || [];
+                          const updatedTypes = checked
+                            ? [...currentTypes, type.id]
+                            : currentTypes.filter((t) => t !== type.id);
+                          updatePrompt(prompt.id, "clothing_types", updatedTypes);
+                        }}
+                      />
+                      <Label htmlFor={`${prompt.id}-type-${type.id}`} className="font-normal cursor-pointer">
+                        {type.label}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
               </div>
 
               <Button
