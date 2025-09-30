@@ -102,7 +102,7 @@ async function processVirtualTryOn(
       negative_prompt: negativePrompt,
       // order must be [model/person image, clothing image]
       image_input: [modelImage, garmentImage],
-      output_format: 'webp'
+      output_format: 'jpg'
     },
     webhook: webhookUrl,
     webhook_events_filter: ['start', 'output', 'logs', 'completed']
@@ -217,7 +217,7 @@ async function generateModel(
   const input: any = {
     prompt: finalPrompt,
     negative_prompt: clothingType && negativeRules[clothingType] ? negativeRules[clothingType] : undefined,
-    output_format: 'webp'
+    output_format: 'jpg'
   };
   if (referenceImage) input.image_input = [referenceImage];
 
@@ -263,7 +263,7 @@ async function processModelSwap(
     prompt,
     negative_prompt: clothingType && negativeByType[clothingType] ? negativeByType[clothingType] : undefined,
     image_input: [garmentImage, modelImage],
-    output_format: 'webp'
+    output_format: 'jpg'
   };
 
   const prediction = await replicate.predictions.create({
@@ -316,7 +316,7 @@ async function processPhotoEdit(replicate: any, { originalImage, editType, promp
   const input: any = {
     prompt: editPrompt,
     image: originalImage,
-    output_format: "webp",
+    output_format: "jpg",
     output_quality: 90
   };
   
