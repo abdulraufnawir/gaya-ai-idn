@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_prompts: {
+        Row: {
+          created_at: string
+          description: string | null
+          feature_name: string
+          id: string
+          is_active: boolean
+          system_prompt: string
+          updated_at: string
+          user_prompt_template: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          feature_name: string
+          id?: string
+          is_active?: boolean
+          system_prompt: string
+          updated_at?: string
+          user_prompt_template?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          feature_name?: string
+          id?: string
+          is_active?: boolean
+          system_prompt?: string
+          updated_at?: string
+          user_prompt_template?: string | null
+        }
+        Relationships: []
+      }
       credit_transactions: {
         Row: {
           created_at: string

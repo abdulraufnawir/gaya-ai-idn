@@ -24,6 +24,7 @@ import AdminRoleManager from '@/components/admin/AdminRoleManager';
 import AdminAIModelManagement from '@/components/admin/AdminAIModelManagement';
 import AdminAIModels from '@/components/admin/AdminAIModels';
 import AdminCreditManager from '@/components/admin/AdminCreditManager';
+import AdminPromptManager from '@/components/admin/AdminPromptManager';
 
 const AdminDashboard = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -189,7 +190,7 @@ const AdminDashboard = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 lg:grid-cols-8 mb-6">
+          <TabsList className="grid w-full grid-cols-3 lg:grid-cols-9 mb-6">
             <TabsTrigger value="overview" className="flex items-center gap-2">
               <BarChart3 className="h-4 w-4" />
               Overview
@@ -209,6 +210,10 @@ const AdminDashboard = () => {
             <TabsTrigger value="ai-models" className="flex items-center gap-2">
               <Settings className="h-4 w-4" />
               AI Models
+            </TabsTrigger>
+            <TabsTrigger value="prompts" className="flex items-center gap-2">
+              <Settings className="h-4 w-4" />
+              Prompts
             </TabsTrigger>
             <TabsTrigger value="roles" className="flex items-center gap-2">
               <Shield className="h-4 w-4" />
@@ -240,13 +245,17 @@ const AdminDashboard = () => {
             <AdminProjectMonitoring />
           </TabsContent>
 
-          <TabsContent value="ai-models">
-            <AdminAIModels />
-          </TabsContent>
+            <TabsContent value="ai-models">
+              <AdminAIModels />
+            </TabsContent>
 
-          <TabsContent value="roles">
-            <AdminRoleManager />
-          </TabsContent>
+            <TabsContent value="prompts">
+              <AdminPromptManager />
+            </TabsContent>
+
+            <TabsContent value="roles">
+              <AdminRoleManager />
+            </TabsContent>
 
           <TabsContent value="credits">
             <AdminCreditManager />
