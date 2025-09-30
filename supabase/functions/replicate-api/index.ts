@@ -163,7 +163,7 @@ async function generateModel(
   const typeRules: Record<string, string> = {
     'Atasan': 'Generate a fashion model wearing a TOP only (shirt, blouse, jacket). Do not generate a dress or gown. Show full body. Bottoms should be simple neutral to keep focus on the top.',
     'Bawahan': 'Generate a fashion model wearing BOTTOMS (pants, trousers, skirt). Do not change the top significantly; keep it neutral to highlight the bottoms. Full body shot.',
-    'Gaun': 'Generate a fashion model wearing a ONE-PIECE DRESS/GOWN. Do not generate shirts, jackets, or pants. Ensure the dress extends below the knees. Full body shot.',
+    'Gaun': 'Generate a fashion model wearing a long DRESS/GOWN. Do not generate shirts, jackets, or pants. Ensure the dress extends below the knees. Full body shot.',
     'Hijab': 'Generate a fashion model wearing a HIJAB/headscarf with modest clothing. Ensure hijab is clearly visible and correctly draped. Full body shot.'
   };
 
