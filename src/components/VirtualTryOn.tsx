@@ -367,8 +367,8 @@ const VirtualTryOn = ({
 
       if (projectError) throw projectError;
 
-      // Note: Model generation still uses Kie.AI as Replicate doesn't have this feature yet
-      const { data: genResponse, error: genError } = await supabase.functions.invoke('kie-ai', {
+      // Use Replicate API with nano-banana for model generation
+      const { data: genResponse, error: genError } = await supabase.functions.invoke('replicate-api', {
         body: {
           action: 'generateModel',
           prompt: aiModelPrompt,

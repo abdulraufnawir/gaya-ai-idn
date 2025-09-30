@@ -157,8 +157,8 @@ const PhotoEditor = ({ userId }: PhotoEditorProps) => {
 
       if (projectError) throw projectError;
 
-      // Call Kie.AI for photo editing  
-      const { data: kieResponse, error: kieError } = await supabase.functions.invoke('kie-ai', {
+      // Use Replicate API with nano-banana for photo editing
+      const { data: kieResponse, error: kieError } = await supabase.functions.invoke('replicate-api', {
         body: {
           action: 'photoEdit',
           originalImage: publicUrl,
@@ -171,25 +171,25 @@ const PhotoEditor = ({ userId }: PhotoEditorProps) => {
       });
 
       if (kieError) {
-        console.error('Kie.AI API Error:', kieError);
+        console.error('Replicate API Error:', kieError);
         throw new Error(kieError.message || 'Failed to start image processing');
       }
 
       if (kieResponse?.error) {
-        console.error('Kie.AI Response Error:', kieResponse.error);
+        console.error('Replicate Response Error:', kieResponse.error);
         throw new Error(kieResponse.error);
       }
 
-      if (!kieResponse?.prediction_id) {
+      if (!kieResponse?.predictionId) {
         console.error('No prediction ID returned:', kieResponse);
-        throw new Error('No prediction ID returned from Kie.AI API');
+        throw new Error('No prediction ID returned from Replicate API');
       }
 
       // Update project with prediction ID
       const { error: updateError } = await supabase
         .from('projects')
         .update({
-          prediction_id: kieResponse.prediction_id,
+          prediction_id: kieResponse.predictionId,
           settings: {
             edit_type: editType,
             prompt: editPrompt,
@@ -197,7 +197,7 @@ const PhotoEditor = ({ userId }: PhotoEditorProps) => {
             background_image_url: backgroundUrl,
             original_image_url: publicUrl,
             model_used: 'google/nano-banana',
-            api_provider: 'kie.ai'
+            api_provider: 'replicate'
           }
         })
         .eq('id', project.id);
@@ -209,7 +209,7 @@ const PhotoEditor = ({ userId }: PhotoEditorProps) => {
 
       toast({
         title: 'Berhasil!',
-        description: 'Foto sedang diproses dengan Kie.AI nano-banana. Silakan cek riwayat proyek untuk melihat hasilnya.',
+        description: 'Foto sedang diproses dengan Replicate nano-banana. Silakan cek riwayat proyek untuk melihat hasilnya.',
       });
 
       // Reset form

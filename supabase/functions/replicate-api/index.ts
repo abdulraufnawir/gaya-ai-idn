@@ -33,6 +33,12 @@ serve(async (req) => {
         return await replaceBackground(replicate, params);
       case 'image_enhancement':
         return await enhanceImage(replicate, params);
+      case 'generateModel':
+        return await generateModel(replicate, params);
+      case 'modelSwap':
+        return await processModelSwap(replicate, params);
+      case 'photoEdit':
+        return await processPhotoEdit(replicate, params);
       case 'status':
         return await getStatus(replicate, params.predictionId);
       default:
@@ -140,6 +146,142 @@ async function enhanceImage(replicate: any, { imageUrl }: { imageUrl: string }) 
   });
 
   return new Response(JSON.stringify({ predictionId: prediction.id }), {
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+  });
+}
+
+async function generateModel(replicate: any, { prompt, clothingType, aspectRatio, projectId }: { prompt: string; clothingType: string; aspectRatio?: string; projectId: string }) {
+  console.log('Generating model with nano-banana for project:', projectId);
+  
+  const webhookUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/replicate-webhook`;
+  
+  // Build prompt with clothing type context
+  let finalPrompt = '';
+  if (clothingType) {
+    const clothingInstructions = {
+      'Atasan': 'Fashion model wearing a top/upper body garment (shirt, blouse, or jacket). Full body shot with focus on the upper garment. Model wearing appropriate bottom wear.',
+      'Bawahan': 'Fashion model wearing bottom garments (pants, trousers, or skirt). Full body shot with simple neutral top to highlight the bottom wear.',
+      'Gaun': 'Fashion model wearing a full-length dress or gown. Complete dress from top to bottom, full body shot.',
+      'Hijab': 'Fashion model wearing a hijab/headscarf with modest clothing. Hijab properly draped and styled with appropriate modest outfit.'
+    };
+    
+    if (clothingInstructions[clothingType]) {
+      finalPrompt = `${clothingInstructions[clothingType]} ${prompt}. `;
+    } else {
+      finalPrompt = `Fashion model: ${prompt}. `;
+    }
+  } else {
+    finalPrompt = `Fashion model: ${prompt}. `;
+  }
+  
+  finalPrompt += 'Professional photography, studio lighting, clean background, high resolution, photorealistic, commercial fashion photography style.';
+  
+  const prediction = await replicate.predictions.create({
+    version: "google/nano-banana",
+    input: {
+      prompt: finalPrompt,
+      aspect_ratio: aspectRatio || "2:3",
+      output_format: "webp",
+      output_quality: 90
+    },
+    webhook: webhookUrl,
+    webhook_events_filter: ["start", "output", "logs", "completed"]
+  });
+
+  console.log('Model generation prediction created:', prediction.id);
+
+  return new Response(JSON.stringify({ 
+    predictionId: prediction.id,
+    projectId: projectId 
+  }), {
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+  });
+}
+
+async function processModelSwap(replicate: any, { modelImage, garmentImage, projectId }: { modelImage: string; garmentImage: string; projectId: string }) {
+  console.log('Processing model swap with nano-banana for project:', projectId);
+  
+  const webhookUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/replicate-webhook`;
+  
+  const prompt = `Swap the model from the product image with the new model. Maintain the exact product appearance, color, style, and details. Only change the model wearing the product.`;
+  
+  const prediction = await replicate.predictions.create({
+    version: "google/nano-banana",
+    input: {
+      prompt: prompt,
+      image: garmentImage,
+      reference_image: modelImage,
+      output_format: "webp",
+      output_quality: 90
+    },
+    webhook: webhookUrl,
+    webhook_events_filter: ["start", "output", "logs", "completed"]
+  });
+
+  console.log('Model swap prediction created:', prediction.id);
+
+  return new Response(JSON.stringify({ 
+    predictionId: prediction.id,
+    projectId: projectId 
+  }), {
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+  });
+}
+
+async function processPhotoEdit(replicate: any, { originalImage, editType, prompt, backgroundImage, selectedColor, projectId }: { originalImage: string; editType: string; prompt?: string; backgroundImage?: string; selectedColor?: string; projectId: string }) {
+  console.log('Processing photo edit with nano-banana for project:', projectId);
+  
+  const webhookUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/replicate-webhook`;
+  
+  let editPrompt = '';
+  
+  switch (editType) {
+    case 'background_removal':
+      editPrompt = 'Remove the background and make it transparent. Keep the main subject intact and clean edges.';
+      break;
+    case 'background_replacement':
+      if (backgroundImage) {
+        editPrompt = `Replace the background with the provided reference image. Maintain natural lighting and shadows.`;
+      } else if (selectedColor) {
+        editPrompt = prompt || `Replace the background with a solid color: ${selectedColor}. Professional studio background.`;
+      } else {
+        editPrompt = prompt || 'Replace with a professional studio background';
+      }
+      break;
+    case 'image_enhancement':
+      editPrompt = 'Enhance image quality, improve lighting, sharpen details, increase resolution. Professional commercial photography quality.';
+      break;
+    case 'custom_edit':
+      editPrompt = prompt || 'Professional photo editing';
+      break;
+    default:
+      editPrompt = prompt || 'Edit the image professionally';
+  }
+  
+  const input: any = {
+    prompt: editPrompt,
+    image: originalImage,
+    output_format: "webp",
+    output_quality: 90
+  };
+  
+  if (backgroundImage) {
+    input.reference_image = backgroundImage;
+  }
+  
+  const prediction = await replicate.predictions.create({
+    version: "google/nano-banana",
+    input: input,
+    webhook: webhookUrl,
+    webhook_events_filter: ["start", "output", "logs", "completed"]
+  });
+
+  console.log('Photo edit prediction created:', prediction.id);
+
+  return new Response(JSON.stringify({ 
+    predictionId: prediction.id,
+    projectId: projectId 
+  }), {
     headers: { ...corsHeaders, 'Content-Type': 'application/json' },
   });
 }
