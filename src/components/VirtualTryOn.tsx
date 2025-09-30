@@ -239,6 +239,15 @@ const VirtualTryOn = ({
       return;
     }
 
+    if (!clothingCategory) {
+      toast({
+        title: 'Error',
+        description: 'Silakan pilih kategori pakaian (Atasan/Bawahan/Gaun/Hijab)',
+        variant: 'destructive'
+      });
+      return;
+    }
+
     setProcessing(true);
     try {
       // Beta testing: Credits system disabled
@@ -260,40 +269,44 @@ const VirtualTryOn = ({
       }).select().single();
       if (projectError) throw projectError;
 
-      // Start Replicate virtual try-on
+      // Start Kie.AI virtual try-on with clothing category enforcement
       const {
-        data: replicateResponse,
+        data: kieResponse,
         error: invokeError
-      } = await supabase.functions.invoke('replicate-api', {
+      } = await supabase.functions.invoke('kie-ai', {
         body: {
-          action: 'virtual_tryon',
+          action: 'virtualTryOn',
           modelImage: finalModelImageUrl,
           garmentImage: clothingImageUrl,
-          projectId: project.id
+          projectId: project.id,
+          clothingCategory: clothingCategory
         }
       });
       if (invokeError) {
         throw new Error(`Function invoke error: ${invokeError.message}`);
       }
-      if (!replicateResponse) {
-        throw new Error('No response received from Replicate');
+      if (!kieResponse) {
+        throw new Error('No response received from Kie.AI');
       }
-      if (replicateResponse.error) {
-        throw new Error(replicateResponse.error);
+      if (kieResponse.error) {
+        throw new Error(kieResponse.error);
       }
+
+      const predictionId = kieResponse.prediction_id || kieResponse.id;
 
       // Update project with prediction ID
       await supabase.from('projects').update({
-        prediction_id: replicateResponse.predictionId,
+        prediction_id: predictionId,
         settings: {
-          prediction_id: replicateResponse.predictionId,
+          prediction_id: predictionId,
           model_image_url: finalModelImageUrl,
-          garment_image_url: clothingImageUrl
+          garment_image_url: clothingImageUrl,
+          clothing_category: clothingCategory
         }
       }).eq('id', project.id);
       toast({
         title: 'Berhasil!',
-        description: 'Virtual try-on sedang diproses dengan Replicate Nano Banana. Silakan cek riwayat proyek untuk melihat hasilnya.'
+        description: 'Virtual try-on sedang diproses dengan Kie.AI. Silakan cek riwayat proyek untuk melihat hasilnya.'
       });
 
       // Reset form
@@ -670,7 +683,7 @@ const { data: genResponse, error: genError } = await supabase.functions.invoke('
       <div className="max-w-7xl mx-auto mt-4 flex justify-center px-4">
         <Button 
           onClick={handleProcess} 
-          disabled={processing || (!modelImage && !modelImageUrl) || !clothingImage} 
+          disabled={processing || (!modelImage && !modelImageUrl) || !clothingImage || !clothingCategory} 
           size="lg" 
           className="w-full sm:w-auto sm:min-w-[300px] h-12 text-base"
         >

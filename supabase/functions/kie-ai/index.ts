@@ -72,20 +72,28 @@ async function processVirtualTryOn({ modelImage, garmentImage, projectId, clothi
     const callbackUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/kie-webhook`;
     console.log('Callback URL:', callbackUrl);
     
-    // Use nano-banana Edit mode for virtual try-on with correct parameters
+    // Use nano-banana Edit mode for virtual try-on with strict clothing-type rules
     let prompt = `Virtual try-on: Take the person from the first image and dress them in the clothing from the second image. Maintain the person's pose, body proportions, and facial features while fitting the garment naturally with proper sizing, realistic lighting, shadows, and fabric physics. High quality, photorealistic result.`;
-    
-    // Add clothing category specific instructions if provided
+
+    // Enforce HARD RULES by clothing category (atasan, bawahan, gaun, hijab)
     if (clothingCategory) {
-      const categoryInstructions = {
-        'atasan': 'Focus on fitting the top/upper body clothing properly around torso, shoulders, and arms.',
-        'bawahan': 'Focus on fitting the bottom/lower body clothing properly around waist, hips, and legs.',
-        'gaun': 'Focus on fitting the dress properly as a full-body garment from shoulders to appropriate length.',
-        'hijab': 'Focus on fitting the hijab/headscarf properly around the head and neck area, maintaining modest coverage.'
+      const typeRules: Record<string, string> = {
+        atasan: 'HARD RULE: This is a TOP/ATASAN only. Replace only the upper garment. Do NOT generate a dress/gown/abaya. Keep bottoms simple and unchanged.',
+        bawahan: 'HARD RULE: This is a BOTTOM/BAWAHAN only. Emphasize pants/skirt. Keep the top plain and unchanged. Do NOT convert to a dress.',
+        gaun: 'HARD RULE: This is a GAUN (full-length dress). One-piece from shoulders to ankles, no pants visible, no split between top and bottom, no shirts.',
+        hijab: 'HARD RULE: This is a HIJAB. Head must be covered with a proper hijab; maintain modest coverage around head and neck.'
       };
-      
-      if (categoryInstructions[clothingCategory]) {
-        prompt += ` ${categoryInstructions[clothingCategory]}`;
+
+      const negativeByType: Record<string, string> = {
+        atasan: 'Avoid: dress, gown, abaya, long robe.',
+        bawahan: 'Avoid: long dress, gown, elaborate tops.',
+        gaun: 'Avoid: shirt, blouse, jacket, pants, jeans, shorts, two-piece outfit, visible split, visible trousers.',
+        hijab: 'Avoid: uncovered hair, exposed hairline.'
+      };
+
+      const key = String(clothingCategory).toLowerCase();
+      if (typeRules[key as keyof typeof typeRules]) {
+        prompt += ` ${typeRules[key as keyof typeof typeRules]} ${negativeByType[key as keyof typeof negativeByType]}`;
       }
     }
 
