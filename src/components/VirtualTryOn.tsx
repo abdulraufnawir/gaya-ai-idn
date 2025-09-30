@@ -269,30 +269,30 @@ const VirtualTryOn = ({
       }).select().single();
       if (projectError) throw projectError;
 
-      // Start Kie.AI virtual try-on with clothing category enforcement
+      // Start Replicate virtual try-on (nano-banana) with clothing category enforcement
       const {
-        data: kieResponse,
+        data: repResponse,
         error: invokeError
-      } = await supabase.functions.invoke('kie-ai', {
+      } = await supabase.functions.invoke('replicate-api', {
         body: {
-          action: 'virtualTryOn',
+          action: 'virtual_tryon',
           modelImage: finalModelImageUrl,
           garmentImage: clothingImageUrl,
           projectId: project.id,
-          clothingCategory: clothingCategory
+          clothingCategory: clothingCategory,
         }
       });
       if (invokeError) {
         throw new Error(`Function invoke error: ${invokeError.message}`);
       }
-      if (!kieResponse) {
-        throw new Error('No response received from Kie.AI');
+      if (!repResponse) {
+        throw new Error('No response received from Replicate API');
       }
-      if (kieResponse.error) {
-        throw new Error(kieResponse.error);
+      if (repResponse.error) {
+        throw new Error(repResponse.error);
       }
 
-      const predictionId = kieResponse.prediction_id || kieResponse.id;
+      const predictionId = repResponse.prediction_id || repResponse.predictionId || repResponse.id;
 
       // Update project with prediction ID
       await supabase.from('projects').update({

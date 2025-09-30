@@ -57,24 +57,58 @@ serve(async (req) => {
   }
 });
 
-async function processVirtualTryOn(replicate: any, { modelImage, garmentImage, projectId }: { modelImage: string; garmentImage: string; projectId: string }) {
-  console.log('Processing virtual try-on with Replicate');
-  
+async function processVirtualTryOn(
+  replicate: any,
+  { modelImage, garmentImage, projectId, clothingCategory }: { modelImage: string; garmentImage: string; projectId: string; clothingCategory?: string }
+) {
+  console.log('Processing virtual try-on with Replicate nano-banana');
+
   const webhookUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/replicate-webhook`;
   console.log('Setting webhook URL:', webhookUrl);
-  
+
+  // Prompt engineered to mirror Replicate.com successful setup
+  let prompt = `Replace the clothing on the person in [MODEL IMAGE at top image] with the outfit from [CLOTHING IMAGE at bottom image], ensuring the model's face, body shape, and pose remain unchanged. Keep the outfit's exact design, color, fabric texture, and natural fit. Preserve realistic lighting, shadows, and background for a seamless, natural appearance.`;
+
+  // Clothing-type hard rules
+  const rules: Record<string, { hard: string; negative: string }> = {
+    Atasan: {
+      hard: 'HARD RULE: This is a TOP only. Replace only the upper garment. Do NOT generate a dress/gown. Bottoms stay as-is and neutral.',
+      negative: 'dress, gown, long robe, abaya'
+    },
+    Bawahan: {
+      hard: 'HARD RULE: This is a BOTTOM only. Emphasize pants/skirt. Do NOT convert to a dress. Keep the top plain and unchanged.',
+      negative: 'long dress, gown, elaborate tops'
+    },
+    Gaun: {
+      hard: 'HARD RULE: This is a full-length dress/gown to the ankles. One-piece silhouette with no visible split between top and bottom. No shirt, blouse, jacket, or pants visible.',
+      negative: 'shirt, t-shirt, blouse, jacket, blazer, coat, cardigan, pants, jeans, trousers, shorts, leggings, two-piece outfit, waistband, belt loops, visible trousers'
+    },
+    Hijab: {
+      hard: 'HARD RULE: Apply a proper hijab covering hair with modest neck coverage. Keep outfit modest.',
+      negative: 'uncovered hair, exposed hairline'
+    }
+  };
+
+  let negativePrompt = undefined as string | undefined;
+  if (clothingCategory && rules[clothingCategory]) {
+    prompt += ` ${rules[clothingCategory].hard}`;
+    negativePrompt = rules[clothingCategory].negative;
+  }
+
   const prediction = await replicate.predictions.create({
-    version: "c871bb9b046607b680449ecbae55fd8c6d945e0a1948644bf2361b3d021d3ff4",
+    model: 'google/nano-banana',
     input: {
-      human_img: modelImage,
-      garm_img: garmentImage,
-      garment_des: "Virtual try-on result"
+      prompt,
+      negative_prompt: negativePrompt,
+      // order must be [model/person image, clothing image]
+      image_input: [modelImage, garmentImage],
+      output_format: 'webp'
     },
     webhook: webhookUrl,
-    webhook_events_filter: ["start", "output", "logs", "completed"]
+    webhook_events_filter: ['start', 'output', 'logs', 'completed']
   });
 
-  console.log('Virtual try-on prediction created:', prediction.id);
+  console.log('Virtual try-on prediction created (nano-banana):', prediction.id);
 
   return new Response(JSON.stringify({ 
     predictionId: prediction.id,
