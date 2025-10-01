@@ -95,14 +95,16 @@ async function processVirtualTryOn(
     negativePrompt = rules[clothingCategory].negative;
   }
 
+  // Use IDM-VTON for virtual try-on - more reliable than nano-banana for this use case
   const prediction = await replicate.predictions.create({
-    model: 'google/nano-banana',
+    version: "c871bb9b046607b680449ecbae55fd8c6d945e0a1948644bf2361b3d021d3ff4",
     input: {
-      prompt,
-      negative_prompt: negativePrompt,
-      // order must be [model/person image, clothing image]
-      image_input: [modelImage, garmentImage],
-      output_format: 'jpg'
+      garm_img: garmentImage,
+      human_img: modelImage,
+      garment_des: clothingCategory === 'Gaun' ? 'A full-length dress' : 
+                   clothingCategory === 'Atasan' ? 'An upper garment' :
+                   clothingCategory === 'Bawahan' ? 'Lower garment' : 
+                   'Clothing item'
     },
     webhook: webhookUrl,
     webhook_events_filter: ['start', 'output', 'logs', 'completed']
