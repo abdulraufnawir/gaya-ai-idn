@@ -55,7 +55,8 @@ const ResultViewer = ({ projectId, predictionId, title, projectType }: ResultVie
         apiFunction = 'replicate-api';
         requestBody = { action: 'status', predictionId: predictionId };
       } else if (isVirtualTryOn) {
-        apiFunction = 'kie-ai';
+        // Virtual try-on in this app uses Replicate (nano-banana) + webhook
+        apiFunction = 'replicate-api';
         requestBody = { action: 'status', predictionId: predictionId };
       } else {
         apiFunction = 'fashn-api';
