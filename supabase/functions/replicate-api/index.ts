@@ -166,24 +166,7 @@ async function processVirtualTryOn(
         webhook_events_filter: ['start', 'output', 'logs', 'completed']
       });
 
-        version: "c871bb9b046607b680449ecbae55fd8c6d945e0a1948644bf2361b3d021d3ff4",
-        input: {
-          garm_img: garmentImage,
-          human_img: modelImage,
-          garment_des: normalizedCategory === 'Gaun' ? 'A full-length top to ankle-length dress/gown that fully covers the legs down to the feet' :
-                       normalizedCategory === 'Atasan' ? 'An upper garment' :
-                       normalizedCategory === 'Bawahan' ? 'Lower garment' :
-                       'Clothing item',
-          category: categoryHint,
-          is_dress: normalizedCategory === 'Gaun' ? true : undefined,
-          prompt,
-          negative_prompt: negativePrompt
-        },
-        webhook: webhookUrl,
-        webhook_events_filter: ['start', 'output', 'logs', 'completed']
-      });
-
-  console.log('Virtual try-on prediction created (nano-banana):', prediction.id);
+  console.log('Virtual try-on prediction created:', prediction.id);
 
   return new Response(JSON.stringify({ 
     predictionId: prediction.id,
