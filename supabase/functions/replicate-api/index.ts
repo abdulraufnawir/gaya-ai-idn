@@ -106,7 +106,7 @@ async function processVirtualTryOn(
   }
 
   // Try-on model inputs (IDM-VTON). Some versions support a category hint.
-  const categoryHint = normalizedCategory === 'Gaun' ? 'dress'
+  const categoryHint = normalizedCategory === 'Gaun' ? 'dresses'
     : normalizedCategory === 'Atasan' ? 'upper_body'
     : normalizedCategory === 'Bawahan' ? 'lower_body'
     : undefined;
