@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -35,23 +35,8 @@ const ProjectHistory = ({ userId }: ProjectHistoryProps) => {
   const [imagePopupOpen, setImagePopupOpen] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string>('');
   const { toast } = useToast();
-  
-  // Enable realtime updates
-  const { realtimeEnabled } = useRealtimeProjects(userId);
 
-  useEffect(() => {
-    fetchProjects();
-  }, [userId]);
-
-  // Realtime subscription effect - refetch when updates occur
-  useEffect(() => {
-    if (realtimeEnabled) {
-      // Refetch projects when realtime updates occur
-      fetchProjects();
-    }
-  }, [realtimeEnabled]);
-
-  const fetchProjects = async () => {
+  const fetchProjects = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('projects')
@@ -70,7 +55,17 @@ const ProjectHistory = ({ userId }: ProjectHistoryProps) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [userId, toast]);
+
+  useEffect(() => {
+    fetchProjects();
+  }, [fetchProjects]);
+  
+  // Enable realtime updates with auto-refetch
+  const { realtimeEnabled } = useRealtimeProjects({ 
+    userId, 
+    onUpdate: fetchProjects 
+  });
 
   const handleRetryProject = async (projectId: string) => {
     setRetryingProjects(prev => new Set([...prev, projectId]));

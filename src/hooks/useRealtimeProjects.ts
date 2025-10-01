@@ -2,7 +2,12 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 
-export const useRealtimeProjects = (userId: string | null) => {
+interface UseRealtimeProjectsProps {
+  userId: string | null;
+  onUpdate?: () => void;
+}
+
+export const useRealtimeProjects = ({ userId, onUpdate }: UseRealtimeProjectsProps) => {
   const { toast } = useToast();
   const [realtimeEnabled, setRealtimeEnabled] = useState(false);
 
@@ -27,7 +32,7 @@ export const useRealtimeProjects = (userId: string | null) => {
           const project = payload.new;
           
           // Show toast notification for status changes
-          if (project.status === 'succeeded') {
+          if (project.status === 'completed') {
             toast({
               title: "Project Complete!",
               description: `"${project.title}" has finished processing successfully.`,
@@ -38,6 +43,11 @@ export const useRealtimeProjects = (userId: string | null) => {
               description: `"${project.title}" encountered an error during processing.`,
               variant: "destructive",
             });
+          }
+
+          // Trigger callback to refetch data
+          if (onUpdate) {
+            onUpdate();
           }
         }
       )
@@ -51,7 +61,7 @@ export const useRealtimeProjects = (userId: string | null) => {
       supabase.removeChannel(channel);
       setRealtimeEnabled(false);
     };
-  }, [userId, toast]);
+  }, [userId, toast, onUpdate]);
 
   return { realtimeEnabled };
 };
