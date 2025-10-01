@@ -76,8 +76,8 @@ async function processVirtualTryOn(
   };
   const normalizedCategory = categoryMap[raw] ?? (['Atasan','Bawahan','Gaun','Hijab'].includes(clothingCategory as string) ? clothingCategory as any : undefined);
 
-  // Prompt engineered to mirror Replicate.com successful setup
-  let prompt = `Replace the clothing on the person in [MODEL IMAGE at top image] with the outfit from [CLOTHING IMAGE at bottom image], ensuring the model's face, body shape, and pose remain unchanged. Keep the outfit's exact design, color, fabric texture, and natural fit. Preserve realistic lighting, shadows, and background for a seamless, natural appearance.`;
+  // Prompt engineered to clearly define image ordering and constraints
+  let prompt = `Two images are provided. FIRST IMAGE is the MODEL photo. SECOND IMAGE is the GARMENT reference. Replace the model's outfit with the garment from the second image while keeping the model's face, body shape, pose, lighting, shadows and background unchanged. Maintain exact design, color, fabric texture and natural fit.`;
 
   // Clothing-type hard rules
   const rules: Record<string, { hard: string; negative: string }> = {
@@ -90,8 +90,8 @@ async function processVirtualTryOn(
       negative: 'long dress, gown, elaborate tops'
     },
     Gaun: {
-      hard: 'HARD RULE: This is a full-length dress/gown reaching the ankles/feet. One-piece silhouette with no split between top and bottom. Legs, ankles and feet must be fully covered by the dress hem (only shoes may be visible). No shirt, blouse, jacket, or pants visible.',
-      negative: 'shirt, t-shirt, blouse, jacket, blazer, coat, cardigan, pants, jeans, trousers, shorts, leggings, two-piece outfit, waistband, belt loops, visible trousers, visible legs, visible ankles, visible feet, calf, calves, shins, knees'
+      hard: 'HARD RULES: This is a full-length dress/gown reaching the ankles/feet. One-piece silhouette with no split between top and bottom. Legs/ankles/feet must not be visible (only shoes may be visible). No shirt, blouse, jacket, or pants visible.',
+      negative: 'shirt, t-shirt, blouse, jacket, blazer, coat, cardigan, pants, jeans, trousers, shorts, leggings, two-piece outfit'
     },
     Hijab: {
       hard: 'HARD RULE: Apply a proper hijab covering hair with modest neck coverage. Keep outfit modest.',
@@ -101,6 +101,7 @@ async function processVirtualTryOn(
 
   let negativePrompt = undefined as string | undefined;
   if (normalizedCategory && rules[normalizedCategory]) {
+    // Add hard constraints into the main prompt (nano-banana ignores negative_prompt)
     prompt += ` ${rules[normalizedCategory].hard}`;
     negativePrompt = rules[normalizedCategory].negative;
   }
@@ -111,22 +112,60 @@ async function processVirtualTryOn(
     : normalizedCategory === 'Bawahan' ? 'lower_body'
     : undefined;
 
+  // Prefer nano-banana for Gaun with strict inline constraints and correct image ordering
   const prediction = normalizedCategory === 'Gaun'
-    ? await replicate.predictions.create({
-        model: 'google/nano-banana',
+    ? await (async () => {
+        try {
+          const p = await replicate.predictions.create({
+            model: 'google/nano-banana',
+            input: {
+              // nano-banana ignores negative_prompt, so fold all constraints into prompt
+              prompt,
+              // Correct order: [MODEL, GARMENT]
+              image_input: [modelImage, garmentImage],
+              output_format: 'jpg'
+            },
+            webhook: webhookUrl,
+            webhook_events_filter: ['start', 'output', 'logs', 'completed']
+          });
+          return p;
+        } catch (e) {
+          console.log('nano-banana creation failed, falling back to IDM-VTON:', e?.message || e);
+          // Fallback to IDM-VTON spec if nano-banana prediction creation fails
+          return await replicate.predictions.create({
+            version: "c871bb9b046607b680449ecbae55fd8c6d945e0a1948644bf2361b3d021d3ff4",
+            input: {
+              garm_img: garmentImage,
+              human_img: modelImage,
+              garment_des: 'A full-length top to ankle-length dress/gown that fully covers the legs down to the feet',
+              category: categoryHint,
+              is_dress: true,
+              prompt,
+              negative_prompt: negativePrompt
+            },
+            webhook: webhookUrl,
+            webhook_events_filter: ['start', 'output', 'logs', 'completed']
+          });
+        }
+      })()
+    : await replicate.predictions.create({
+        version: "c871bb9b046607b680449ecbae55fd8c6d945e0a1948644bf2361b3d021d3ff4",
         input: {
-          // Dress/gown must fully cover legs down to the ankles/feet
+          garm_img: garmentImage,
+          human_img: modelImage,
+          garment_des: normalizedCategory === 'Gaun' ? 'A full-length top to ankle-length dress/gown that fully covers the legs down to the feet' :
+                       normalizedCategory === 'Atasan' ? 'An upper garment' :
+                       normalizedCategory === 'Bawahan' ? 'Lower garment' :
+                       'Clothing item',
+          category: categoryHint,
+          is_dress: normalizedCategory === 'Gaun' ? true : undefined,
           prompt,
           negative_prompt: negativePrompt
-            ? `${negativePrompt}, bare legs, knees, thighs, calves, visible ankles, visible feet, mini dress, knee-length dress, tunic`
-            : 'bare legs, knees, thighs, calves, visible ankles, visible feet, mini dress, knee-length dress, tunic',
-          image_input: [garmentImage, modelImage],
-          output_format: 'jpg'
         },
         webhook: webhookUrl,
         webhook_events_filter: ['start', 'output', 'logs', 'completed']
-      })
-    : await replicate.predictions.create({
+      });
+
         version: "c871bb9b046607b680449ecbae55fd8c6d945e0a1948644bf2361b3d021d3ff4",
         input: {
           garm_img: garmentImage,

@@ -332,17 +332,12 @@ const VirtualTryOn = ({
     }
   };
   const uploadImage = async (file: File, type: string): Promise<string> => {
-    const fileName = `${userId}/${type}_${Date.now()}_${file.name}`;
-    const {
-      data,
-      error
-    } = await supabase.storage.from('tryon-images').upload(fileName, file);
+    // Sanitize filename to avoid spaces and special characters in public URLs
+    const base = file.name.normalize('NFKD').replace(/[\s]+/g, '_').replace(/[^\w.-]/g, '_');
+    const fileName = `${userId}/${type}_${Date.now()}_${base}`;
+    const { data, error } = await supabase.storage.from('tryon-images').upload(fileName, file);
     if (error) throw error;
-    const {
-      data: {
-        publicUrl
-      }
-    } = supabase.storage.from('tryon-images').getPublicUrl(fileName);
+    const { data: { publicUrl } } = supabase.storage.from('tryon-images').getPublicUrl(fileName);
     return publicUrl;
   };
 
