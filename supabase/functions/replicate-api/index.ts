@@ -66,6 +66,16 @@ async function processVirtualTryOn(
   const webhookUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/replicate-webhook`;
   console.log('Setting webhook URL:', webhookUrl);
 
+  // Normalize category from various inputs (e.g., 'gaun', 'dress', 'gamis')
+  const raw = (clothingCategory ?? '').toString().trim().toLowerCase();
+  const categoryMap: Record<string, 'Atasan' | 'Bawahan' | 'Gaun' | 'Hijab'> = {
+    atasan: 'Atasan', top: 'Atasan', shirt: 'Atasan',
+    bawahan: 'Bawahan', bottom: 'Bawahan', celana: 'Bawahan', rok: 'Bawahan', skirt: 'Bawahan',
+    gaun: 'Gaun', dress: 'Gaun', gamis: 'Gaun', abaya: 'Gaun', jubah: 'Gaun', robe: 'Gaun',
+    hijab: 'Hijab', kerudung: 'Hijab', headscarf: 'Hijab'
+  };
+  const normalizedCategory = categoryMap[raw] ?? (['Atasan','Bawahan','Gaun','Hijab'].includes(clothingCategory as string) ? clothingCategory as any : undefined);
+
   // Prompt engineered to mirror Replicate.com successful setup
   let prompt = `Replace the clothing on the person in [MODEL IMAGE at top image] with the outfit from [CLOTHING IMAGE at bottom image], ensuring the model's face, body shape, and pose remain unchanged. Keep the outfit's exact design, color, fabric texture, and natural fit. Preserve realistic lighting, shadows, and background for a seamless, natural appearance.`;
 
@@ -90,21 +100,30 @@ async function processVirtualTryOn(
   };
 
   let negativePrompt = undefined as string | undefined;
-  if (clothingCategory && rules[clothingCategory]) {
-    prompt += ` ${rules[clothingCategory].hard}`;
-    negativePrompt = rules[clothingCategory].negative;
+  if (normalizedCategory && rules[normalizedCategory]) {
+    prompt += ` ${rules[normalizedCategory].hard}`;
+    negativePrompt = rules[normalizedCategory].negative;
   }
 
-  // Use IDM-VTON for virtual try-on - more reliable than nano-banana for this use case
+  // Try-on model inputs (IDM-VTON). Some versions support a category hint.
+  const categoryHint = normalizedCategory === 'Gaun' ? 'dress'
+    : normalizedCategory === 'Atasan' ? 'upper_body'
+    : normalizedCategory === 'Bawahan' ? 'lower_body'
+    : undefined;
+
   const prediction = await replicate.predictions.create({
     version: "c871bb9b046607b680449ecbae55fd8c6d945e0a1948644bf2361b3d021d3ff4",
     input: {
       garm_img: garmentImage,
       human_img: modelImage,
-      garment_des: clothingCategory === 'Gaun' ? 'A full-length dress' : 
-                   clothingCategory === 'Atasan' ? 'An upper garment' :
-                   clothingCategory === 'Bawahan' ? 'Lower garment' : 
-                   'Clothing item'
+      garment_des: normalizedCategory === 'Gaun' ? 'A full-length dress' :
+                   normalizedCategory === 'Atasan' ? 'An upper garment' :
+                   normalizedCategory === 'Bawahan' ? 'Lower garment' :
+                   'Clothing item',
+      category: categoryHint,
+      is_dress: normalizedCategory === 'Gaun' ? true : undefined,
+      prompt,
+      negative_prompt: negativePrompt
     },
     webhook: webhookUrl,
     webhook_events_filter: ['start', 'output', 'logs', 'completed']

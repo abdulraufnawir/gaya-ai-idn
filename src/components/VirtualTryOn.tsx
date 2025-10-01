@@ -255,6 +255,10 @@ const VirtualTryOn = ({
       // Get model image URL - either from uploaded file or selected model
       const finalModelImageUrl = modelImageUrl || (await uploadImage(modelImage!, 'model'));
       const clothingImageUrl = await uploadImage(clothingImage, 'clothing');
+      // Normalize clothing category to Title Case expected by backend
+      const normalizedCategory = clothingCategory 
+        ? clothingCategory.charAt(0).toUpperCase() + clothingCategory.slice(1).toLowerCase()
+        : null;
 
       // Create project record
       const {
@@ -279,7 +283,7 @@ const VirtualTryOn = ({
           modelImage: finalModelImageUrl,
           garmentImage: clothingImageUrl,
           projectId: project.id,
-          clothingCategory: clothingCategory,
+          clothingCategory: normalizedCategory,
         }
       });
       if (invokeError) {
@@ -301,12 +305,12 @@ const VirtualTryOn = ({
           prediction_id: predictionId,
           model_image_url: finalModelImageUrl,
           garment_image_url: clothingImageUrl,
-          clothing_category: clothingCategory
+          clothing_category: normalizedCategory
         }
       }).eq('id', project.id);
       toast({
         title: 'Berhasil!',
-        description: 'Virtual try-on sedang diproses dengan Kie.AI. Silakan cek riwayat proyek untuk melihat hasilnya.'
+        description: 'Virtual try-on sedang diproses dengan Replicate. Silakan cek riwayat proyek untuk melihat hasilnya.'
       });
 
       // Reset form
