@@ -61,7 +61,7 @@ async function processVirtualTryOn(
   replicate: any,
   { modelImage, garmentImage, projectId, clothingCategory }: { modelImage: string; garmentImage: string; projectId: string; clothingCategory?: string }
 ) {
-  console.log('Processing virtual try-on with Replicate nano-banana');
+  console.log('Processing virtual try-on with IDM-VTON');
 
   const webhookUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/replicate-webhook`;
   console.log('Setting webhook URL:', webhookUrl);
@@ -76,10 +76,35 @@ async function processVirtualTryOn(
   };
   const normalizedCategory = categoryMap[raw] ?? (['Atasan','Bawahan','Gaun','Hijab'].includes(clothingCategory as string) ? clothingCategory as any : undefined);
 
-  // Prompt engineered to mirror Replicate.com successful setup
+  // For Gaun, use OOTDiffusion which handles full-length dresses better
+  if (normalizedCategory === 'Gaun') {
+    console.log('Using OOTDiffusion for full-length Gaun/dress');
+    
+    const prediction = await replicate.predictions.create({
+      version: "4e885dbf06aa5c29f5567b7c6e390e7eb3c808a8ac8c4ac1e870cf0e5f0c2e5d", // OOTDiffusion
+      input: {
+        cloth_image: garmentImage,
+        model_image: modelImage,
+        category: "upperbody",  // OOTDiffusion uses this for full garments
+        cloth_type: "dress"
+      },
+      webhook: webhookUrl,
+      webhook_events_filter: ['start', 'output', 'logs', 'completed']
+    });
+
+    console.log('OOTDiffusion prediction created for Gaun:', prediction.id);
+
+    return new Response(JSON.stringify({ 
+      predictionId: prediction.id,
+      projectId: projectId 
+    }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+
+  // Standard IDM-VTON for other categories
   let prompt = `Replace the clothing on the person in [MODEL IMAGE at top image] with the outfit from [CLOTHING IMAGE at bottom image], ensuring the model's face, body shape, and pose remain unchanged. Keep the outfit's exact design, color, fabric texture, and natural fit. Preserve realistic lighting, shadows, and background for a seamless, natural appearance.`;
 
-  // Clothing-type hard rules
   const rules: Record<string, { hard: string; negative: string }> = {
     Atasan: {
       hard: 'HARD RULE: This is a TOP only. Replace only the upper garment. Do NOT generate a dress/gown. Bottoms stay as-is and neutral.',
@@ -88,10 +113,6 @@ async function processVirtualTryOn(
     Bawahan: {
       hard: 'HARD RULE: This is a BOTTOM only. Emphasize pants/skirt. Do NOT convert to a dress. Keep the top plain and unchanged.',
       negative: 'long dress, gown, elaborate tops'
-    },
-    Gaun: {
-      hard: 'HARD RULE: This is a full-length dress/gown reaching the ankles/feet. One-piece silhouette with no split between top and bottom. Legs, ankles and feet must be fully covered by the dress hem (only shoes may be visible). No shirt, blouse, jacket, or pants visible.',
-      negative: 'shirt, t-shirt, blouse, jacket, blazer, coat, cardigan, pants, jeans, trousers, shorts, leggings, two-piece outfit, waistband, belt loops, visible trousers, visible legs, visible ankles, visible feet, calf, calves, shins, knees'
     },
     Hijab: {
       hard: 'HARD RULE: Apply a proper hijab covering hair with modest neck coverage. Keep outfit modest.',
@@ -105,9 +126,7 @@ async function processVirtualTryOn(
     negativePrompt = rules[normalizedCategory].negative;
   }
 
-  // Try-on model inputs (IDM-VTON). Some versions support a category hint.
-  const categoryHint = normalizedCategory === 'Gaun' ? 'dresses'
-    : normalizedCategory === 'Atasan' ? 'upper_body'
+  const categoryHint = normalizedCategory === 'Atasan' ? 'upper_body'
     : normalizedCategory === 'Bawahan' ? 'lower_body'
     : undefined;
 
@@ -116,12 +135,10 @@ async function processVirtualTryOn(
     input: {
       garm_img: garmentImage,
       human_img: modelImage,
-      garment_des: normalizedCategory === 'Gaun' ? 'A full-length ankle-length dress/gown that fully covers the legs down to the feet' :
-                   normalizedCategory === 'Atasan' ? 'An upper garment' :
+      garment_des: normalizedCategory === 'Atasan' ? 'An upper garment' :
                    normalizedCategory === 'Bawahan' ? 'Lower garment' :
                    'Clothing item',
       category: categoryHint,
-      is_dress: normalizedCategory === 'Gaun' ? true : undefined,
       prompt,
       negative_prompt: negativePrompt
     },
@@ -129,7 +146,7 @@ async function processVirtualTryOn(
     webhook_events_filter: ['start', 'output', 'logs', 'completed']
   });
 
-  console.log('Virtual try-on prediction created (nano-banana):', prediction.id);
+  console.log('IDM-VTON prediction created:', prediction.id);
 
   return new Response(JSON.stringify({ 
     predictionId: prediction.id,
