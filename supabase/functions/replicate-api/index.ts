@@ -90,8 +90,8 @@ async function processVirtualTryOn(
       negative: 'long dress, gown, elaborate tops'
     },
     Gaun: {
-      hard: 'HARD RULE: This is a full-length dress/gown to the ankles. One-piece silhouette with no visible split between top and bottom. No shirt, blouse, jacket, or pants visible.',
-      negative: 'shirt, t-shirt, blouse, jacket, blazer, coat, cardigan, pants, jeans, trousers, shorts, leggings, two-piece outfit, waistband, belt loops, visible trousers'
+      hard: 'HARD RULE: This is a full-length dress/gown reaching the ankles/feet. One-piece silhouette with no split between top and bottom. Legs, ankles and feet must be fully covered by the dress hem (only shoes may be visible). No shirt, blouse, jacket, or pants visible.',
+      negative: 'shirt, t-shirt, blouse, jacket, blazer, coat, cardigan, pants, jeans, trousers, shorts, leggings, two-piece outfit, waistband, belt loops, visible trousers, visible legs, visible ankles, visible feet, calf, calves, shins, knees'
     },
     Hijab: {
       hard: 'HARD RULE: Apply a proper hijab covering hair with modest neck coverage. Keep outfit modest.',
@@ -116,7 +116,7 @@ async function processVirtualTryOn(
     input: {
       garm_img: garmentImage,
       human_img: modelImage,
-      garment_des: normalizedCategory === 'Gaun' ? 'A full-length dress' :
+      garment_des: normalizedCategory === 'Gaun' ? 'A full-length ankle-length dress/gown that fully covers the legs down to the feet' :
                    normalizedCategory === 'Atasan' ? 'An upper garment' :
                    normalizedCategory === 'Bawahan' ? 'Lower garment' :
                    'Clothing item',
