@@ -1,6 +1,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
+import Replicate from "https://esm.sh/replicate@0.25.2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -107,10 +108,72 @@ serve(async (req) => {
       console.log('Setting result image URL:', storedImageUrl);
     }
 
-    // Handle errors
+    // Handle errors - with automatic retry for nano-banana failures
     if (status === 'failed' && error) {
       updateData.error_message = typeof error === 'string' ? error : JSON.stringify(error);
       console.log('Setting error message:', updateData.error_message);
+      
+      // Check if this was a nano-banana failure for virtual try-on
+      const { data: failedProject } = await supabaseClient
+        .from('projects')
+        .select('*')
+        .eq('prediction_id', predictionId)
+        .single();
+      
+      if (failedProject?.project_type === 'virtual_tryon' && 
+          failedProject?.settings?.model_image_url && 
+          failedProject?.settings?.garment_image_url &&
+          !failedProject?.settings?.retried) {
+        
+        console.log('nano-banana failed, automatically retrying with IDM-VTON fallback');
+        
+        try {
+          const REPLICATE_API_KEY = Deno.env.get('REPLICATE_API_KEY');
+          const replicate = new Replicate({ auth: REPLICATE_API_KEY });
+          
+          const category = failedProject.settings.clothing_category;
+          const categoryHint = category === 'Gaun' ? 'dresses'
+            : category === 'Atasan' ? 'upper_body'
+            : category === 'Bawahan' ? 'lower_body'
+            : undefined;
+          
+          const webhookUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/replicate-webhook`;
+          
+          // Create new prediction with IDM-VTON
+          const retryPrediction = await replicate.predictions.create({
+            version: "c871bb9b046607b680449ecbae55fd8c6d945e0a1948644bf2361b3d021d3ff4",
+            input: {
+              garm_img: failedProject.settings.garment_image_url,
+              human_img: failedProject.settings.model_image_url,
+              garment_des: category === 'Gaun' ? 'A full-length top to ankle-length dress/gown that fully covers the legs down to the feet' :
+                           category === 'Atasan' ? 'An upper garment' :
+                           category === 'Bawahan' ? 'Lower garment' :
+                           'Clothing item',
+              category: categoryHint,
+              is_dress: category === 'Gaun' ? true : undefined,
+            },
+            webhook: webhookUrl,
+            webhook_events_filter: ['start', 'output', 'logs', 'completed']
+          });
+          
+          console.log('Retry prediction created with IDM-VTON:', retryPrediction.id);
+          
+          // Update project with new prediction ID and mark as retried
+          updateData.prediction_id = retryPrediction.id;
+          updateData.status = 'processing';
+          updateData.error_message = null;
+          updateData.settings = {
+            ...failedProject.settings,
+            retried: true,
+            original_prediction_id: predictionId,
+            fallback_model: 'IDM-VTON'
+          };
+          
+        } catch (retryError) {
+          console.error('Failed to retry with IDM-VTON:', retryError);
+          // Keep the original error if retry fails
+        }
+      }
     }
 
     // Update the project
