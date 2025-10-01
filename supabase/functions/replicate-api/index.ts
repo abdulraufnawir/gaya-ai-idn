@@ -131,7 +131,7 @@ async function processVirtualTryOn(
         input: {
           garm_img: garmentImage,
           human_img: modelImage,
-          garment_des: normalizedCategory === 'Gaun' ? 'A full-length ankle-length dress/gown that fully covers the legs down to the feet' :
+          garment_des: normalizedCategory === 'Gaun' ? 'A full-length top to ankle-length dress/gown that fully covers the legs down to the feet' :
                        normalizedCategory === 'Atasan' ? 'An upper garment' :
                        normalizedCategory === 'Bawahan' ? 'Lower garment' :
                        'Clothing item',
