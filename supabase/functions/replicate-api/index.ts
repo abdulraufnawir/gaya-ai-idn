@@ -111,23 +111,38 @@ async function processVirtualTryOn(
     : normalizedCategory === 'Bawahan' ? 'lower_body'
     : undefined;
 
-  const prediction = await replicate.predictions.create({
-    version: "c871bb9b046607b680449ecbae55fd8c6d945e0a1948644bf2361b3d021d3ff4",
-    input: {
-      garm_img: garmentImage,
-      human_img: modelImage,
-      garment_des: normalizedCategory === 'Gaun' ? 'A full-length ankle-length dress/gown that fully covers the legs down to the feet' :
-                   normalizedCategory === 'Atasan' ? 'An upper garment' :
-                   normalizedCategory === 'Bawahan' ? 'Lower garment' :
-                   'Clothing item',
-      category: categoryHint,
-      is_dress: normalizedCategory === 'Gaun' ? true : undefined,
-      prompt,
-      negative_prompt: negativePrompt
-    },
-    webhook: webhookUrl,
-    webhook_events_filter: ['start', 'output', 'logs', 'completed']
-  });
+  const prediction = normalizedCategory === 'Gaun'
+    ? await replicate.predictions.create({
+        model: 'google/nano-banana',
+        input: {
+          // Dress/gown must fully cover legs down to the ankles/feet
+          prompt,
+          negative_prompt: negativePrompt
+            ? `${negativePrompt}, bare legs, knees, thighs, calves, visible ankles, visible feet, mini dress, knee-length dress, tunic`
+            : 'bare legs, knees, thighs, calves, visible ankles, visible feet, mini dress, knee-length dress, tunic',
+          image_input: [garmentImage, modelImage],
+          output_format: 'jpg'
+        },
+        webhook: webhookUrl,
+        webhook_events_filter: ['start', 'output', 'logs', 'completed']
+      })
+    : await replicate.predictions.create({
+        version: "c871bb9b046607b680449ecbae55fd8c6d945e0a1948644bf2361b3d021d3ff4",
+        input: {
+          garm_img: garmentImage,
+          human_img: modelImage,
+          garment_des: normalizedCategory === 'Gaun' ? 'A full-length ankle-length dress/gown that fully covers the legs down to the feet' :
+                       normalizedCategory === 'Atasan' ? 'An upper garment' :
+                       normalizedCategory === 'Bawahan' ? 'Lower garment' :
+                       'Clothing item',
+          category: categoryHint,
+          is_dress: normalizedCategory === 'Gaun' ? true : undefined,
+          prompt,
+          negative_prompt: negativePrompt
+        },
+        webhook: webhookUrl,
+        webhook_events_filter: ['start', 'output', 'logs', 'completed']
+      });
 
   console.log('Virtual try-on prediction created (nano-banana):', prediction.id);
 
