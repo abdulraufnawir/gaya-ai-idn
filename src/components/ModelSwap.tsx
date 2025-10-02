@@ -152,6 +152,30 @@ const {
         console.error('Model generation error:', genError);
         throw new Error(genError.message || 'Failed to generate model');
       }
+
+      if (!genResponse?.predictionId) {
+        console.error('No prediction ID returned:', genResponse);
+        throw new Error('No prediction ID returned from Replicate API');
+      }
+
+      // Update project with prediction ID
+      const currentSettings = project.settings && typeof project.settings === 'object' && !Array.isArray(project.settings) ? project.settings : {};
+      const { error: updateError } = await supabase
+        .from('projects')
+        .update({
+          prediction_id: genResponse.predictionId,
+          settings: {
+            ...currentSettings,
+            model_used: 'google/nano-banana',
+            api_provider: 'replicate'
+          } as any
+        })
+        .eq('id', project.id);
+
+      if (updateError) {
+        console.error('Update project error:', updateError);
+        throw updateError;
+      }
       toast({
         title: 'Berhasil!',
         description: 'Model AI sedang dibuat. Model akan muncul di galeri setelah selesai diproses.'
