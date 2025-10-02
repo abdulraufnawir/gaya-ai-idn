@@ -61,7 +61,7 @@ async function processVirtualTryOn(
   replicate: any,
   { modelImage, garmentImage, projectId, clothingCategory }: { modelImage: string; garmentImage: string; projectId: string; clothingCategory?: string }
 ) {
-  console.log('Processing virtual try-on (IDM-VTON for Gaun)');
+  console.log('Processing virtual try-on with Replicate nano-banana');
 
   const webhookUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/replicate-webhook`;
   console.log('Setting webhook URL:', webhookUrl);
@@ -112,27 +112,59 @@ async function processVirtualTryOn(
     : normalizedCategory === 'Bawahan' ? 'lower_body'
     : undefined;
 
-  // Use IDM-VTON for all categories, with strict dress handling for 'Gaun'
-  const prediction = await replicate.predictions.create({
-    version: "c871bb9b046607b680449ecbae55fd8c6d945e0a1948644bf2361b3d021d3ff4",
-    input: {
-      garm_img: garmentImage,
-      human_img: modelImage,
-      garment_des: normalizedCategory === 'Gaun'
-        ? 'An ankle-length full dress/gown that fully covers the legs down to the feet; one-piece silhouette without leg separation; keep hem straight; preserve embroidery and trim.'
-        : normalizedCategory === 'Atasan' ? 'An upper garment'
-        : normalizedCategory === 'Bawahan' ? 'Lower garment'
-        : 'Clothing item',
-      category: categoryHint,
-      is_dress: normalizedCategory === 'Gaun' ? true : undefined,
-      prompt,
-      negative_prompt: normalizedCategory === 'Gaun'
-        ? 'pants, trousers, jeans, leggings, shorts, visible legs, exposed ankles, two-piece outfit, high slit above ankles, split hem'
-        : negativePrompt
-    },
-    webhook: webhookUrl,
-    webhook_events_filter: ['start', 'output', 'logs', 'completed']
-  });
+  // Prefer nano-banana for Gaun with strict inline constraints and correct image ordering
+  const prediction = normalizedCategory === 'Gaun'
+    ? await (async () => {
+        try {
+          const p = await replicate.predictions.create({
+            model: 'google/nano-banana',
+            input: {
+              // nano-banana ignores negative_prompt, so fold all constraints into prompt
+              prompt,
+              // Correct order: [MODEL, GARMENT]
+              image_input: [modelImage, garmentImage],
+              output_format: 'jpg'
+            },
+            webhook: webhookUrl,
+            webhook_events_filter: ['start', 'output', 'logs', 'completed']
+          });
+          return p;
+        } catch (e) {
+          console.log('nano-banana creation failed, falling back to IDM-VTON:', e?.message || e);
+          // Fallback to IDM-VTON spec if nano-banana prediction creation fails
+          return await replicate.predictions.create({
+            version: "c871bb9b046607b680449ecbae55fd8c6d945e0a1948644bf2361b3d021d3ff4",
+            input: {
+              garm_img: garmentImage,
+              human_img: modelImage,
+              garment_des: 'A full-length top to ankle-length dress/gown that fully covers the legs down to the feet',
+              category: categoryHint,
+              is_dress: true,
+              prompt,
+              negative_prompt: negativePrompt
+            },
+            webhook: webhookUrl,
+            webhook_events_filter: ['start', 'output', 'logs', 'completed']
+          });
+        }
+      })()
+    : await replicate.predictions.create({
+        version: "c871bb9b046607b680449ecbae55fd8c6d945e0a1948644bf2361b3d021d3ff4",
+        input: {
+          garm_img: garmentImage,
+          human_img: modelImage,
+          garment_des: normalizedCategory === 'Gaun' ? 'A full-length top to ankle-length dress/gown that fully covers the legs down to the feet' :
+                       normalizedCategory === 'Atasan' ? 'An upper garment' :
+                       normalizedCategory === 'Bawahan' ? 'Lower garment' :
+                       'Clothing item',
+          category: categoryHint,
+          is_dress: normalizedCategory === 'Gaun' ? true : undefined,
+          prompt,
+          negative_prompt: negativePrompt
+        },
+        webhook: webhookUrl,
+        webhook_events_filter: ['start', 'output', 'logs', 'completed']
+      });
 
   console.log('Virtual try-on prediction created:', prediction.id);
 
