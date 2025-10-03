@@ -253,7 +253,24 @@ const VirtualTryOn = ({
       // Beta testing: Credits system disabled
 
       // Get model image URL - either from uploaded file or selected model
-      const finalModelImageUrl = modelImageUrl || (await uploadImage(modelImage!, 'model'));
+      let finalModelImageUrl = modelImageUrl;
+      
+      // If modelImageUrl is a local asset path, fetch and upload it to Supabase
+      if (modelImageUrl && (modelImageUrl.startsWith('/src/') || modelImageUrl.startsWith('/assets/') || !modelImageUrl.startsWith('http'))) {
+        try {
+          // Fetch the local image
+          const response = await fetch(modelImageUrl);
+          const blob = await response.blob();
+          const file = new File([blob], `template-model-${Date.now()}.jpg`, { type: 'image/jpeg' });
+          finalModelImageUrl = await uploadImage(file, 'model');
+        } catch (error) {
+          console.error('Error uploading template model:', error);
+          throw new Error('Failed to process template model image');
+        }
+      } else if (!modelImageUrl && modelImage) {
+        finalModelImageUrl = await uploadImage(modelImage, 'model');
+      }
+      
       const clothingImageUrl = await uploadImage(clothingImage, 'clothing');
       // Normalize clothing category to Title Case expected by backend
       const normalizedCategory = clothingCategory 
