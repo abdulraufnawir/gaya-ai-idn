@@ -10,6 +10,8 @@ import goodModelExample from '@/assets/examples/good-model-example.jpg';
 import badModelExample from '@/assets/examples/bad-model-example.jpg';
 import goodGarmentExample from '@/assets/examples/good-garment-example.jpg';
 import badGarmentExample from '@/assets/examples/bad-garment-example.jpg';
+import modelExamples from '@/assets/examples/model-examples.png';
+import apparelExamples from '@/assets/examples/apparel-examples.png';
 
 interface StudioProps {
   userId: string;
@@ -55,40 +57,16 @@ const Studio = ({ userId }: StudioProps) => {
               <div className="space-y-4">
                 <h3 className="font-semibold text-xl flex items-center gap-2 pb-2 border-b">
                   <Shirt className="h-6 w-6" />
-                  Foto Model
+                  Foto Model (Live Model Images)
                 </h3>
                 
-                {/* Example Images */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <div className="relative rounded-lg overflow-hidden border-2 border-green-500">
-                      <img 
-                        src={goodModelExample} 
-                        alt="Good model example" 
-                        className="w-full h-48 object-cover"
-                      />
-                      <div className="absolute top-2 right-2 bg-green-500 text-white px-2 py-1 rounded text-xs font-bold flex items-center gap-1">
-                        <CheckCircle2 className="h-3 w-3" />
-                        BAIK
-                      </div>
-                    </div>
-                    <p className="text-xs text-muted-foreground text-center">Pencahayaan baik, background polos</p>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <div className="relative rounded-lg overflow-hidden border-2 border-red-500">
-                      <img 
-                        src={badModelExample} 
-                        alt="Bad model example" 
-                        className="w-full h-48 object-cover"
-                      />
-                      <div className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded text-xs font-bold flex items-center gap-1">
-                        <XCircle className="h-3 w-3" />
-                        BURUK
-                      </div>
-                    </div>
-                    <p className="text-xs text-muted-foreground text-center">Blur, background ramai</p>
-                  </div>
+                {/* Reference Image - Full Guide */}
+                <div className="rounded-lg overflow-hidden border-2 border-blue-200 dark:border-blue-800">
+                  <img 
+                    src={modelExamples} 
+                    alt="Model photo examples guide" 
+                    className="w-full object-contain"
+                  />
                 </div>
                 
                 <div className="grid md:grid-cols-2 gap-4">
@@ -132,40 +110,16 @@ const Studio = ({ userId }: StudioProps) => {
               <div className="space-y-4">
                 <h3 className="font-semibold text-xl flex items-center gap-2 pb-2 border-b">
                   <Package className="h-6 w-6" />
-                  Foto Pakaian/Produk
+                  Foto Pakaian/Produk (Apparel Images)
                 </h3>
                 
-                {/* Example Images */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <div className="relative rounded-lg overflow-hidden border-2 border-green-500">
-                      <img 
-                        src={goodGarmentExample} 
-                        alt="Good garment example" 
-                        className="w-full h-48 object-cover"
-                      />
-                      <div className="absolute top-2 right-2 bg-green-500 text-white px-2 py-1 rounded text-xs font-bold flex items-center gap-1">
-                        <CheckCircle2 className="h-3 w-3" />
-                        BAIK
-                      </div>
-                    </div>
-                    <p className="text-xs text-muted-foreground text-center">Rapi, detail jelas, background bersih</p>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <div className="relative rounded-lg overflow-hidden border-2 border-red-500">
-                      <img 
-                        src={badGarmentExample} 
-                        alt="Bad garment example" 
-                        className="w-full h-48 object-cover"
-                      />
-                      <div className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded text-xs font-bold flex items-center gap-1">
-                        <XCircle className="h-3 w-3" />
-                        BURUK
-                      </div>
-                    </div>
-                    <p className="text-xs text-muted-foreground text-center">Kusut, bayangan kuat, background ramai</p>
-                  </div>
+                {/* Reference Image - Full Guide */}
+                <div className="rounded-lg overflow-hidden border-2 border-blue-200 dark:border-blue-800">
+                  <img 
+                    src={apparelExamples} 
+                    alt="Apparel photo examples guide" 
+                    className="w-full object-contain"
+                  />
                 </div>
                 
                 <div className="grid md:grid-cols-2 gap-4">
