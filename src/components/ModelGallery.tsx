@@ -6,13 +6,33 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Upload, User, Search, Sparkles, CheckCircle, X } from 'lucide-react';
+import { Upload, User, Search, Sparkles, CheckCircle, X, Users, Baby } from 'lucide-react';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+
+// Import template images
+import manAtasan1 from '@/assets/models/man-atasan-1.jpg';
+import manFullBody1 from '@/assets/models/man-fullbody-1.jpg';
+import manBawahan1 from '@/assets/models/man-bawahan-1.jpg';
+import womanAtasan1 from '@/assets/models/woman-atasan-1.jpg';
+import womanFullBody1 from '@/assets/models/woman-fullbody-1.jpg';
+import womanBawahan1 from '@/assets/models/woman-bawahan-1.jpg';
+import hijabFullBody1 from '@/assets/models/hijab-fullbody-1.jpg';
+import hijabAtasan1 from '@/assets/models/hijab-atasan-1.jpg';
+import kidBoyAtasan1 from '@/assets/models/kid-boy-atasan-1.jpg';
+import kidBoyFullBody1 from '@/assets/models/kid-boy-fullbody-1.jpg';
+import kidGirlAtasan1 from '@/assets/models/kid-girl-atasan-1.jpg';
+import kidGirlFullBody1 from '@/assets/models/kid-girl-fullbody-1.jpg';
+
+type Gender = 'all' | 'man' | 'woman' | 'hijab' | 'kid';
+type PhotoStyle = 'all' | 'atasan' | 'bawahan' | 'fullbody';
 
 interface Model {
   id: string;
   name: string;
   imageUrl: string;
   type: 'template' | 'uploaded';
+  gender?: Gender;
+  photoStyle?: PhotoStyle;
   uploadedAt?: string;
 }
 
@@ -25,10 +45,32 @@ const ModelGallery = ({ onModelSelect, selectedModel }: ModelGalleryProps) => {
   const [models, setModels] = useState<Model[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [uploading, setUploading] = useState(false);
+  const [selectedGender, setSelectedGender] = useState<Gender>('all');
+  const [selectedPhotoStyle, setSelectedPhotoStyle] = useState<PhotoStyle>('all');
   const { toast } = useToast();
 
-  // Template models yang disediakan aplikasi - semua dihapus
-  const templateModels: Model[] = [];
+  // Template models with proper categorization
+  const templateModels: Model[] = [
+    // Men
+    { id: 'man-atasan-1', name: 'Pria - Atasan 1', imageUrl: manAtasan1, type: 'template', gender: 'man', photoStyle: 'atasan' },
+    { id: 'man-fullbody-1', name: 'Pria - Full Body 1', imageUrl: manFullBody1, type: 'template', gender: 'man', photoStyle: 'fullbody' },
+    { id: 'man-bawahan-1', name: 'Pria - Bawahan 1', imageUrl: manBawahan1, type: 'template', gender: 'man', photoStyle: 'bawahan' },
+    
+    // Women
+    { id: 'woman-atasan-1', name: 'Wanita - Atasan 1', imageUrl: womanAtasan1, type: 'template', gender: 'woman', photoStyle: 'atasan' },
+    { id: 'woman-fullbody-1', name: 'Wanita - Full Body 1', imageUrl: womanFullBody1, type: 'template', gender: 'woman', photoStyle: 'fullbody' },
+    { id: 'woman-bawahan-1', name: 'Wanita - Bawahan 1', imageUrl: womanBawahan1, type: 'template', gender: 'woman', photoStyle: 'bawahan' },
+    
+    // Hijab
+    { id: 'hijab-fullbody-1', name: 'Hijab - Full Body 1', imageUrl: hijabFullBody1, type: 'template', gender: 'hijab', photoStyle: 'fullbody' },
+    { id: 'hijab-atasan-1', name: 'Hijab - Atasan 1', imageUrl: hijabAtasan1, type: 'template', gender: 'hijab', photoStyle: 'atasan' },
+    
+    // Kids
+    { id: 'kid-boy-atasan-1', name: 'Anak Laki-laki - Atasan', imageUrl: kidBoyAtasan1, type: 'template', gender: 'kid', photoStyle: 'atasan' },
+    { id: 'kid-boy-fullbody-1', name: 'Anak Laki-laki - Full Body', imageUrl: kidBoyFullBody1, type: 'template', gender: 'kid', photoStyle: 'fullbody' },
+    { id: 'kid-girl-atasan-1', name: 'Anak Perempuan - Atasan', imageUrl: kidGirlAtasan1, type: 'template', gender: 'kid', photoStyle: 'atasan' },
+    { id: 'kid-girl-fullbody-1', name: 'Anak Perempuan - Full Body', imageUrl: kidGirlFullBody1, type: 'template', gender: 'kid', photoStyle: 'fullbody' },
+  ];
 
   useEffect(() => {
     loadUploadedModels();
@@ -187,9 +229,13 @@ const ModelGallery = ({ onModelSelect, selectedModel }: ModelGalleryProps) => {
     }
   };
 
-  const filteredModels = models.filter(model =>
-    model.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredModels = models.filter(model => {
+    const matchesSearch = model.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesGender = selectedGender === 'all' || model.gender === selectedGender;
+    const matchesPhotoStyle = selectedPhotoStyle === 'all' || model.photoStyle === selectedPhotoStyle;
+    
+    return matchesSearch && matchesGender && matchesPhotoStyle;
+  });
 
   return (
     <Card className="overflow-hidden">
@@ -232,6 +278,69 @@ const ModelGallery = ({ onModelSelect, selectedModel }: ModelGalleryProps) => {
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
             />
+          </div>
+
+          {/* Gender Filter */}
+          <div className="space-y-2">
+            <Label className="text-sm font-medium">Filter Kategori</Label>
+            <Tabs value={selectedGender} onValueChange={(v) => setSelectedGender(v as Gender)} className="w-full">
+              <TabsList className="grid w-full grid-cols-5 h-auto">
+                <TabsTrigger value="all" className="text-xs py-2">
+                  Semua
+                </TabsTrigger>
+                <TabsTrigger value="man" className="text-xs py-2">
+                  <User className="h-3 w-3 mr-1" />
+                  Pria
+                </TabsTrigger>
+                <TabsTrigger value="woman" className="text-xs py-2">
+                  <Users className="h-3 w-3 mr-1" />
+                  Wanita
+                </TabsTrigger>
+                <TabsTrigger value="hijab" className="text-xs py-2">
+                  <Sparkles className="h-3 w-3 mr-1" />
+                  Hijab
+                </TabsTrigger>
+                <TabsTrigger value="kid" className="text-xs py-2">
+                  <Baby className="h-3 w-3 mr-1" />
+                  Anak
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
+
+          {/* Photo Style Filter */}
+          <div className="space-y-2">
+            <Label className="text-sm font-medium">Gaya Foto</Label>
+            <div className="flex gap-2 flex-wrap">
+              <Button
+                size="sm"
+                variant={selectedPhotoStyle === 'all' ? 'default' : 'outline'}
+                onClick={() => setSelectedPhotoStyle('all')}
+              >
+                Semua
+              </Button>
+              <Button
+                size="sm"
+                variant={selectedPhotoStyle === 'atasan' ? 'default' : 'outline'}
+                onClick={() => setSelectedPhotoStyle('atasan')}
+              >
+                Atasan
+              </Button>
+              <Button
+                size="sm"
+                variant={selectedPhotoStyle === 'bawahan' ? 'default' : 'outline'}
+                onClick={() => setSelectedPhotoStyle('bawahan')}
+              >
+                Bawahan
+              </Button>
+              <Button
+                size="sm"
+                variant={selectedPhotoStyle === 'fullbody' ? 'default' : 'outline'}
+                onClick={() => setSelectedPhotoStyle('fullbody')}
+              >
+                Full Body
+              </Button>
+            </div>
           </div>
 
           {/* Models Grid */}
