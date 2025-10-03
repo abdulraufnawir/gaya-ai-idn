@@ -6,12 +6,14 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Shirt, Package, Info, CheckCircle2, XCircle, Lightbulb } from 'lucide-react';
 import VirtualTryOn from './VirtualTryOn';
 import Produk from './Produk';
-import goodModelExample from '@/assets/examples/good-model-example.jpg';
-import badModelExample from '@/assets/examples/bad-model-example.jpg';
-import goodGarmentExample from '@/assets/examples/good-garment-example.jpg';
-import badGarmentExample from '@/assets/examples/bad-garment-example.jpg';
-import modelExamples from '@/assets/examples/model-examples.png';
-import apparelExamples from '@/assets/examples/apparel-examples.png';
+import goodModelSingle from '@/assets/examples/good-model-single.jpg';
+import badModelGroup from '@/assets/examples/bad-model-group.jpg';
+import goodFlatlayApparel from '@/assets/examples/good-flatlay-apparel.jpg';
+import goodHangingApparel from '@/assets/examples/good-hanging-apparel.jpg';
+import good3DApparel from '@/assets/examples/good-3d-apparel.jpg';
+import badOverlappingClothes from '@/assets/examples/bad-overlapping-clothes.jpg';
+import badFoldedClothes from '@/assets/examples/bad-folded-clothes.jpg';
+import badBackViewClothes from '@/assets/examples/bad-back-view-clothes.jpg';
 
 interface StudioProps {
   userId: string;
@@ -60,13 +62,36 @@ const Studio = ({ userId }: StudioProps) => {
                   Foto Model (Live Model Images)
                 </h3>
                 
-                {/* Reference Image - Full Guide */}
-                <div className="rounded-lg overflow-hidden border-2 border-blue-200 dark:border-blue-800">
-                  <img 
-                    src={modelExamples} 
-                    alt="Model photo examples guide" 
-                    className="w-full object-contain"
-                  />
+                {/* Good Example */}
+                <div className="space-y-2">
+                  <p className="font-medium text-green-700 dark:text-green-400 flex items-center gap-2">
+                    <CheckCircle2 className="h-5 w-5" />
+                    Contoh BAIK - Full Body Single Person
+                  </p>
+                  <div className="rounded-lg overflow-hidden border-2 border-green-500">
+                    <img 
+                      src={goodModelSingle} 
+                      alt="Good model example - single person full body" 
+                      className="w-full object-contain bg-gray-50 dark:bg-gray-900"
+                    />
+                  </div>
+                  <p className="text-sm text-muted-foreground">✓ Satu orang saja, full body, background polos, pencahayaan merata</p>
+                </div>
+                
+                {/* Bad Example */}
+                <div className="space-y-2">
+                  <p className="font-medium text-red-700 dark:text-red-400 flex items-center gap-2">
+                    <XCircle className="h-5 w-5" />
+                    Contoh BURUK - Multiple People
+                  </p>
+                  <div className="rounded-lg overflow-hidden border-2 border-red-500">
+                    <img 
+                      src={badModelGroup} 
+                      alt="Bad model example - multiple people" 
+                      className="w-full object-contain bg-gray-50 dark:bg-gray-900"
+                    />
+                  </div>
+                  <p className="text-sm text-muted-foreground">✗ Lebih dari satu orang, tidak cocok untuk virtual try-on</p>
                 </div>
                 
                 <div className="grid md:grid-cols-2 gap-4">
@@ -113,13 +138,84 @@ const Studio = ({ userId }: StudioProps) => {
                   Foto Pakaian/Produk (Apparel Images)
                 </h3>
                 
-                {/* Reference Image - Full Guide */}
-                <div className="rounded-lg overflow-hidden border-2 border-blue-200 dark:border-blue-800">
-                  <img 
-                    src={apparelExamples} 
-                    alt="Apparel photo examples guide" 
-                    className="w-full object-contain"
-                  />
+                {/* Good Examples Grid */}
+                <div>
+                  <p className="font-medium text-green-700 dark:text-green-400 flex items-center gap-2 mb-3">
+                    <CheckCircle2 className="h-5 w-5" />
+                    Contoh BAIK - 3 Gaya yang Direkomendasikan
+                  </p>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="space-y-2">
+                      <div className="rounded-lg overflow-hidden border-2 border-green-500">
+                        <img 
+                          src={goodFlatlayApparel} 
+                          alt="Flatlay apparel example" 
+                          className="w-full aspect-square object-cover bg-white"
+                        />
+                      </div>
+                      <p className="text-xs font-medium text-center">Flatlay Apparel</p>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="rounded-lg overflow-hidden border-2 border-green-500">
+                        <img 
+                          src={goodHangingApparel} 
+                          alt="Hanging apparel example" 
+                          className="w-full aspect-square object-cover bg-white"
+                        />
+                      </div>
+                      <p className="text-xs font-medium text-center">Hanging Apparel</p>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="rounded-lg overflow-hidden border-2 border-green-500">
+                        <img 
+                          src={good3DApparel} 
+                          alt="3D apparel example" 
+                          className="w-full aspect-square object-cover bg-white"
+                        />
+                      </div>
+                      <p className="text-xs font-medium text-center">3D Apparel</p>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Bad Examples Grid */}
+                <div>
+                  <p className="font-medium text-red-700 dark:text-red-400 flex items-center gap-2 mb-3">
+                    <XCircle className="h-5 w-5" />
+                    Contoh BURUK - Yang Harus Dihindari
+                  </p>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="space-y-2">
+                      <div className="rounded-lg overflow-hidden border-2 border-red-500">
+                        <img 
+                          src={badOverlappingClothes} 
+                          alt="Overlapping clothes example" 
+                          className="w-full aspect-square object-cover bg-white"
+                        />
+                      </div>
+                      <p className="text-xs font-medium text-center">Overlapping Clothes</p>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="rounded-lg overflow-hidden border-2 border-red-500">
+                        <img 
+                          src={badFoldedClothes} 
+                          alt="Folded clothes example" 
+                          className="w-full aspect-square object-cover bg-white"
+                        />
+                      </div>
+                      <p className="text-xs font-medium text-center">Folded Clothes</p>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="rounded-lg overflow-hidden border-2 border-red-500">
+                        <img 
+                          src={badBackViewClothes} 
+                          alt="Back view clothes example" 
+                          className="w-full aspect-square object-cover bg-white"
+                        />
+                      </div>
+                      <p className="text-xs font-medium text-center">Back of Clothes</p>
+                    </div>
+                  </div>
                 </div>
                 
                 <div className="grid md:grid-cols-2 gap-4">
