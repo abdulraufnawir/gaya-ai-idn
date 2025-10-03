@@ -98,8 +98,10 @@ const Studio = ({ userId }: StudioProps) => {
                       Yang Direkomendasikan:
                     </p>
                     <ul className="space-y-1 text-sm ml-6 list-disc text-green-900 dark:text-green-300">
+                      <li><strong>Satu orang saja</strong> - Model tunggal dalam frame</li>
+                      <li><strong>Full-body shot</strong> - Seluruh tubuh terlihat jelas</li>
                       <li>Foto dengan pencahayaan yang baik dan merata</li>
-                      <li>Background polos atau sederhana (putih, abu-abu, atau warna solid)</li>
+                      <li>Background polos atau sederhana (putih, biru muda, abu-abu)</li>
                       <li>Pose natural dan jelas menampilkan bagian tubuh yang diinginkan</li>
                       <li>Resolusi tinggi (minimal 1024x1024 pixels)</li>
                       <li>Model menghadap kamera dengan postur tegak</li>
@@ -113,6 +115,8 @@ const Studio = ({ userId }: StudioProps) => {
                       Yang Harus Dihindari:
                     </p>
                     <ul className="space-y-1 text-sm ml-6 list-disc text-red-900 dark:text-red-300">
+                      <li><strong>Multiple people</strong> - Lebih dari satu orang dalam foto</li>
+                      <li><strong>Group photos</strong> - Foto berkelompok</li>
                       <li>Foto blur atau tidak fokus</li>
                       <li>Background ramai atau terlalu banyak elemen</li>
                       <li>Pencahayaan terlalu gelap atau terlalu terang</li>
@@ -171,11 +175,14 @@ const Studio = ({ userId }: StudioProps) => {
                       Yang Direkomendasikan:
                     </p>
                     <ul className="space-y-1 text-sm ml-6 list-disc text-green-900 dark:text-green-300">
-                      <li>Foto flat lay atau di mannequin dengan jelas</li>
+                      <li><strong>Flatlay Apparel</strong> - Pakaian diletakkan rata di permukaan</li>
+                      <li><strong>Hanging Apparel</strong> - Pakaian digantung di hanger</li>
+                      <li><strong>3D Apparel</strong> - Pakaian di mannequin atau bentuk 3D</li>
                       <li>Warna dan detail pakaian terlihat dengan jelas</li>
-                      <li>Background kontras dengan warna pakaian</li>
+                      <li>Background kontras dengan warna pakaian (putih/abu-abu/biru muda)</li>
                       <li>Seluruh bagian pakaian terlihat dalam frame</li>
                       <li>Fokus tajam pada tekstur dan detail</li>
+                      <li>Pakaian rapi, tidak kusut atau terlipat</li>
                       <li>Format PNG dengan background transparan (optimal)</li>
                     </ul>
                   </div>
@@ -186,6 +193,9 @@ const Studio = ({ userId }: StudioProps) => {
                       Yang Harus Dihindari:
                     </p>
                     <ul className="space-y-1 text-sm ml-6 list-disc text-red-900 dark:text-red-300">
+                      <li><strong>Overlapping Clothes</strong> - Pakaian bertumpuk/saling menutupi</li>
+                      <li><strong>Folded Clothes</strong> - Pakaian dilipat (tidak terlihat lengkap)</li>
+                      <li><strong>Back of Clothes</strong> - Foto dari belakang saja</li>
                       <li>Pakaian kusut atau tidak rapi</li>
                       <li>Foto dengan bayangan yang mengganggu</li>
                       <li>Warna yang tidak akurat atau terlalu saturasi</li>
