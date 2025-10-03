@@ -102,7 +102,6 @@ const Studio = ({ userId }: StudioProps) => {
                     </p>
                     <ul className="space-y-1 text-sm ml-6 list-disc text-green-900 dark:text-green-300">
                       <li><strong>Satu orang saja</strong> - Model tunggal dalam frame</li>
-                      <li><strong>Full-body shot</strong> - Seluruh tubuh terlihat jelas</li>
                       <li>Foto dengan pencahayaan yang baik dan merata</li>
                       <li>Background polos atau sederhana (putih, biru muda, abu-abu)</li>
                       <li>Pose natural dan jelas menampilkan bagian tubuh yang diinginkan</li>
@@ -119,7 +118,6 @@ const Studio = ({ userId }: StudioProps) => {
                     </p>
                     <ul className="space-y-1 text-sm ml-6 list-disc text-red-900 dark:text-red-300">
                       <li><strong>Multiple people</strong> - Lebih dari satu orang dalam foto</li>
-                      <li><strong>Group photos</strong> - Foto berkelompok</li>
                       <li>Foto blur atau tidak fokus</li>
                       <li>Background ramai atau terlalu banyak elemen</li>
                       <li>Pencahayaan terlalu gelap atau terlalu terang</li>
