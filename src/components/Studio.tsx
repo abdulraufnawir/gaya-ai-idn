@@ -68,14 +68,14 @@ const Studio = ({ userId }: StudioProps) => {
                     <CheckCircle2 className="h-5 w-5" />
                     Contoh BAIK - Full Body Single Person
                   </p>
-                  <div className="rounded-lg overflow-hidden border-2 border-green-500">
+                  <div className="rounded-lg overflow-hidden border-2 border-green-500 max-w-xs mx-auto">
                     <img 
                       src={goodModelSingle} 
                       alt="Good model example - single person full body" 
-                      className="w-full object-contain bg-gray-50 dark:bg-gray-900"
+                      className="w-full h-48 object-cover bg-gray-50 dark:bg-gray-900"
                     />
                   </div>
-                  <p className="text-sm text-muted-foreground">✓ Satu orang saja, full body, background polos, pencahayaan merata</p>
+                  <p className="text-sm text-muted-foreground text-center">✓ Satu orang saja, full body, background polos, pencahayaan merata</p>
                 </div>
                 
                 {/* Bad Example */}
@@ -84,14 +84,14 @@ const Studio = ({ userId }: StudioProps) => {
                     <XCircle className="h-5 w-5" />
                     Contoh BURUK - Multiple People
                   </p>
-                  <div className="rounded-lg overflow-hidden border-2 border-red-500">
+                  <div className="rounded-lg overflow-hidden border-2 border-red-500 max-w-xs mx-auto">
                     <img 
                       src={badModelGroup} 
                       alt="Bad model example - multiple people" 
-                      className="w-full object-contain bg-gray-50 dark:bg-gray-900"
+                      className="w-full h-48 object-cover bg-gray-50 dark:bg-gray-900"
                     />
                   </div>
-                  <p className="text-sm text-muted-foreground">✗ Lebih dari satu orang, tidak cocok untuk virtual try-on</p>
+                  <p className="text-sm text-muted-foreground text-center">✗ Lebih dari satu orang, tidak cocok untuk virtual try-on</p>
                 </div>
                 
                 <div className="grid md:grid-cols-2 gap-4">
