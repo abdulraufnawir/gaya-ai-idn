@@ -36,7 +36,7 @@ const AdminCreditManager = () => {
 
     setLoading(true);
     try {
-      const { error } = await supabase.rpc('admin_add_credits', {
+      const { error } = await (supabase.rpc as any)('admin_add_credits', {
         p_target_user_id: targetUserId,
         p_credits_amount: amount,
         p_description: description || `Admin credit allocation - ${amount} credits`
@@ -71,7 +71,7 @@ const AdminCreditManager = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      const { error } = await supabase.rpc('admin_add_credits', {
+      const { error } = await (supabase.rpc as any)('admin_add_credits', {
         p_target_user_id: user.id,
         p_credits_amount: 30,
         p_description: 'Admin testing and trial credits'

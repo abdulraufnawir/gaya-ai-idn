@@ -86,7 +86,7 @@ const UserProfile = ({ user }: UserProfileProps) => {
       if (error && error.code !== 'PGRST116') throw error;
 
       if (data) {
-        setProfile(data);
+        setProfile(data as any);
         setFormData({
           full_name: data.full_name || '',
           phone: data.phone || '',
@@ -124,7 +124,7 @@ const UserProfile = ({ user }: UserProfileProps) => {
         .maybeSingle();
 
       if (subscriptionError && subscriptionError.code !== 'PGRST116') throw subscriptionError;
-      setSubscription(subscriptionData);
+      setSubscription(subscriptionData as any);
 
       // Fetch recent transactions
       const { data: transactionsData, error: transactionsError } = await supabase
@@ -135,7 +135,7 @@ const UserProfile = ({ user }: UserProfileProps) => {
         .limit(10);
 
       if (transactionsError) throw transactionsError;
-      setTransactions(transactionsData || []);
+      setTransactions((transactionsData || []) as any);
 
     } catch (error: any) {
       toast({

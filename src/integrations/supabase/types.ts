@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_prompts: {
+        Row: {
+          clothing_types: string[] | null
+          created_at: string
+          description: string | null
+          feature_name: string
+          id: string
+          is_active: boolean
+          system_prompt: string
+          updated_at: string
+          user_prompt_template: string
+        }
+        Insert: {
+          clothing_types?: string[] | null
+          created_at?: string
+          description?: string | null
+          feature_name: string
+          id?: string
+          is_active?: boolean
+          system_prompt?: string
+          updated_at?: string
+          user_prompt_template?: string
+        }
+        Update: {
+          clothing_types?: string[] | null
+          created_at?: string
+          description?: string | null
+          feature_name?: string
+          id?: string
+          is_active?: boolean
+          system_prompt?: string
+          updated_at?: string
+          user_prompt_template?: string
+        }
+        Relationships: []
+      }
       credit_transactions: {
         Row: {
           created_at: string
@@ -21,7 +57,9 @@ export type Database = {
           credits_amount: number
           credits_before: number
           description: string | null
+          expires_at: string | null
           id: string
+          reference_id: string | null
           transaction_type: string
           user_id: string
         }
@@ -31,7 +69,9 @@ export type Database = {
           credits_amount: number
           credits_before?: number
           description?: string | null
+          expires_at?: string | null
           id?: string
+          reference_id?: string | null
           transaction_type: string
           user_id: string
         }
@@ -41,7 +81,9 @@ export type Database = {
           credits_amount?: number
           credits_before?: number
           description?: string | null
+          expires_at?: string | null
           id?: string
+          reference_id?: string | null
           transaction_type?: string
           user_id?: string
         }
@@ -50,25 +92,34 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          business_name: string | null
+          business_type: string | null
           created_at: string
           full_name: string | null
           id: string
+          phone: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
           avatar_url?: string | null
+          business_name?: string | null
+          business_type?: string | null
           created_at?: string
           full_name?: string | null
           id?: string
+          phone?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
           avatar_url?: string | null
+          business_name?: string | null
+          business_type?: string | null
           created_at?: string
           full_name?: string | null
           id?: string
+          phone?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -76,47 +127,65 @@ export type Database = {
       }
       projects: {
         Row: {
+          analysis: string | null
           created_at: string
+          description: string | null
           error_message: string | null
           garment_image_url: string | null
           id: string
+          metadata: Json | null
           model_image_url: string | null
           name: string
+          original_image_url: string | null
           prediction_id: string | null
           project_type: string
           result_image_url: string | null
+          result_url: string | null
           settings: Json | null
           status: string
+          title: string
           updated_at: string
           user_id: string
         }
         Insert: {
+          analysis?: string | null
           created_at?: string
+          description?: string | null
           error_message?: string | null
           garment_image_url?: string | null
           id?: string
+          metadata?: Json | null
           model_image_url?: string | null
           name?: string
+          original_image_url?: string | null
           prediction_id?: string | null
           project_type?: string
           result_image_url?: string | null
+          result_url?: string | null
           settings?: Json | null
           status?: string
+          title?: string
           updated_at?: string
           user_id: string
         }
         Update: {
+          analysis?: string | null
           created_at?: string
+          description?: string | null
           error_message?: string | null
           garment_image_url?: string | null
           id?: string
+          metadata?: Json | null
           model_image_url?: string | null
           name?: string
+          original_image_url?: string | null
           prediction_id?: string | null
           project_type?: string
           result_image_url?: string | null
+          result_url?: string | null
           settings?: Json | null
           status?: string
+          title?: string
           updated_at?: string
           user_id?: string
         }
@@ -175,32 +244,41 @@ export type Database = {
       }
       user_subscriptions: {
         Row: {
+          auto_renew: boolean
           created_at: string
           credits_per_month: number
           id: string
           monthly_price: number
           plan_type: string
           status: string
+          subscription_end: string | null
+          subscription_start: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          auto_renew?: boolean
           created_at?: string
           credits_per_month?: number
           id?: string
           monthly_price?: number
           plan_type?: string
           status?: string
+          subscription_end?: string | null
+          subscription_start?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          auto_renew?: boolean
           created_at?: string
           credits_per_month?: number
           id?: string
           monthly_price?: number
           plan_type?: string
           status?: string
+          subscription_end?: string | null
+          subscription_start?: string | null
           updated_at?: string
           user_id?: string
         }
