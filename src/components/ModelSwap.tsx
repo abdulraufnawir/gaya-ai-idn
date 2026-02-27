@@ -134,11 +134,11 @@ const {
       }).select().single();
       if (projectError) throw projectError;
 
-      // Use Replicate API with nano-banana for model generation
+      // Use KIE AI for model generation
       const {
         data: genResponse,
         error: genError
-      } = await supabase.functions.invoke('replicate-api', {
+      } = await supabase.functions.invoke('kie-ai', {
         body: {
           action: 'generateModel',
           prompt: generatePrompt,
@@ -153,28 +153,10 @@ const {
         throw new Error(genError.message || 'Failed to generate model');
       }
 
-      if (!genResponse?.predictionId) {
+      const genPredictionId = genResponse?.prediction_id || genResponse?.id;
+      if (!genPredictionId) {
         console.error('No prediction ID returned:', genResponse);
-        throw new Error('No prediction ID returned from Replicate API');
-      }
-
-      // Update project with prediction ID
-      const currentSettings = project.settings && typeof project.settings === 'object' && !Array.isArray(project.settings) ? project.settings : {};
-      const { error: updateError } = await supabase
-        .from('projects')
-        .update({
-          prediction_id: genResponse.predictionId,
-          settings: {
-            ...currentSettings,
-            model_used: 'google/nano-banana',
-            api_provider: 'replicate'
-          } as any
-        })
-        .eq('id', project.id);
-
-      if (updateError) {
-        console.error('Update project error:', updateError);
-        throw updateError;
+        throw new Error('No prediction ID returned from KIE AI');
       }
       toast({
         title: 'Berhasil!',
@@ -270,52 +252,36 @@ settings: {
       }).select().single();
       if (projectError) throw projectError;
 
-      // Use Replicate API with nano-banana for model swap
+      // Use KIE AI for model swap
       const {
         data: kieResponse,
         error: kieError
-      } = await supabase.functions.invoke('replicate-api', {
-body: {
+      } = await supabase.functions.invoke('kie-ai', {
+        body: {
           action: 'modelSwap',
           modelImage: selectedModel.imageUrl,
           garmentImage: originalImageUrl,
           projectId: project.id,
-          clothingType: swapClothingType
         }
       });
       if (kieError) {
-        console.error('Replicate API Error:', kieError);
+        console.error('KIE AI Error:', kieError);
         throw new Error(kieError.message || 'Failed to start model swap');
       }
       if (kieResponse?.error) {
-        console.error('Replicate Response Error:', kieResponse.error);
+        console.error('KIE AI Response Error:', kieResponse.error);
         throw new Error(kieResponse.error);
       }
-      if (!kieResponse?.predictionId) {
+
+      const swapPredictionId = kieResponse?.prediction_id || kieResponse?.id;
+      if (!swapPredictionId) {
         console.error('No prediction ID returned:', kieResponse);
-        throw new Error('No prediction ID returned from Replicate API');
+        throw new Error('No prediction ID returned from KIE AI');
       }
 
-      // Update project with prediction ID
-      const {
-        error: updateError
-      } = await supabase.from('projects').update({
-        prediction_id: kieResponse.predictionId,
-        settings: {
-          model_image_url: selectedModel.imageUrl,
-          model_name: selectedModel.name,
-          model_type: selectedModel.type,
-          model_used: 'google/nano-banana',
-          api_provider: 'replicate'
-        }
-      }).eq('id', project.id);
-      if (updateError) {
-        console.error('Update project error:', updateError);
-        throw updateError;
-      }
       toast({
         title: 'Berhasil!',
-        description: 'Model swap sedang diproses dengan Replicate nano-banana. Silakan cek riwayat proyek untuk melihat hasilnya.'
+        description: 'Model swap sedang diproses dengan KIE AI. Silakan cek riwayat proyek untuk melihat hasilnya.'
       });
 
       // Reset form

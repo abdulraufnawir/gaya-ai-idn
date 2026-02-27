@@ -32,9 +32,9 @@ export const StatusChecker = ({ userId }: StatusCheckerProps) => {
         if (!project.prediction_id) continue;
 
         try {
-          // Check status using fashn-api
-          const { data: response } = await supabase.functions.invoke('fashn-api', {
-            body: { action: 'status', id: project.prediction_id }
+          // Check status using kie-ai
+          const { data: response } = await supabase.functions.invoke('kie-ai', {
+            body: { action: 'status', predictionId: project.prediction_id }
           });
 
           console.log(`Project ${project.id} status:`, response);

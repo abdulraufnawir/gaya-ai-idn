@@ -290,13 +290,13 @@ const VirtualTryOn = ({
       }).select().single();
       if (projectError) throw projectError;
 
-      // Start Replicate virtual try-on (nano-banana) with clothing category enforcement
+      // Start KIE AI virtual try-on with clothing category enforcement
       const {
-        data: repResponse,
+        data: kieResponse,
         error: invokeError
-      } = await supabase.functions.invoke('replicate-api', {
+      } = await supabase.functions.invoke('kie-ai', {
         body: {
-          action: 'virtual_tryon',
+          action: 'virtualTryOn',
           modelImage: finalModelImageUrl,
           garmentImage: clothingImageUrl,
           projectId: project.id,
@@ -306,14 +306,14 @@ const VirtualTryOn = ({
       if (invokeError) {
         throw new Error(`Function invoke error: ${invokeError.message}`);
       }
-      if (!repResponse) {
-        throw new Error('No response received from Replicate API');
+      if (!kieResponse) {
+        throw new Error('No response received from KIE AI');
       }
-      if (repResponse.error) {
-        throw new Error(repResponse.error);
+      if (kieResponse.error) {
+        throw new Error(kieResponse.error);
       }
 
-      const predictionId = repResponse.prediction_id || repResponse.predictionId || repResponse.id;
+      const predictionId = kieResponse.prediction_id || kieResponse.id;
 
       // Update project with prediction ID
       await supabase.from('projects').update({
@@ -327,7 +327,7 @@ const VirtualTryOn = ({
       }).eq('id', project.id);
       toast({
         title: 'Berhasil!',
-        description: 'Virtual try-on sedang diproses dengan Replicate. Silakan cek riwayat proyek untuk melihat hasilnya.'
+        description: 'Virtual try-on sedang diproses dengan KIE AI. Silakan cek riwayat proyek untuk melihat hasilnya.'
       });
 
       // Reset form
@@ -396,14 +396,13 @@ const VirtualTryOn = ({
 
       if (projectError) throw projectError;
 
-      // Use Replicate API with nano-banana for model generation
-const { data: genResponse, error: genError } = await supabase.functions.invoke('replicate-api', {
+      // Use KIE AI for model generation
+      const { data: genResponse, error: genError } = await supabase.functions.invoke('kie-ai', {
         body: {
           action: 'generateModel',
           prompt: aiModelPrompt,
           clothingType: aiModelClothingType,
           aspectRatio: '2:3',
-          // If user has already uploaded a garment image in this session, use it as a reference
           referenceImage: (window as any)?.lastUploadedGarmentImageUrl,
           projectId: project.id
         }
