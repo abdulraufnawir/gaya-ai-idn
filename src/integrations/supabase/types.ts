@@ -89,6 +89,116 @@ export type Database = {
         }
         Relationships: []
       }
+      product_content: {
+        Row: {
+          content_text: string | null
+          content_type: string
+          created_at: string
+          id: string
+          image_url: string | null
+          platform: string | null
+          product_id: string | null
+          settings: Json | null
+          status: string | null
+          template_type: string | null
+          title: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content_text?: string | null
+          content_type?: string
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          platform?: string | null
+          product_id?: string | null
+          settings?: Json | null
+          status?: string | null
+          template_type?: string | null
+          title?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content_text?: string | null
+          content_type?: string
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          platform?: string | null
+          product_id?: string | null
+          settings?: Json | null
+          status?: string | null
+          template_type?: string | null
+          title?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_content_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      products: {
+        Row: {
+          category: string
+          created_at: string
+          currency: string | null
+          description: string | null
+          id: string
+          images: string[] | null
+          is_active: boolean | null
+          metadata: Json | null
+          name: string
+          price: number | null
+          primary_image_url: string | null
+          subcategory: string | null
+          tags: string[] | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          currency?: string | null
+          description?: string | null
+          id?: string
+          images?: string[] | null
+          is_active?: boolean | null
+          metadata?: Json | null
+          name: string
+          price?: number | null
+          primary_image_url?: string | null
+          subcategory?: string | null
+          tags?: string[] | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          currency?: string | null
+          description?: string | null
+          id?: string
+          images?: string[] | null
+          is_active?: boolean | null
+          metadata?: Json | null
+          name?: string
+          price?: number | null
+          primary_image_url?: string | null
+          subcategory?: string | null
+          tags?: string[] | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null

@@ -7,7 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { User } from '@supabase/supabase-js';
-import { Upload, Sparkles, Users, Edit3, LogOut, User as UserIcon } from 'lucide-react';
+import { Upload, Sparkles, Users, Edit3, LogOut, User as UserIcon, Package } from 'lucide-react';
 import {
   Sidebar,
   SidebarContent,
@@ -28,6 +28,7 @@ import ProjectHistory from '@/components/ProjectHistory';
 import UserProfile from '@/components/UserProfile';
 import AdminAccess from '@/components/AdminAccess';
 import CreditStatus from '@/components/CreditStatus';
+import ContentStudio from '@/components/product/ContentStudio';
 
 const Dashboard = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -110,6 +111,7 @@ const Dashboard = () => {
 
   const menuItems = [
     { id: 'studio', label: 'Studio', icon: Upload },
+    { id: 'produk', label: 'Produk', icon: Package },
     { id: 'model-swap', label: 'Ganti Model', icon: Users },
     { id: 'photo-edit', label: 'Edit Foto', icon: Edit3 },
     { id: 'history', label: 'Riwayat', icon: Sparkles },
@@ -160,6 +162,10 @@ const Dashboard = () => {
                 <Studio userId={user.id} />
               </TabsContent>
 
+              <TabsContent value="produk">
+                <ContentStudio userId={user.id} />
+              </TabsContent>
+
               <TabsContent value="model-swap">
                 <ModelSwap userId={user.id} />
               </TabsContent>
@@ -179,7 +185,7 @@ const Dashboard = () => {
 
             {/* Bottom Navigation - Mobile */}
             <div className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-t border-border z-50">
-              <TabsList className="grid w-full grid-cols-5 h-16 bg-transparent rounded-none border-none p-0">
+              <TabsList className="grid w-full grid-cols-6 h-16 bg-transparent rounded-none border-none p-0">
                 {menuItems.map((item) => (
                   <TabsTrigger 
                     key={item.id}
@@ -274,6 +280,10 @@ const Dashboard = () => {
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <TabsContent value="studio">
                 <Studio userId={user.id} />
+              </TabsContent>
+
+              <TabsContent value="produk">
+                <ContentStudio userId={user.id} />
               </TabsContent>
 
               <TabsContent value="model-swap">
