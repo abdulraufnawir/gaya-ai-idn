@@ -34,7 +34,7 @@ const ResultViewer = ({ projectId, predictionId, title, projectType }: ResultVie
         const settings = project.settings as Record<string, any> || {};
         const existingResult = {
           status: project.status,
-          result_url: project.result_url,
+          result_url: (project as any).result_url,
           output: project.result_image_url ? [project.result_image_url] : null,
           urls: settings.result_url ? [settings.result_url] : null,
           error: project.error_message
@@ -44,27 +44,9 @@ const ResultViewer = ({ projectId, predictionId, title, projectType }: ResultVie
         return;
       }
 
-      // Use different APIs based on project type
-      const isPhotoEdit = projectType === 'photo_edit';
-      const isVirtualTryOn = projectType === 'virtual_tryon';
-      
-      let apiFunction: string;
-      let requestBody: any;
-      
-      if (isPhotoEdit) {
-        apiFunction = 'replicate-api';
-        requestBody = { action: 'status', predictionId: predictionId };
-      } else if (isVirtualTryOn) {
-        // Virtual try-on in this app uses Replicate (nano-banana) + webhook
-        apiFunction = 'replicate-api';
-        requestBody = { action: 'status', predictionId: predictionId };
-      } else {
-        apiFunction = 'fashn-api';
-        requestBody = { action: 'status', id: predictionId };
-      }
-      
-      const { data: response } = await supabase.functions.invoke(apiFunction, {
-        body: requestBody
+      // Use KIE AI for all project types
+      const { data: response } = await supabase.functions.invoke('kie-ai', {
+        body: { action: 'status', predictionId: predictionId }
       });
 
       if (!response) {

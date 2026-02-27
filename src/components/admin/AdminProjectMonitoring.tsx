@@ -65,7 +65,7 @@ const AdminProjectMonitoring = () => {
 
       if (projectsError) throw projectsError;
 
-      setProjects(projects || []);
+      setProjects((projects || []) as any);
     } catch (error: any) {
       console.error('Error fetching projects:', error);
       toast({

@@ -58,9 +58,9 @@ const AdminPromptManager = () => {
       const {
         data,
         error
-      } = await supabase.from("ai_prompts").select("*").order("feature_name");
+      } = await (supabase.from as any)("ai_prompts").select("*").order("feature_name");
       if (error) throw error;
-      setPrompts(data || []);
+      setPrompts((data || []) as any);
     } catch (error: any) {
       toast({
         title: "Error loading prompts",
@@ -76,7 +76,7 @@ const AdminPromptManager = () => {
     try {
       const {
         error
-      } = await supabase.from("ai_prompts").update({
+      } = await (supabase.from as any)("ai_prompts").update({
         system_prompt: prompt.system_prompt,
         user_prompt_template: prompt.user_prompt_template,
         description: prompt.description,
@@ -110,7 +110,7 @@ const AdminPromptManager = () => {
     try {
       const {
         error
-      } = await supabase.from("ai_prompts").insert([newPrompt]);
+      } = await (supabase.from as any)("ai_prompts").insert([newPrompt]);
       if (error) throw error;
       toast({
         title: "Prompt created",
@@ -141,7 +141,7 @@ const AdminPromptManager = () => {
     try {
       const {
         error
-      } = await supabase.from("ai_prompts").delete().eq("id", id);
+      } = await (supabase.from as any)("ai_prompts").delete().eq("id", id);
       if (error) throw error;
       toast({
         title: "Prompt deleted",

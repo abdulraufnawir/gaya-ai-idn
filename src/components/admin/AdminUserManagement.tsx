@@ -82,7 +82,7 @@ const AdminUserManagement = () => {
         })
       );
 
-      setUsers(usersWithProjectCounts);
+      setUsers(usersWithProjectCounts as any);
     } catch (error: any) {
       console.error('Error fetching users:', error);
       toast({

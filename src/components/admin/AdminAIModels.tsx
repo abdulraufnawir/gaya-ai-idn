@@ -86,7 +86,7 @@ const AdminAIModels = () => {
       setIsLoading(true);
       
       // Check admin access first
-      const { data: isAdmin } = await supabase.rpc('check_admin_access');
+      const { data: isAdmin } = await (supabase.rpc as any)('check_admin_access');
       if (!isAdmin) {
         throw new Error('Unauthorized: Admin access required');
       }
