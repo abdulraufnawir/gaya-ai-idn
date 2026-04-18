@@ -164,7 +164,7 @@ const ResultViewer = ({ projectId, predictionId, title, projectType }: ResultVie
 
   useEffect(() => {
     // Poll for updates if still processing
-    let interval: NodeJS.Timeout;
+    let interval: ReturnType<typeof setInterval> | undefined;
     if (result?.status === 'processing' || result?.status === 'in_queue' || result?.status === 'starting' || result?.status === 'starting') {
       interval = setInterval(checkStatus, 5000); // Check every 5 seconds
     }
