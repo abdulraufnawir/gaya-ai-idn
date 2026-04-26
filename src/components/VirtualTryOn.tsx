@@ -67,6 +67,7 @@ const VirtualTryOn = ({
   const [processing, setProcessing] = useState(false);
   const [selectedModel, setSelectedModel] = useState<any>(null);
   const [clothingCategory, setClothingCategory] = useState<string | null>(null);
+  const [backgroundPreset, setBackgroundPreset] = useState<BackgroundPresetKey | null>(null);
   const [aiModelPrompt, setAiModelPrompt] = useState<string>('');
   const [aiModelClothingType, setAiModelClothingType] = useState<string>('');
   const [generatingModel, setGeneratingModel] = useState(false);
