@@ -22,18 +22,14 @@ const VirtualTryOn = ({
   const [clothingImage, setClothingImage] = useState<File | null>(null);
   const [modelImagePreview, setModelImagePreview] = useState<string | null>(null);
   const [clothingImagePreview, setClothingImagePreview] = useState<string | null>(null);
+  const [lastGarmentUploadedUrl, setLastGarmentUploadedUrl] = useState<string | null>(null);
   const [processing, setProcessing] = useState(false);
   const [selectedModel, setSelectedModel] = useState<any>(null);
   const [clothingCategory, setClothingCategory] = useState<string | null>(null);
   const [aiModelPrompt, setAiModelPrompt] = useState<string>('');
   const [aiModelClothingType, setAiModelClothingType] = useState<string>('');
   const [generatingModel, setGeneratingModel] = useState(false);
-  const [userCredits, setUserCredits] = useState<number>(0);
-  const [loadingCredits, setLoadingCredits] = useState(true);
   const { toast } = useToast();
-  const { checkBalance, useCredits: useCreditsHook } = useCredits();
-
-  const VIRTUAL_TRYON_COST = 2; // 2 credits per virtual try-on
 
   // Helper function to convert images to JPEG format
   const convertToJpeg = async (file: File): Promise<File> => {
