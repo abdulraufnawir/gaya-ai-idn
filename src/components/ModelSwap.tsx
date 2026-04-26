@@ -64,23 +64,35 @@ const {
     width: 819,
     height: 1024
   }];
-  const handleOriginalImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleOriginalImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      setOriginalImage(file);
-      const previewUrl = URL.createObjectURL(file);
-      setOriginalImagePreview(previewUrl);
+    if (!file) return;
+    try {
+      const { file: processed, wasTranscoded } = await processImageForUpload(file);
+      if (wasTranscoded) {
+        toast({ title: 'Format dikonversi', description: 'Foto diubah ke JPEG agar kompatibel.' });
+      }
+      setOriginalImage(processed);
+      setOriginalImagePreview(URL.createObjectURL(processed));
+    } catch (err: any) {
+      toast({ title: 'Gambar tidak didukung', description: err?.message || 'Gagal memproses gambar.', variant: 'destructive' });
     }
   };
   const handleModelSelect = (model: Model) => {
     setSelectedModel(model);
   };
-  const handleReferenceImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleReferenceImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      setReferenceImage(file);
-      const previewUrl = URL.createObjectURL(file);
-      setReferenceImagePreview(previewUrl);
+    if (!file) return;
+    try {
+      const { file: processed, wasTranscoded } = await processImageForUpload(file);
+      if (wasTranscoded) {
+        toast({ title: 'Format dikonversi', description: 'Foto diubah ke JPEG agar kompatibel.' });
+      }
+      setReferenceImage(processed);
+      setReferenceImagePreview(URL.createObjectURL(processed));
+    } catch (err: any) {
+      toast({ title: 'Gambar tidak didukung', description: err?.message || 'Gagal memproses gambar.', variant: 'destructive' });
     }
   };
   const handleGenerateModel = async () => {
