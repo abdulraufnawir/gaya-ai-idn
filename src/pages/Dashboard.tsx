@@ -109,13 +109,31 @@ const Dashboard = () => {
     return null;
   }
 
-  const menuItems = [
-    { id: 'studio', label: 'Studio', icon: Upload },
-    { id: 'produk', label: 'Produk', icon: Package },
+  // Fashion Studio: fitur core sesuai positioning Fashion Premium
+  const fashionItems = [
+    { id: 'studio', label: 'Virtual Try-On', icon: Upload },
     { id: 'model-swap', label: 'Ganti Model', icon: Users },
     { id: 'photo-edit', label: 'Edit Foto', icon: Edit3 },
+  ];
+
+  // Lab: fitur eksperimental / multi-kategori (beta)
+  const labItems = [
+    { id: 'produk', label: 'Konten Produk', icon: Package, beta: true },
+  ];
+
+  // Account: riwayat & profil
+  const accountItems = [
     { id: 'history', label: 'Riwayat', icon: Sparkles },
     { id: 'profile', label: 'Profil', icon: UserIcon },
+  ];
+
+  // Mobile bottom nav (5 slot agar muat & tetap touch-friendly)
+  const mobileItems = [
+    { id: 'studio', label: 'Try-On', icon: Upload },
+    { id: 'model-swap', label: 'Model', icon: Users },
+    { id: 'photo-edit', label: 'Edit', icon: Edit3 },
+    { id: 'produk', label: 'Lab', icon: Package },
+    { id: 'profile', label: 'Akun', icon: UserIcon },
   ];
 
   if (isMobile) {
@@ -185,9 +203,9 @@ const Dashboard = () => {
 
             {/* Bottom Navigation - Mobile */}
             <div className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-t border-border z-50">
-              <TabsList className="grid w-full grid-cols-6 h-16 bg-transparent rounded-none border-none p-0">
-                {menuItems.map((item) => (
-                  <TabsTrigger 
+              <TabsList className="grid w-full grid-cols-5 h-16 bg-transparent rounded-none border-none p-0">
+                {mobileItems.map((item) => (
+                  <TabsTrigger
                     key={item.id}
                     value={item.id}
                     className="flex flex-col items-center justify-center gap-1 p-2 text-xs data-[state=active]:bg-primary/10 data-[state=active]:text-primary rounded-none border-none h-full"
@@ -218,12 +236,59 @@ const Dashboard = () => {
               </h1>
             </div>
 
-            {/* Navigation Menu */}
+            {/* Fashion Studio - Core */}
             <SidebarGroup>
-              <SidebarGroupLabel>Menu Utama</SidebarGroupLabel>
+              <SidebarGroupLabel>Fashion Studio</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {menuItems.map((item) => (
+                  {fashionItems.map((item) => (
+                    <SidebarMenuItem key={item.id}>
+                      <SidebarMenuButton
+                        onClick={() => setActiveTab(item.id)}
+                        isActive={activeTab === item.id}
+                        className="w-full justify-start"
+                      >
+                        <item.icon className="mr-2 h-4 w-4" />
+                        <span>{item.label}</span>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+
+            {/* Lab - Eksperimen / Multi-kategori */}
+            <SidebarGroup>
+              <SidebarGroupLabel>Lab</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {labItems.map((item) => (
+                    <SidebarMenuItem key={item.id}>
+                      <SidebarMenuButton
+                        onClick={() => setActiveTab(item.id)}
+                        isActive={activeTab === item.id}
+                        className="w-full justify-start"
+                      >
+                        <item.icon className="mr-2 h-4 w-4" />
+                        <span className="flex-1">{item.label}</span>
+                        {item.beta && (
+                          <span className="ml-auto text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded bg-primary/10 text-primary">
+                            Beta
+                          </span>
+                        )}
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+
+            {/* Akun */}
+            <SidebarGroup>
+              <SidebarGroupLabel>Akun</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {accountItems.map((item) => (
                     <SidebarMenuItem key={item.id}>
                       <SidebarMenuButton
                         onClick={() => setActiveTab(item.id)}
