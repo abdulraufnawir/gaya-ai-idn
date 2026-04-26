@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Sparkles, ArrowRight, MessageCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import heroEditorial from "@/assets/hero-editorial.jpg";
+import heroBeforeAfter from "@/assets/hero-before-after.jpg";
 import { buildWhatsAppLink, DEMO_BRAND_MESSAGE } from "@/lib/contact";
 
 const Hero = () => {
@@ -10,17 +10,18 @@ const Hero = () => {
 
   return (
     <section className="relative min-h-[92vh] flex items-center overflow-hidden bg-background">
-      {/* Background image - full bleed editorial */}
+      {/* Background image - editorial before/after */}
       <div className="absolute inset-0">
         <img
-          src={heroEditorial}
-          alt="Foto fashion editorial dibuat dengan AI"
+          src={heroBeforeAfter}
+          alt="Foto produk fashion menjadi foto on-model dengan AI — sebelum dan sesudah"
           width={1920}
           height={1080}
           className="w-full h-full object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-background/95 via-background/70 to-background/20" />
-        <div className="absolute inset-0 bg-gradient-to-t from-background/60 via-transparent to-transparent" />
+        {/* Stronger left overlay agar copy tetap legible di atas split image */}
+        <div className="absolute inset-0 bg-gradient-to-r from-background via-background/85 to-background/10" />
+        <div className="absolute inset-0 bg-gradient-to-t from-background/40 via-transparent to-transparent" />
       </div>
 
       {/* Content */}
@@ -37,21 +38,36 @@ const Hero = () => {
             </Badge>
           </div>
 
-          {/* Main Heading - fashion-focused, confident */}
+          {/* Main Heading - benefit-driven, kongkret */}
           <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-foreground mb-6 animate-slide-up tracking-tight leading-[1.05]">
-            AI Fashion.
+            Foto on-model.
             <br />
             <span className="bg-gradient-primary bg-clip-text text-transparent">
-              Brand-Approved.
+              Dalam 60 detik.
             </span>
           </h1>
 
-          {/* Subtitle - fashion-only positioning */}
-          <p className="text-lg sm:text-xl text-muted-foreground mb-8 max-w-xl animate-slide-up leading-relaxed">
-            Studio AI untuk brand fashion Indonesia — virtual try-on, ganti model,
-            dan foto produk berkualitas editorial. Tanpa studio, tanpa model fee,
-            tanpa kompromi pada brand Anda.
+          {/* Subtitle - angka konkret + ID-specific */}
+          <p className="text-lg sm:text-xl text-muted-foreground mb-6 max-w-xl animate-slide-up leading-relaxed">
+            Ubah foto produk jadi foto editorial on-model — termasuk hijab &amp; modest wear.
+            <strong className="text-foreground"> Hemat hingga 90% biaya foto produk</strong> vs sewa studio &amp; fotografer.
           </p>
+
+          {/* Concrete value props */}
+          <div className="flex flex-wrap gap-x-5 gap-y-2 mb-8 text-sm text-muted-foreground animate-fade-in">
+            <span className="inline-flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+              Mulai Rp 5.000/foto
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+              Tanpa studio fisik
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+              Format Shopee, Tokopedia, IG, TikTok
+            </span>
+          </div>
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center mb-10 animate-slide-up">
@@ -60,7 +76,7 @@ const Hero = () => {
               className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-full px-8 shadow-warm group"
               onClick={() => navigate("/auth")}
             >
-              Coba Gratis
+              Coba Gratis — 5 Foto
               <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
             </Button>
             <Button

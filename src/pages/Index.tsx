@@ -6,6 +6,7 @@ import ProductTiers from "@/components/ProductTiers";
 import Stats from "@/components/Stats";
 import Features from "@/components/Features";
 import HowItWorks from "@/components/HowItWorks";
+import Pricing from "@/components/Pricing";
 import Testimonials from "@/components/Testimonials";
 import Footer from "@/components/Footer";
 
@@ -24,6 +25,7 @@ const Index = () => {
       <HowItWorks />
       <Stats />
       <Testimonials />
+      <Pricing />
       <Footer />
     </div>
   );
