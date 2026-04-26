@@ -114,6 +114,37 @@ const Auth = () => {
     }
   };
 
+  const handleForgotPassword = async () => {
+    if (!email) {
+      toast({
+        title: 'Email diperlukan',
+        description: 'Masukkan email Anda terlebih dahulu di kolom Email.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    setLoading(true);
+    try {
+      const redirectUrl = `${window.location.protocol}//${window.location.host}/reset-password`.replace('http:', 'https:');
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: redirectUrl,
+      });
+      if (error) throw error;
+      toast({
+        title: 'Email reset terkirim',
+        description: 'Periksa inbox Anda untuk tautan reset password.',
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleGoogleAuth = async () => {
     setLoading(true);
     try {
@@ -216,6 +247,17 @@ const Auth = () => {
                 >
                   {loading ? 'Memproses...' : 'Masuk'}
                 </Button>
+
+                <div className="text-center">
+                  <button
+                    type="button"
+                    onClick={handleForgotPassword}
+                    disabled={loading}
+                    className="text-sm text-primary hover:underline disabled:opacity-50"
+                  >
+                    Lupa password?
+                  </button>
+                </div>
                 
                 <div className="relative hidden">
                   <div className="absolute inset-0 flex items-center">
