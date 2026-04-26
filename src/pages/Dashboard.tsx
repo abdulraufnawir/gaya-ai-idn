@@ -240,12 +240,36 @@ const Dashboard = () => {
               </h1>
             </div>
 
-            {/* Fashion Studio - Core */}
+            {/* Create — produksi konten fashion */}
             <SidebarGroup>
-              <SidebarGroupLabel>Fashion Studio</SidebarGroupLabel>
+              <SidebarGroupLabel>Create</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {fashionItems.map((item) => (
+                  {createItems.map((item) => (
+                    <SidebarMenuItem key={item.id}>
+                      <SidebarMenuButton
+                        onClick={() => setActiveTab(item.id)}
+                        isActive={activeTab === item.id}
+                        className="w-full justify-start"
+                      >
+                        <item.icon className="mr-2 h-4 w-4" />
+                        <div className="flex flex-col items-start leading-tight">
+                          <span>{item.label}</span>
+                          <span className="text-[10px] text-muted-foreground">{item.desc}</span>
+                        </div>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+
+            {/* Library — project & aset */}
+            <SidebarGroup>
+              <SidebarGroupLabel>Library</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {libraryItems.map((item) => (
                     <SidebarMenuItem key={item.id}>
                       <SidebarMenuButton
                         onClick={() => setActiveTab(item.id)}
