@@ -10,6 +10,7 @@ import { processImageForUpload } from '@/lib/imageProcessing';
 import { Upload, Sparkles, Users, Image, Download, RotateCcw, CheckCircle2, XCircle, Layers, X, Plus } from 'lucide-react';
 import ModelGallery from './ModelGallery';
 import TryOnPresets, { type TryOnPreset } from './TryOnPresets';
+import ResultRating from './ResultRating';
 
 interface VirtualTryOnProps {
   userId: string;
