@@ -1,13 +1,30 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { User } from '@supabase/supabase-js';
-import { Shirt, Sparkles, UserSquare2, Wand2, LogOut, User as UserIcon, FlaskConical, History } from 'lucide-react';
+import {
+  Shirt,
+  UserSquare2,
+  Wand2,
+  LogOut,
+  User as UserIcon,
+  FlaskConical,
+  History,
+  Plus,
+} from 'lucide-react';
 import {
   Sidebar,
   SidebarContent,
@@ -27,7 +44,7 @@ import PhotoEditor from '@/components/PhotoEditor';
 import ProjectHistory from '@/components/ProjectHistory';
 import UserProfile from '@/components/UserProfile';
 import AdminAccess from '@/components/AdminAccess';
-import CreditStatus from '@/components/CreditStatus';
+import CreditPill from '@/components/CreditPill';
 import ContentStudio from '@/components/product/ContentStudio';
 import OnboardingQuickStart from '@/components/OnboardingQuickStart';
 
@@ -43,7 +60,7 @@ const Dashboard = () => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null);
       setLoading(false);
-      
+
       if (!session?.user) {
         navigate('/auth');
       }
@@ -52,21 +69,18 @@ const Dashboard = () => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
       setLoading(false);
-      
+
       if (!session?.user) {
         navigate('/auth');
       }
     });
 
-    // Listen for custom event to switch to model tab
     const handleSwitchToModelTab = () => {
       setActiveTab('model-swap');
     };
 
-    // Listen for model selection event to switch to studio
     const handleSelectModelForTryOn = (event: any) => {
       setActiveTab('studio');
-      // Dispatch the model data to VirtualTryOn component
       const virtualTryOnEvent = new CustomEvent('setSelectedModel', {
         detail: { model: event.detail.model }
       });
@@ -87,7 +101,6 @@ const Dashboard = () => {
     try {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
-      
       navigate('/');
     } catch (error: any) {
       toast({
@@ -110,21 +123,21 @@ const Dashboard = () => {
     return null;
   }
 
-  // Create — alur produksi konten fashion (mengikuti Lumoo: On-Model, Model, Editorial Edit)
+  // Greeting helper
+  const greetingName = (user.email?.split('@')[0] ?? 'kamu').split(/[._-]/)[0];
+  const initials = greetingName.slice(0, 2).toUpperCase();
+
+  // Create — alur produksi konten fashion
   const createItems = [
     { id: 'studio', label: 'On-Model Try-On', icon: Shirt, desc: 'Foto produk → on-model' },
     { id: 'model-swap', label: 'Model Library', icon: UserSquare2, desc: 'Ganti model & pose' },
     { id: 'photo-edit', label: 'Editorial Edit', icon: Wand2, desc: 'Background & retouch' },
+    { id: 'produk', label: 'Konten Produk', icon: FlaskConical, desc: 'Multi-kategori (Beta)', beta: true },
   ];
 
-  // Library — aset & riwayat
+  // Workspace — riwayat
   const libraryItems = [
-    { id: 'history', label: 'Project Saya', icon: History },
-  ];
-
-  // Lab — eksperimen non-core (multi-kategori produk)
-  const labItems = [
-    { id: 'produk', label: 'Konten Produk', icon: FlaskConical, beta: true },
+    { id: 'history', label: 'Hasil Saya', icon: History },
   ];
 
   // Akun
@@ -132,83 +145,109 @@ const Dashboard = () => {
     { id: 'profile', label: 'Akun & Kredit', icon: UserIcon },
   ];
 
-  // Mobile bottom nav (5 slot, fokus produksi konten fashion)
+  // Mobile bottom nav — 5 slot, semua aksi produksi + galeri
   const mobileItems = [
     { id: 'studio', label: 'Try-On', icon: Shirt },
     { id: 'model-swap', label: 'Model', icon: UserSquare2 },
     { id: 'photo-edit', label: 'Edit', icon: Wand2 },
-    { id: 'history', label: 'Hasil', icon: History },
-    { id: 'profile', label: 'Akun', icon: UserIcon },
+    { id: 'produk', label: 'Produk', icon: FlaskConical },
+    { id: 'history', label: 'Galeri', icon: History },
   ];
 
+  // Avatar/profile dropdown — reused on mobile + desktop header
+  const ProfileMenu = () => (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          className="rounded-full ring-1 ring-border hover:ring-primary/40 transition-all"
+          aria-label="Menu akun"
+        >
+          <Avatar className="h-8 w-8">
+            <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
+              {initials}
+            </AvatarFallback>
+          </Avatar>
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-56">
+        <DropdownMenuLabel className="font-normal">
+          <div className="flex flex-col">
+            <span className="text-sm font-medium">Halo, {greetingName}</span>
+            <span className="text-xs text-muted-foreground truncate">{user.email}</span>
+          </div>
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={() => setActiveTab('profile')}>
+          <UserIcon className="h-4 w-4 mr-2" />
+          Akun & Kredit
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={handleSignOut} className="text-destructive focus:text-destructive">
+          <LogOut className="h-4 w-4 mr-2" />
+          Keluar
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+
   if (isMobile) {
-    // Mobile Layout - Bottom Navigation
+    // Mobile Layout
     return (
       <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5">
-        {/* Header */}
+        {/* Header — logo + credit pill + avatar */}
         <header className="border-b bg-background/80 backdrop-blur-sm sticky top-0 z-50">
-          <div className="container mx-auto px-4 py-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <h1 className="text-xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-                  BUSANA.AI
-                </h1>
-                <span className="text-sm text-muted-foreground">Dashboard</span>
-              </div>
-              <div className="flex items-center space-x-3">
+          <div className="container mx-auto px-4 py-2.5">
+            <div className="flex items-center justify-between gap-2">
+              <h1 className="text-base font-bold bg-gradient-primary bg-clip-text text-transparent shrink-0">
+                BUSANA.AI
+              </h1>
+              <div className="flex items-center gap-2">
+                <CreditPill userId={user.id} onClick={() => setActiveTab('profile')} />
                 <AdminAccess />
-                <Button variant="outline" size="sm" onClick={handleSignOut}>
-                  <LogOut className="h-4 w-4" />
-                </Button>
+                <ProfileMenu />
               </div>
             </div>
           </div>
         </header>
 
         <div className="container mx-auto px-4 py-3">
-          <div className="mb-4">
-            <h2 className="text-xl font-bold mb-1">AI Fashion Studio</h2>
-            <p className="text-sm text-muted-foreground">
-              Foto on-model, ganti model, &amp; lookbook editorial — tanpa studio fisik
-            </p>
-          </div>
-
-          {/* Credit Status - Mobile */}
-          <div className="mb-4">
-            <CreditStatus userId={user.id} />
-          </div>
+          {/* Primary CTA — context-aware (only when not already on Try-On) */}
+          {activeTab !== 'studio' && (
+            <Button
+              onClick={() => setActiveTab('studio')}
+              className="w-full mb-3 rounded-full"
+              size="sm"
+            >
+              <Plus className="h-4 w-4 mr-1.5" />
+              Mulai Try-On Baru
+            </Button>
+          )}
 
           <OnboardingQuickStart userId={user.id} onSelectStep={setActiveTab} />
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            {/* Content area with bottom padding for fixed nav */}
             <div className="pb-20">
               <TabsContent value="studio">
                 <Studio userId={user.id} />
               </TabsContent>
-
               <TabsContent value="produk">
                 <ContentStudio userId={user.id} />
               </TabsContent>
-
               <TabsContent value="model-swap">
                 <ModelSwap userId={user.id} />
               </TabsContent>
-
               <TabsContent value="photo-edit">
                 <PhotoEditor userId={user.id} />
               </TabsContent>
-
               <TabsContent value="history">
                 <ProjectHistory userId={user.id} />
               </TabsContent>
-
               <TabsContent value="profile">
                 <UserProfile user={user} />
               </TabsContent>
             </div>
 
-            {/* Bottom Navigation - Mobile */}
+            {/* Bottom Navigation */}
             <div className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-t border-border z-50">
               <TabsList className="grid w-full grid-cols-5 h-16 bg-transparent rounded-none border-none p-0">
                 {mobileItems.map((item) => (
@@ -229,21 +268,19 @@ const Dashboard = () => {
     );
   }
 
-  // Desktop Layout - Sidebar Navigation
+  // Desktop Layout
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-gradient-to-br from-primary/5 via-background to-accent/5">
-        {/* Sidebar */}
         <Sidebar className="w-64">
           <SidebarContent>
-            {/* Logo in Sidebar */}
             <div className="p-4 border-b">
               <h1 className="text-lg font-bold bg-gradient-primary bg-clip-text text-transparent">
                 BUSANA.AI
               </h1>
             </div>
 
-            {/* Create — produksi konten fashion */}
+            {/* Create */}
             <SidebarGroup>
               <SidebarGroupLabel>Create</SidebarGroupLabel>
               <SidebarGroupContent>
@@ -257,7 +294,12 @@ const Dashboard = () => {
                         className="w-full justify-start"
                       >
                         <item.icon className="mr-2 h-4 w-4" />
-                        <span>{item.label}</span>
+                        <span className="flex-1">{item.label}</span>
+                        {item.beta && (
+                          <span className="ml-auto text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded bg-muted text-muted-foreground border border-border">
+                            Beta
+                          </span>
+                        )}
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   ))}
@@ -265,7 +307,7 @@ const Dashboard = () => {
               </SidebarGroupContent>
             </SidebarGroup>
 
-            {/* Workspace — project, asset, eksperimen */}
+            {/* Workspace */}
             <SidebarGroup>
               <SidebarGroupLabel>Workspace</SidebarGroupLabel>
               <SidebarGroupContent>
@@ -279,24 +321,6 @@ const Dashboard = () => {
                       >
                         <item.icon className="mr-2 h-4 w-4" />
                         <span>{item.label}</span>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
-                  {labItems.map((item) => (
-                    <SidebarMenuItem key={item.id}>
-                      <SidebarMenuButton
-                        onClick={() => setActiveTab(item.id)}
-                        isActive={activeTab === item.id}
-                        tooltip="Eksperimen — multi-kategori produk"
-                        className="w-full justify-start"
-                      >
-                        <item.icon className="mr-2 h-4 w-4" />
-                        <span className="flex-1">{item.label}</span>
-                        {item.beta && (
-                          <span className="ml-auto text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded bg-muted text-muted-foreground border border-border">
-                            Beta
-                          </span>
-                        )}
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   ))}
@@ -325,67 +349,63 @@ const Dashboard = () => {
               </SidebarGroupContent>
             </SidebarGroup>
 
-            {/* User Actions */}
-            <div className="mt-auto p-4 border-t">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-sm text-muted-foreground truncate">
+            {/* Footer — credit pill + admin */}
+            <div className="mt-auto p-4 border-t space-y-3">
+              <CreditPill
+                userId={user.id}
+                onClick={() => setActiveTab('profile')}
+                className="w-full justify-center"
+              />
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground truncate">
                   {user.email}
                 </span>
                 <AdminAccess />
               </div>
-              <Button variant="outline" size="sm" onClick={handleSignOut} className="w-full">
-                <LogOut className="h-4 w-4 mr-2" />
-                Keluar
-              </Button>
             </div>
           </SidebarContent>
         </Sidebar>
 
-        {/* Main Content */}
         <SidebarInset className="flex-1">
-          <header className="flex h-16 shrink-0 items-center gap-2 border-b bg-background/80 backdrop-blur-sm px-4">
-            <SidebarTrigger className="-ml-1" />
-            <div className="flex items-center gap-2">
+          <header className="flex h-16 shrink-0 items-center justify-between gap-2 border-b bg-background/80 backdrop-blur-sm px-4">
+            <div className="flex items-center gap-3">
+              <SidebarTrigger className="-ml-1" />
               <h2 className="font-semibold">Dashboard</h2>
+            </div>
+            <div className="flex items-center gap-3">
+              {activeTab !== 'studio' && (
+                <Button
+                  size="sm"
+                  onClick={() => setActiveTab('studio')}
+                  className="rounded-full"
+                >
+                  <Plus className="h-4 w-4 mr-1.5" />
+                  Mulai Try-On
+                </Button>
+              )}
+              <ProfileMenu />
             </div>
           </header>
 
-          <div className="flex-1 p-4">
-          <div className="mb-6">
-            <h2 className="text-2xl font-bold mb-1">AI Fashion Studio</h2>
-            <p className="text-muted-foreground">
-              Foto on-model, ganti model, &amp; lookbook editorial — siap untuk Shopee, Tokopedia, TikTok &amp; Instagram
-            </p>
-          </div>
-
-          {/* Credit Status - Desktop */}
-          <div className="mb-6">
-            <CreditStatus userId={user.id} />
-          </div>
-
-          <OnboardingQuickStart userId={user.id} onSelectStep={setActiveTab} />
+          <div className="flex-1 p-6">
+            <OnboardingQuickStart userId={user.id} onSelectStep={setActiveTab} />
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <TabsContent value="studio">
                 <Studio userId={user.id} />
               </TabsContent>
-
               <TabsContent value="produk">
                 <ContentStudio userId={user.id} />
               </TabsContent>
-
               <TabsContent value="model-swap">
                 <ModelSwap userId={user.id} />
               </TabsContent>
-
               <TabsContent value="photo-edit">
                 <PhotoEditor userId={user.id} />
               </TabsContent>
-
               <TabsContent value="history">
                 <ProjectHistory userId={user.id} />
               </TabsContent>
-
               <TabsContent value="profile">
                 <UserProfile user={user} />
               </TabsContent>
