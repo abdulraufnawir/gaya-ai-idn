@@ -784,8 +784,8 @@ const VirtualTryOn = ({
                   <label htmlFor="clothing-upload" className="relative w-full h-full flex flex-col items-center justify-center cursor-pointer hover:bg-muted/10 transition-colors p-4 z-20">
                     <Upload className="w-10 h-10 sm:w-12 sm:h-12 text-muted-foreground mb-3 sm:mb-4" />
                     <span className="text-base sm:text-lg font-medium text-primary mb-2 text-center">Upload foto pakaian</span>
-                    <span className="text-xs sm:text-sm text-muted-foreground text-center">PNG, JPG hingga 10MB</span>
-                    <Input id="clothing-upload" type="file" accept="image/*" className="sr-only" onChange={handleClothingImageChange} />
+                    <span className="text-xs sm:text-sm text-muted-foreground text-center">JPG, PNG, HEIC · auto-compress</span>
+                    <Input id="clothing-upload" type="file" accept="image/*,.heic,.heif" className="sr-only" onChange={handleClothingImageChange} />
                   </label>
                 </div>}
             </div>
