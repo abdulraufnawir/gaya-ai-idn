@@ -87,22 +87,18 @@ const Pricing = () => {
   ];
 
   return (
-    <section id="pricing" className="py-20 bg-muted/30">
+    <section id="pricing" className="section bg-muted/30">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="text-center mb-16">
-          <Badge variant="secondary" className="mb-4">
-            <Star className="w-4 h-4 mr-2" />
-            Harga Transparan — IDR
-          </Badge>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground mb-6 tracking-tight">
-            Mulai dari Rp 5.000/foto
+        <div className="section-header">
+          <span className="eyebrow">Harga Transparan — IDR</span>
+          <h2 className="heading-section">
+            Mulai Rp 5.000/foto
             <br />
             <span className="bg-gradient-primary bg-clip-text text-transparent">
               vs Rp 500.000/foto fotografer
             </span>
           </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+          <p className="lead">
             Tanpa kontrak, tanpa biaya setup. Mulai gratis, upgrade kapan saja.
           </p>
         </div>
