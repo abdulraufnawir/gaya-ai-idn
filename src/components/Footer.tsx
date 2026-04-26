@@ -1,18 +1,35 @@
-import { Sparkles, Mail, Phone, MapPin, Instagram, Youtube, MessageCircle } from "lucide-react";
+import { Sparkles, Mail, MapPin, Instagram, Youtube, MessageCircle } from "lucide-react";
+import { buildWhatsAppLink, DEMO_BRAND_MESSAGE, SUPPORT_EMAIL } from "@/lib/contact";
+
 const Footer = () => {
   const footerSections = [{
     title: "Produk",
     links: [{
-      label: "BUSANA Studio (Brand)",
+      label: "BUSANA Studio (Enterprise)",
       href: "#tiers"
     }, {
-      label: "BUSANA Air (UMKM)",
+      label: "BUSANA Air (Self-serve)",
       href: "#tiers"
     }, {
+      label: "Harga",
+      href: "#pricing"
+    }, {
+      label: "Mulai Gratis",
+      href: "/auth"
+    }]
+  }, {
+    title: "Fitur",
+    links: [{
       label: "On-Model Try-On",
       href: "#features"
     }, {
-      label: "Model Library",
+      label: "Model Library Lokal",
+      href: "#features"
+    }, {
+      label: "Editorial Edit",
+      href: "#features"
+    }, {
+      label: "Auto-Format Marketplace",
       href: "#features"
     }]
   }, {
@@ -33,13 +50,13 @@ const Footer = () => {
   }, {
     title: "Dukungan",
     links: [{
-      label: "Help Center",
-      href: "#"
-    }, {
       label: "Jadwalkan Demo",
-      href: "/auth"
+      href: buildWhatsAppLink(DEMO_BRAND_MESSAGE)
     }, {
       label: "WhatsApp Support",
+      href: buildWhatsAppLink("Halo BUSANA.AI, saya butuh bantuan.")
+    }, {
+      label: "Help Center",
       href: "#"
     }]
   }];
