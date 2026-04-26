@@ -359,6 +359,25 @@ const VirtualTryOn = ({
         if (data.status === 'completed') {
           const url = data.result_url || data.result_image_url;
           stopPolling();
+          // Chain background swap if user pre-selected one
+          if (url && backgroundPreset) {
+            setActiveJob((j) => j && j.projectId === projectId
+              ? { ...j, status: 'swapping_background', baseResultUrl: url, resultUrl: url }
+              : j);
+            chainBackgroundSwap(projectId, url, backgroundPreset).catch((err) => {
+              console.error('[bg-swap] error', err);
+              // Background swap failed but try-on succeeded — keep base result, surface a soft toast
+              setActiveJob((j) => j && j.projectId === projectId
+                ? { ...j, status: 'completed', resultUrl: url }
+                : j);
+              toast({
+                title: 'Background gagal diganti',
+                description: 'Hasil try-on tetap tersedia. Coba ganti background lewat panel Lookbook.',
+                variant: 'destructive',
+              });
+            });
+            return;
+          }
           setActiveJob((j) => j && j.projectId === projectId
             ? { ...j, status: 'completed', resultUrl: url ?? undefined }
             : j);
