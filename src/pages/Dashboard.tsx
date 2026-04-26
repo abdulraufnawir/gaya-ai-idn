@@ -109,13 +109,31 @@ const Dashboard = () => {
     return null;
   }
 
-  const menuItems = [
-    { id: 'studio', label: 'Studio', icon: Upload },
-    { id: 'produk', label: 'Produk', icon: Package },
+  // Fashion Studio: fitur core sesuai positioning Fashion Premium
+  const fashionItems = [
+    { id: 'studio', label: 'Virtual Try-On', icon: Upload },
     { id: 'model-swap', label: 'Ganti Model', icon: Users },
     { id: 'photo-edit', label: 'Edit Foto', icon: Edit3 },
+  ];
+
+  // Lab: fitur eksperimental / multi-kategori (beta)
+  const labItems = [
+    { id: 'produk', label: 'Konten Produk', icon: Package, beta: true },
+  ];
+
+  // Account: riwayat & profil
+  const accountItems = [
     { id: 'history', label: 'Riwayat', icon: Sparkles },
     { id: 'profile', label: 'Profil', icon: UserIcon },
+  ];
+
+  // Mobile bottom nav (5 slot agar muat & tetap touch-friendly)
+  const mobileItems = [
+    { id: 'studio', label: 'Try-On', icon: Upload },
+    { id: 'model-swap', label: 'Model', icon: Users },
+    { id: 'photo-edit', label: 'Edit', icon: Edit3 },
+    { id: 'produk', label: 'Lab', icon: Package },
+    { id: 'profile', label: 'Akun', icon: UserIcon },
   ];
 
   if (isMobile) {
