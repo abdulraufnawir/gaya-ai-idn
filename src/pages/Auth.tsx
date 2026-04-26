@@ -247,6 +247,17 @@ const Auth = () => {
                 >
                   {loading ? 'Memproses...' : 'Masuk'}
                 </Button>
+
+                <div className="text-center">
+                  <button
+                    type="button"
+                    onClick={handleForgotPassword}
+                    disabled={loading}
+                    className="text-sm text-primary hover:underline disabled:opacity-50"
+                  >
+                    Lupa password?
+                  </button>
+                </div>
                 
                 <div className="relative hidden">
                   <div className="absolute inset-0 flex items-center">
