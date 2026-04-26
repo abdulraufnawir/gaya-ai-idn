@@ -65,78 +65,42 @@ const VirtualTryOn = ({
     });
   };
 
-  const loadUserCredits = async () => {
-    setLoadingCredits(true);
-    try {
-      const creditBalance = await checkBalance();
-      if (creditBalance) {
-        setUserCredits(creditBalance.credits_balance);
-      }
-    } catch (error) {
-      console.error('Error loading credits:', error);
-    } finally {
-      setLoadingCredits(false);
-    }
-  };
+  // Unified model-selection handler (consolidated from 3 overlapping listeners).
+  // Dedupe rapid-fire events (<300ms) to avoid double-toast / state thrash.
   useEffect(() => {
-    loadUserCredits();
+    let lastUrl: string | null = null;
+    let lastAt = 0;
 
-    // Listen for model selection from ModelGallery
-    const handleSetSelectedModel = (event: any) => {
-      const selectedModel = event.detail.model;
-      if (selectedModel?.imageUrl) {
-        // Clear any uploaded file and set the selected model URL
-        setModelImage(null);
-        setModelImageUrl(selectedModel.imageUrl);
-        setModelImagePreview(selectedModel.imageUrl);
-        setSelectedModel(selectedModel);
-        toast({
-          title: 'Berhasil',
-          description: 'Model berhasil dipilih untuk virtual try-on'
-        });
-      }
+    const applyModel = (model: any, source: 'gallery' | 'ai') => {
+      if (!model?.imageUrl) return;
+      const now = Date.now();
+      if (model.imageUrl === lastUrl && now - lastAt < 300) return;
+      lastUrl = model.imageUrl;
+      lastAt = now;
+
+      setModelImage(null);
+      setModelImageUrl(model.imageUrl);
+      setModelImagePreview(model.imageUrl);
+      setSelectedModel(model);
+      toast({
+        title: source === 'ai' ? 'Model AI Siap!' : 'Model dipilih',
+        description: source === 'ai'
+          ? 'Model AI berhasil dibuat dan siap untuk virtual try-on'
+          : 'Model berhasil dipilih untuk virtual try-on',
+      });
     };
 
-    // Listen for model selection from gallery within VirtualTryOn
-    const handleSelectModelForTryOn = (event: any) => {
-      const selectedModel = event.detail.model;
-      if (selectedModel?.imageUrl) {
-        // Clear any uploaded file and set the selected model URL
-        setModelImage(null);
-        setModelImageUrl(selectedModel.imageUrl);
-        setModelImagePreview(selectedModel.imageUrl);
-        setSelectedModel(selectedModel);
-        toast({
-          title: 'Berhasil',
-          description: 'Model berhasil dipilih untuk virtual try-on'
-        });
-      }
-    };
+    const onGallery = (e: any) => applyModel(e.detail?.model, 'gallery');
+    const onAi = (e: any) => applyModel(e.detail?.model, 'ai');
 
-    // Listen for generated model completion
-    const handleGeneratedModelReady = (event: any) => {
-      const generatedModel = event.detail.model;
-      if (generatedModel?.imageUrl) {
-        // Set the generated model as selected for virtual try-on
-        setModelImage(null);
-        setModelImageUrl(generatedModel.imageUrl);
-        setModelImagePreview(generatedModel.imageUrl);
-        setSelectedModel(generatedModel);
-        toast({
-          title: 'Model AI Siap!',
-          description: 'Model AI telah berhasil dibuat dan siap untuk virtual try-on'
-        });
-      }
-    };
+    window.addEventListener('setSelectedModel', onGallery);
+    window.addEventListener('selectModelForTryOn', onGallery);
+    window.addEventListener('generatedModelReady', onAi);
 
-    window.addEventListener('setSelectedModel', handleSetSelectedModel);
-    window.addEventListener('selectModelForTryOn', handleSelectModelForTryOn);
-    window.addEventListener('generatedModelReady', handleGeneratedModelReady);
-    
     return () => {
-      window.removeEventListener('setSelectedModel', handleSetSelectedModel);
-      window.removeEventListener('selectModelForTryOn', handleSelectModelForTryOn);
-      window.removeEventListener('generatedModelReady', handleGeneratedModelReady);
+      window.removeEventListener('setSelectedModel', onGallery);
+      window.removeEventListener('selectModelForTryOn', onGallery);
+      window.removeEventListener('generatedModelReady', onAi);
     };
   }, [toast]);
   const handleModelImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
