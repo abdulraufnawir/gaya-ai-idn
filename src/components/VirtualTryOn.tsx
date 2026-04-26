@@ -411,7 +411,7 @@ const VirtualTryOn = ({
           prompt: aiModelPrompt,
           clothingType: aiModelClothingType,
           aspectRatio: '2:3',
-          referenceImage: (window as any)?.lastUploadedGarmentImageUrl,
+          referenceImage: lastGarmentUploadedUrl ?? undefined,
           projectId: project.id
         }
       });
