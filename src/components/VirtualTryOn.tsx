@@ -337,6 +337,43 @@ const VirtualTryOn = ({
     }
   };
 
+  // After try-on completes, optionally chain a background swap so the user
+  // gets a single seamless flow (model + garment + background) in one click.
+  const chainBackgroundSwap = async (
+    projectId: string,
+    baseResultUrl: string,
+    bgKey: BackgroundPresetKey,
+  ) => {
+    const { data, error } = await supabase.functions.invoke('lookbook-generate', {
+      body: {
+        userId,
+        sourceProjectId: projectId,
+        sourceImageUrl: baseResultUrl,
+        variations: [{ type: 'background', key: bgKey }],
+      },
+    });
+    if (error) {
+      const ctx = (error as any)?.context;
+      if (ctx?.status === 402) throw new Error('Kredit tidak cukup untuk ganti background');
+      throw error;
+    }
+    const ok = (data?.results ?? []).find((r: any) => r.status === 'completed');
+    if (!ok?.resultUrl) {
+      const failMsg = (data?.results ?? [])[0]?.error ?? 'Background swap gagal';
+      throw new Error(failMsg);
+    }
+    // Persist the swapped result on the original project so history shows the final image
+    await supabase
+      .from('projects')
+      .update({ result_url: ok.resultUrl, result_image_url: ok.resultUrl })
+      .eq('id', projectId);
+
+    setActiveJob((j) => j && j.projectId === projectId
+      ? { ...j, status: 'completed', resultUrl: ok.resultUrl, baseResultUrl }
+      : j);
+    toast({ title: 'Background diganti!', description: `Hasil siap dengan ${ok.label}.` });
+  };
+
   // Poll project row until status === 'completed' or 'failed'
   const startPolling = (projectId: string) => {
     stopPolling();
