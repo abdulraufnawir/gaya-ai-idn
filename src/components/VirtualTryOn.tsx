@@ -733,6 +733,7 @@ const VirtualTryOn = ({
     setBulkRunning(false);
 
     // Toast counts using latest snapshot via functional setter
+    setBulkItems((prev) => {
       const ok = prev.filter((i) => i.status === 'completed').length;
       const fail = prev.filter((i) => i.status === 'failed').length;
       toast({
