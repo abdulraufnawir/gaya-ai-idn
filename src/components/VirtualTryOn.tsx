@@ -65,6 +65,14 @@ const VirtualTryOn = ({
   const [elapsedMs, setElapsedMs] = useState(0);
   const pollRef = useRef<number | null>(null);
   const tickRef = useRef<number | null>(null);
+
+  // Bulk mode (1 model × N garments, sequential)
+  const [bulkMode, setBulkMode] = useState(false);
+  const [bulkItems, setBulkItems] = useState<BulkGarmentItem[]>([]);
+  const [bulkRunning, setBulkRunning] = useState(false);
+  const [bulkCurrentIndex, setBulkCurrentIndex] = useState<number | null>(null);
+  const bulkAbortRef = useRef(false);
+
   const { toast } = useToast();
 
   // Image preprocessing: HEIC→JPEG, AVIF/WEBP→JPEG, auto-resize, compress.
