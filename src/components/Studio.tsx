@@ -1,11 +1,8 @@
-import { useState } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Shirt, Package, Info, CheckCircle2, XCircle, Lightbulb } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Shirt, Info, CheckCircle2, XCircle, Lightbulb } from 'lucide-react';
 import VirtualTryOn from './VirtualTryOn';
-import Produk from './Produk';
 import goodModelSingle from '@/assets/examples/good-model-single.jpg';
 import badModelGroup from '@/assets/examples/bad-model-group.jpg';
 import goodFlatlayApparel from '@/assets/examples/good-flatlay-apparel.jpg';
