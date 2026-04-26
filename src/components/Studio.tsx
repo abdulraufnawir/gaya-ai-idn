@@ -271,52 +271,20 @@ const Studio = ({ userId }: StudioProps) => {
         </Dialog>
       </div>
 
-      <Tabs value={activeStudioTab} onValueChange={setActiveStudioTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2 mb-6">
-          <TabsTrigger value="pakaian" className="flex items-center gap-2">
-            <Shirt className="h-4 w-4" />
-            Pakaian
-          </TabsTrigger>
-          <TabsTrigger value="produk" className="flex items-center gap-2">
-            <Package className="h-4 w-4" />
-            Produk
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="pakaian">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Shirt className="h-5 w-5" />
-                Virtual Try-On Pakaian
-              </CardTitle>
-              <CardDescription>
-                Upload foto model dan pakaian untuk melihat hasil virtual try-on
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <VirtualTryOn userId={userId} />
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="produk">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Package className="h-5 w-5" />
-                Materi Marketing Produk
-              </CardTitle>
-              <CardDescription>
-                Ubah foto produk menjadi materi marketing yang menarik
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Produk userId={userId} />
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Shirt className="h-5 w-5" />
+            Virtual Try-On Pakaian
+          </CardTitle>
+          <CardDescription>
+            Upload foto model dan pakaian untuk melihat hasil virtual try-on
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <VirtualTryOn userId={userId} />
+        </CardContent>
+      </Card>
     </div>
   );
 };
