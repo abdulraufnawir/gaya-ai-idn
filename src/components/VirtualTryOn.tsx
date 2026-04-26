@@ -463,6 +463,7 @@ const VirtualTryOn = ({
     setClothingImagePreview(null);
     setSelectedModel(null);
     setClothingCategory(null);
+    setBackgroundPreset(null);
     setLastGarmentUploadedUrl(null);
   };
 
