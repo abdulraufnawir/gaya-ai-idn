@@ -987,6 +987,20 @@ const VirtualTryOn = ({
         </div>
       </div>
 
+      {/* Preset bar — quick save & apply favorite combos */}
+      <TryOnPresets
+        userId={userId}
+        current={{
+          modelImageUrl: modelImageUrl ?? modelImagePreview,
+          modelSource: selectedModel ? (selectedModel.source ?? 'gallery') : (modelImage ? 'upload' : null),
+          modelMeta: selectedModel ?? undefined,
+          category: clothingCategory
+            ? clothingCategory.charAt(0).toUpperCase() + clothingCategory.slice(1).toLowerCase()
+            : null,
+        }}
+        onApply={handleApplyPreset}
+      />
+
       <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Pilih Model */}
         <div className="space-y-4">
