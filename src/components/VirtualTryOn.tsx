@@ -1,18 +1,34 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Upload, Sparkles, Users, Image } from 'lucide-react';
+import { Upload, Sparkles, Users, Image, Download, RotateCcw, CheckCircle2, XCircle } from 'lucide-react';
 import ModelGallery from './ModelGallery';
+
 interface VirtualTryOnProps {
   userId: string;
 }
+
+type ActiveJob = {
+  projectId: string;
+  predictionId: string;
+  startedAt: number;
+  modelImageUrl: string;
+  garmentImageUrl: string;
+  category: string;
+  status: 'processing' | 'completed' | 'failed';
+  resultUrl?: string;
+  errorMessage?: string;
+};
+
+const ESTIMATED_DURATION_MS = 25_000; // observed: ~20-25s end-to-end
+const POLL_INTERVAL_MS = 2_500;
+const POLL_TIMEOUT_MS = 120_000;
+
 const VirtualTryOn = ({
   userId
 }: VirtualTryOnProps) => {
@@ -28,6 +44,10 @@ const VirtualTryOn = ({
   const [aiModelPrompt, setAiModelPrompt] = useState<string>('');
   const [aiModelClothingType, setAiModelClothingType] = useState<string>('');
   const [generatingModel, setGeneratingModel] = useState(false);
+  const [activeJob, setActiveJob] = useState<ActiveJob | null>(null);
+  const [elapsedMs, setElapsedMs] = useState(0);
+  const pollRef = useRef<number | null>(null);
+  const tickRef = useRef<number | null>(null);
   const { toast } = useToast();
 
   // Helper function to convert images to JPEG format
