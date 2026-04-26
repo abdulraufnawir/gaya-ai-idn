@@ -1,18 +1,34 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Upload, Sparkles, Users, Image } from 'lucide-react';
+import { Upload, Sparkles, Users, Image, Download, RotateCcw, CheckCircle2, XCircle } from 'lucide-react';
 import ModelGallery from './ModelGallery';
+
 interface VirtualTryOnProps {
   userId: string;
 }
+
+type ActiveJob = {
+  projectId: string;
+  predictionId: string;
+  startedAt: number;
+  modelImageUrl: string;
+  garmentImageUrl: string;
+  category: string;
+  status: 'processing' | 'completed' | 'failed';
+  resultUrl?: string;
+  errorMessage?: string;
+};
+
+const ESTIMATED_DURATION_MS = 25_000; // observed: ~20-25s end-to-end
+const POLL_INTERVAL_MS = 2_500;
+const POLL_TIMEOUT_MS = 120_000;
+
 const VirtualTryOn = ({
   userId
 }: VirtualTryOnProps) => {
@@ -28,6 +44,10 @@ const VirtualTryOn = ({
   const [aiModelPrompt, setAiModelPrompt] = useState<string>('');
   const [aiModelClothingType, setAiModelClothingType] = useState<string>('');
   const [generatingModel, setGeneratingModel] = useState(false);
+  const [activeJob, setActiveJob] = useState<ActiveJob | null>(null);
+  const [elapsedMs, setElapsedMs] = useState(0);
+  const pollRef = useRef<number | null>(null);
+  const tickRef = useRef<number | null>(null);
   const { toast } = useToast();
 
   // Helper function to convert images to JPEG format
@@ -289,27 +309,127 @@ const VirtualTryOn = ({
           clothing_category: normalizedCategory
         }
       }).eq('id', project.id);
-      toast({
-        title: 'Berhasil!',
-        description: 'Virtual try-on sedang diproses dengan KIE AI. Silakan cek riwayat proyek untuk melihat hasilnya.'
-      });
 
-      // Reset form
-      setModelImage(null);
-      setModelImageUrl(null);
-      setClothingImage(null);
-      setModelImagePreview(null);
-      setClothingImagePreview(null);
-      setSelectedModel(null);
-      setClothingCategory(null);
+      // Set active job — DO NOT reset form. Inline viewer will render below.
+      setActiveJob({
+        projectId: project.id,
+        predictionId,
+        startedAt: Date.now(),
+        modelImageUrl: finalModelImageUrl!,
+        garmentImageUrl: clothingImageUrl,
+        category: normalizedCategory!,
+        status: 'processing',
+      });
+      setElapsedMs(0);
+      startPolling(project.id);
     } catch (error: any) {
       toast({
-        title: 'Error',
+        title: 'Gagal memulai',
         description: error.message,
         variant: 'destructive'
       });
     } finally {
       setProcessing(false);
+    }
+  };
+
+  // Poll project row until status === 'completed' or 'failed'
+  const startPolling = (projectId: string) => {
+    stopPolling();
+    const startedAt = Date.now();
+
+    tickRef.current = window.setInterval(() => {
+      setElapsedMs(Date.now() - startedAt);
+    }, 250);
+
+    const tick = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('projects')
+          .select('status, result_url, result_image_url, error_message')
+          .eq('id', projectId)
+          .maybeSingle();
+        if (error) throw error;
+        if (!data) return;
+
+        if (data.status === 'completed') {
+          const url = data.result_url || data.result_image_url;
+          stopPolling();
+          setActiveJob((j) => j && j.projectId === projectId
+            ? { ...j, status: 'completed', resultUrl: url ?? undefined }
+            : j);
+          toast({ title: 'Selesai!', description: 'Virtual try-on siap dilihat.' });
+        } else if (data.status === 'failed') {
+          stopPolling();
+          setActiveJob((j) => j && j.projectId === projectId
+            ? { ...j, status: 'failed', errorMessage: data.error_message ?? 'Generation failed' }
+            : j);
+          toast({
+            title: 'Generasi gagal',
+            description: data.error_message || 'Coba lagi dalam beberapa saat.',
+            variant: 'destructive',
+          });
+        } else if (Date.now() - startedAt > POLL_TIMEOUT_MS) {
+          stopPolling();
+          setActiveJob((j) => j && j.projectId === projectId
+            ? { ...j, status: 'failed', errorMessage: 'Timeout — coba lagi.' }
+            : j);
+        }
+      } catch (e) {
+        console.error('[poll] error', e);
+      }
+    };
+
+    tick(); // immediate first poll
+    pollRef.current = window.setInterval(tick, POLL_INTERVAL_MS);
+  };
+
+  const stopPolling = () => {
+    if (pollRef.current) { window.clearInterval(pollRef.current); pollRef.current = null; }
+    if (tickRef.current) { window.clearInterval(tickRef.current); tickRef.current = null; }
+  };
+
+  // Cleanup on unmount
+  useEffect(() => () => stopPolling(), []);
+
+  const handleNewTryOn = () => {
+    stopPolling();
+    setActiveJob(null);
+    setElapsedMs(0);
+    setModelImage(null);
+    setModelImageUrl(null);
+    setClothingImage(null);
+    setModelImagePreview(null);
+    setClothingImagePreview(null);
+    setSelectedModel(null);
+    setClothingCategory(null);
+    setLastGarmentUploadedUrl(null);
+  };
+
+  const handleSwapGarmentOnly = () => {
+    stopPolling();
+    setActiveJob(null);
+    setElapsedMs(0);
+    setClothingImage(null);
+    setClothingImagePreview(null);
+    setLastGarmentUploadedUrl(null);
+    // Keep model + category
+  };
+
+  const handleDownloadResult = async () => {
+    if (!activeJob?.resultUrl) return;
+    try {
+      const res = await fetch(activeJob.resultUrl);
+      const blob = await res.blob();
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `tryon-${activeJob.projectId}.jpg`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    } catch {
+      // Fallback: open in new tab
+      window.open(activeJob.resultUrl, '_blank');
     }
   };
   const uploadImage = async (file: File, type: string): Promise<string> => {
@@ -704,27 +824,138 @@ const VirtualTryOn = ({
         </div>
       </div>
 
-      {/* Generate Button */}
-      <div className="max-w-7xl mx-auto mt-4 flex justify-center px-4">
-        <Button 
-          onClick={handleProcess} 
-          disabled={processing || (!modelImage && !modelImageUrl) || !clothingImage || !clothingCategory} 
-          size="lg" 
-          className="w-full sm:w-auto sm:min-w-[300px] h-12 text-base"
-        >
-          {processing ? (
-            <>
-              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div>
-              Memproses...
-            </>
-          ) : (
-            <>
-              <Sparkles className="h-5 w-5 mr-3" />
-              Buat Virtual Try-On (Gratis - Beta)
-            </>
-          )}
-        </Button>
-      </div>
+      {/* Generate Button — hidden once a job is active so result viewer takes focus */}
+      {!activeJob && (
+        <div className="max-w-7xl mx-auto mt-4 flex justify-center px-4">
+          <Button
+            onClick={handleProcess}
+            disabled={processing || (!modelImage && !modelImageUrl) || !clothingImage || !clothingCategory}
+            size="lg"
+            className="w-full sm:w-auto sm:min-w-[300px] h-12 text-base"
+          >
+            {processing ? (
+              <>
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-current mr-3"></div>
+                Mengirim ke AI...
+              </>
+            ) : (
+              <>
+                <Sparkles className="h-5 w-5 mr-3" />
+                Generate
+                <Badge variant="secondary" className="ml-2 text-[10px]">Beta · Gratis</Badge>
+              </>
+            )}
+          </Button>
+        </div>
+      )}
+
+      {/* Inline Result Viewer */}
+      {activeJob && (
+        <div className="max-w-7xl mx-auto mt-6 px-2 sm:px-4">
+          <div className="rounded-xl border border-border bg-card p-4 sm:p-6 shadow-soft">
+            {/* Status header */}
+            <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+              <div className="flex items-center gap-2">
+                {activeJob.status === 'processing' && (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary" />
+                    <span className="font-medium">Memproses virtual try-on...</span>
+                  </>
+                )}
+                {activeJob.status === 'completed' && (
+                  <>
+                    <CheckCircle2 className="h-5 w-5 text-success" />
+                    <span className="font-medium">Hasil siap</span>
+                  </>
+                )}
+                {activeJob.status === 'failed' && (
+                  <>
+                    <XCircle className="h-5 w-5 text-destructive" />
+                    <span className="font-medium">Generasi gagal</span>
+                  </>
+                )}
+              </div>
+              {activeJob.status === 'processing' && (
+                <span className="text-xs text-muted-foreground tabular-nums">
+                  {(elapsedMs / 1000).toFixed(0)}s / ~{Math.round(ESTIMATED_DURATION_MS / 1000)}s
+                </span>
+              )}
+            </div>
+
+            {/* Progress bar (processing only) */}
+            {activeJob.status === 'processing' && (
+              <div className="mb-4">
+                <Progress value={Math.min(95, (elapsedMs / ESTIMATED_DURATION_MS) * 100)} className="h-2" />
+                <p className="text-xs text-muted-foreground mt-2">
+                  AI sedang memasangkan pakaian ke model. Estimasi ~25 detik.
+                </p>
+              </div>
+            )}
+
+            {/* Result grid: model | garment | result */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="space-y-1">
+                <p className="text-xs text-muted-foreground text-center">Model</p>
+                <div className="aspect-[3/4] bg-muted/20 rounded-lg overflow-hidden">
+                  <img src={activeJob.modelImageUrl} alt="Model" className="w-full h-full object-cover" />
+                </div>
+              </div>
+              <div className="space-y-1">
+                <p className="text-xs text-muted-foreground text-center">Pakaian</p>
+                <div className="aspect-[3/4] bg-muted/20 rounded-lg overflow-hidden">
+                  <img src={activeJob.garmentImageUrl} alt="Pakaian" className="w-full h-full object-cover" />
+                </div>
+              </div>
+              <div className="space-y-1">
+                <p className="text-xs text-muted-foreground text-center">
+                  Hasil {activeJob.status === 'completed' ? '✨' : ''}
+                </p>
+                <div className="aspect-[3/4] bg-muted/20 rounded-lg overflow-hidden relative ring-2 ring-primary/20">
+                  {activeJob.status === 'completed' && activeJob.resultUrl ? (
+                    <img src={activeJob.resultUrl} alt="Hasil try-on" className="w-full h-full object-cover" />
+                  ) : activeJob.status === 'failed' ? (
+                    <div className="w-full h-full flex flex-col items-center justify-center p-4 text-center">
+                      <XCircle className="h-8 w-8 text-destructive mb-2" />
+                      <p className="text-xs text-muted-foreground">{activeJob.errorMessage}</p>
+                    </div>
+                  ) : (
+                    <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-primary/5 to-primary/10">
+                      <Sparkles className="h-8 w-8 text-primary/40 animate-pulse mb-2" />
+                      <p className="text-xs text-muted-foreground">Generating...</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Action bar */}
+            <div className="mt-4 flex flex-wrap gap-2 justify-center">
+              {activeJob.status === 'completed' && (
+                <Button onClick={handleDownloadResult} variant="default" size="sm">
+                  <Download className="h-4 w-4 mr-2" />
+                  Download
+                </Button>
+              )}
+              {activeJob.status !== 'processing' && (
+                <>
+                  <Button onClick={handleSwapGarmentOnly} variant="outline" size="sm">
+                    <RotateCcw className="h-4 w-4 mr-2" />
+                    Coba pakaian lain
+                  </Button>
+                  <Button onClick={handleNewTryOn} variant="ghost" size="sm">
+                    Try-on baru
+                  </Button>
+                </>
+              )}
+              {activeJob.status === 'processing' && (
+                <p className="text-xs text-muted-foreground">
+                  Anda boleh meninggalkan halaman — hasil tetap tersimpan di Riwayat.
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>;
 };
 export default VirtualTryOn;
