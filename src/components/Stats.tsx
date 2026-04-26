@@ -37,12 +37,12 @@ const Stats = () => {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative">
         <div className="max-w-3xl mb-12">
           <p className="text-sm uppercase tracking-widest text-background/60 mb-4">
-            Hasil Nyata
+            Hasil Nyata untuk Brand Fashion
           </p>
           <h2 className="text-4xl sm:text-5xl font-bold tracking-tight">
-            Lebih cepat. Lebih murah.
+            Konten editorial.
             <br />
-            <span className="text-primary-glow">Lebih siap jualan.</span>
+            <span className="text-primary-glow">Tanpa studio fisik.</span>
           </h2>
         </div>
 

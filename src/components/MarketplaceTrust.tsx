@@ -17,10 +17,10 @@ const MarketplaceTrust = () => {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-10">
           <p className="text-xs uppercase tracking-widest text-muted-foreground font-semibold mb-3">
-            Siap Diunggah ke
+            Konten Fashion Anda, Siap di Setiap Channel
           </p>
           <h3 className="text-2xl sm:text-3xl font-bold text-foreground">
-            Semua marketplace &amp; sosial media favorit Anda
+            Lookbook, marketplace, sosial media — semua format otomatis
           </h3>
         </div>
 
