@@ -517,14 +517,16 @@ const VirtualTryOn = ({
                     />
                   </div>
                   
-                  <Button 
+                  <Button
                     onClick={handleGenerateModel}
                     disabled={generatingModel || !aiModelPrompt.trim() || !aiModelClothingType}
-                    className="w-full bg-yellow-400 hover:bg-yellow-500 text-black font-medium py-3"
+                    variant="hero"
+                    size="lg"
+                    className="w-full"
                   >
                     {generatingModel ? (
                       <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-black mr-2"></div>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2"></div>
                         Generating...
                       </>
                     ) : (
