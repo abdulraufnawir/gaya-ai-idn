@@ -824,27 +824,138 @@ const VirtualTryOn = ({
         </div>
       </div>
 
-      {/* Generate Button */}
-      <div className="max-w-7xl mx-auto mt-4 flex justify-center px-4">
-        <Button 
-          onClick={handleProcess} 
-          disabled={processing || (!modelImage && !modelImageUrl) || !clothingImage || !clothingCategory} 
-          size="lg" 
-          className="w-full sm:w-auto sm:min-w-[300px] h-12 text-base"
-        >
-          {processing ? (
-            <>
-              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div>
-              Memproses...
-            </>
-          ) : (
-            <>
-              <Sparkles className="h-5 w-5 mr-3" />
-              Buat Virtual Try-On (Gratis - Beta)
-            </>
-          )}
-        </Button>
-      </div>
+      {/* Generate Button — hidden once a job is active so result viewer takes focus */}
+      {!activeJob && (
+        <div className="max-w-7xl mx-auto mt-4 flex justify-center px-4">
+          <Button
+            onClick={handleProcess}
+            disabled={processing || (!modelImage && !modelImageUrl) || !clothingImage || !clothingCategory}
+            size="lg"
+            className="w-full sm:w-auto sm:min-w-[300px] h-12 text-base"
+          >
+            {processing ? (
+              <>
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-current mr-3"></div>
+                Mengirim ke AI...
+              </>
+            ) : (
+              <>
+                <Sparkles className="h-5 w-5 mr-3" />
+                Generate
+                <Badge variant="secondary" className="ml-2 text-[10px]">Beta · Gratis</Badge>
+              </>
+            )}
+          </Button>
+        </div>
+      )}
+
+      {/* Inline Result Viewer */}
+      {activeJob && (
+        <div className="max-w-7xl mx-auto mt-6 px-2 sm:px-4">
+          <div className="rounded-xl border border-border bg-card p-4 sm:p-6 shadow-soft">
+            {/* Status header */}
+            <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+              <div className="flex items-center gap-2">
+                {activeJob.status === 'processing' && (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary" />
+                    <span className="font-medium">Memproses virtual try-on...</span>
+                  </>
+                )}
+                {activeJob.status === 'completed' && (
+                  <>
+                    <CheckCircle2 className="h-5 w-5 text-success" />
+                    <span className="font-medium">Hasil siap</span>
+                  </>
+                )}
+                {activeJob.status === 'failed' && (
+                  <>
+                    <XCircle className="h-5 w-5 text-destructive" />
+                    <span className="font-medium">Generasi gagal</span>
+                  </>
+                )}
+              </div>
+              {activeJob.status === 'processing' && (
+                <span className="text-xs text-muted-foreground tabular-nums">
+                  {(elapsedMs / 1000).toFixed(0)}s / ~{Math.round(ESTIMATED_DURATION_MS / 1000)}s
+                </span>
+              )}
+            </div>
+
+            {/* Progress bar (processing only) */}
+            {activeJob.status === 'processing' && (
+              <div className="mb-4">
+                <Progress value={Math.min(95, (elapsedMs / ESTIMATED_DURATION_MS) * 100)} className="h-2" />
+                <p className="text-xs text-muted-foreground mt-2">
+                  AI sedang memasangkan pakaian ke model. Estimasi ~25 detik.
+                </p>
+              </div>
+            )}
+
+            {/* Result grid: model | garment | result */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="space-y-1">
+                <p className="text-xs text-muted-foreground text-center">Model</p>
+                <div className="aspect-[3/4] bg-muted/20 rounded-lg overflow-hidden">
+                  <img src={activeJob.modelImageUrl} alt="Model" className="w-full h-full object-cover" />
+                </div>
+              </div>
+              <div className="space-y-1">
+                <p className="text-xs text-muted-foreground text-center">Pakaian</p>
+                <div className="aspect-[3/4] bg-muted/20 rounded-lg overflow-hidden">
+                  <img src={activeJob.garmentImageUrl} alt="Pakaian" className="w-full h-full object-cover" />
+                </div>
+              </div>
+              <div className="space-y-1">
+                <p className="text-xs text-muted-foreground text-center">
+                  Hasil {activeJob.status === 'completed' ? '✨' : ''}
+                </p>
+                <div className="aspect-[3/4] bg-muted/20 rounded-lg overflow-hidden relative ring-2 ring-primary/20">
+                  {activeJob.status === 'completed' && activeJob.resultUrl ? (
+                    <img src={activeJob.resultUrl} alt="Hasil try-on" className="w-full h-full object-cover" />
+                  ) : activeJob.status === 'failed' ? (
+                    <div className="w-full h-full flex flex-col items-center justify-center p-4 text-center">
+                      <XCircle className="h-8 w-8 text-destructive mb-2" />
+                      <p className="text-xs text-muted-foreground">{activeJob.errorMessage}</p>
+                    </div>
+                  ) : (
+                    <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-primary/5 to-primary/10">
+                      <Sparkles className="h-8 w-8 text-primary/40 animate-pulse mb-2" />
+                      <p className="text-xs text-muted-foreground">Generating...</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Action bar */}
+            <div className="mt-4 flex flex-wrap gap-2 justify-center">
+              {activeJob.status === 'completed' && (
+                <Button onClick={handleDownloadResult} variant="default" size="sm">
+                  <Download className="h-4 w-4 mr-2" />
+                  Download
+                </Button>
+              )}
+              {activeJob.status !== 'processing' && (
+                <>
+                  <Button onClick={handleSwapGarmentOnly} variant="outline" size="sm">
+                    <RotateCcw className="h-4 w-4 mr-2" />
+                    Coba pakaian lain
+                  </Button>
+                  <Button onClick={handleNewTryOn} variant="ghost" size="sm">
+                    Try-on baru
+                  </Button>
+                </>
+              )}
+              {activeJob.status === 'processing' && (
+                <p className="text-xs text-muted-foreground">
+                  Anda boleh meninggalkan halaman — hasil tetap tersimpan di Riwayat.
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>;
 };
 export default VirtualTryOn;
