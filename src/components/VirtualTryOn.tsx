@@ -1117,81 +1117,250 @@ const VirtualTryOn = ({
 
         </div>
 
-        {/* Select Garment */}
-        <div className="space-y-4">
-          <div className="text-center">
-            <h2 className="text-lg sm:text-xl font-semibold flex items-center justify-center gap-2">
-              Pilih Pakaian
-              <div className="w-4 h-4 bg-muted-foreground/20 rounded-full flex items-center justify-center">
-               </div>
-            </h2>
-          </div>
+        {/* Select Garment — Single OR Bulk */}
+        {!bulkMode ? (
+          <div className="space-y-4">
+            <div className="text-center">
+              <h2 className="text-lg sm:text-xl font-semibold flex items-center justify-center gap-2">
+                Pilih Pakaian
+                <div className="w-4 h-4 bg-muted-foreground/20 rounded-full flex items-center justify-center">
+                </div>
+              </h2>
+            </div>
 
-          {/* Clothing Category Selection */}
-          <div>
-            
+            {/* Clothing Category Selection */}
+            <div>
+              <div className="flex flex-wrap gap-2 justify-center">
+                {[{
+                key: 'atasan',
+                label: 'Atasan'
+              }, {
+                key: 'bawahan',
+                label: 'Bawahan'
+              }, {
+                key: 'gaun',
+                label: 'Gaun'
+              }, {
+                key: 'hijab',
+                label: 'Hijab'
+              }].map(category => <Button key={category.key} variant={clothingCategory === category.key ? 'default' : 'outline'} size="sm" onClick={() => setClothingCategory(clothingCategory === category.key ? null : category.key)} className="text-xs">
+                    {category.label}
+                  </Button>)}
+              </div>
+              {clothingCategory && <p className="text-xs text-muted-foreground text-center mt-1">
+                  Dipilih: {clothingCategory.charAt(0).toUpperCase() + clothingCategory.slice(1)}
+                </p>}
+            </div>
+
+            <div className="relative">
+              <div className="aspect-[3/4] bg-muted/20 rounded-xl border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 transition-colors overflow-hidden min-h-[200px] sm:min-h-[250px]">
+                {clothingImagePreview ? <div className="relative w-full h-full">
+                    <img
+                      src={clothingImagePreview}
+                      alt="Clothing preview"
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        console.error('Failed to load clothing image:', clothingImagePreview);
+                        toast({
+                          title: 'Error',
+                          description: 'Gagal memuat gambar. Silakan coba upload ulang.',
+                          variant: 'destructive'
+                        });
+                      }}
+                      onLoad={() => {
+                        console.log('Clothing image loaded successfully');
+                      }}
+                    />
+                    <button onClick={() => {
+                  setClothingImage(null);
+                  setClothingImagePreview(null);
+                }} className="absolute top-2 right-2 bg-background/80 backdrop-blur-sm text-foreground rounded-full w-8 h-8 flex items-center justify-center hover:bg-background/90 transition-colors touch-target">
+                      ×
+                    </button>
+                  </div> : <div className="relative w-full h-full">
+                    {/* Shadow guide image */}
+                    <img src="/lovable-uploads/65812cd8-a3b0-4c9c-9483-d9c21ac76d83.png" alt="Clothing positioning guide" className="absolute inset-0 w-full h-full object-contain opacity-20 pointer-events-none z-10" />
+                    <label htmlFor="clothing-upload" className="relative w-full h-full flex flex-col items-center justify-center cursor-pointer hover:bg-muted/10 transition-colors p-4 z-20">
+                      <Upload className="w-10 h-10 sm:w-12 sm:h-12 text-muted-foreground mb-3 sm:mb-4" />
+                      <span className="text-base sm:text-lg font-medium text-primary mb-2 text-center">Upload foto pakaian</span>
+                      <span className="text-xs sm:text-sm text-muted-foreground text-center">JPG, PNG, HEIC · auto-compress</span>
+                      <Input id="clothing-upload" type="file" accept="image/*,.heic,.heif" className="sr-only" onChange={handleClothingImageChange} />
+                    </label>
+                  </div>}
+              </div>
+            </div>
+          </div>
+        ) : (
+          /* ======= BULK GARMENT PANEL ======= */
+          <div className="space-y-3">
+            <div className="text-center">
+              <h2 className="text-lg sm:text-xl font-semibold flex items-center justify-center gap-2">
+                <Layers className="h-5 w-5" />
+                Pakaian (Batch)
+              </h2>
+              <p className="text-xs text-muted-foreground mt-1">
+                Upload sampai {BULK_MAX_ITEMS} pakaian. Semua akan di-try-on ke 1 model yang sama.
+              </p>
+            </div>
+
+            {/* Default category picker (applied to new uploads) */}
             <div className="flex flex-wrap gap-2 justify-center">
-              {[{
-              key: 'atasan',
-              label: 'Atasan'
-            }, {
-              key: 'bawahan',
-              label: 'Bawahan'
-            }, {
-              key: 'gaun',
-              label: 'Gaun'
-            }, {
-              key: 'hijab',
-              label: 'Hijab'
-            }].map(category => <Button key={category.key} variant={clothingCategory === category.key ? 'default' : 'outline'} size="sm" onClick={() => setClothingCategory(clothingCategory === category.key ? null : category.key)} className="text-xs">
-                  {category.label}
-                </Button>)}
+              {[
+                { key: 'atasan', label: 'Atasan' },
+                { key: 'bawahan', label: 'Bawahan' },
+                { key: 'gaun', label: 'Gaun' },
+                { key: 'hijab', label: 'Hijab' },
+              ].map((c) => (
+                <Button
+                  key={c.key}
+                  variant={clothingCategory === c.key ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setClothingCategory(clothingCategory === c.key ? null : c.key)}
+                  className="text-xs"
+                  disabled={bulkRunning}
+                >
+                  {c.label}
+                </Button>
+              ))}
             </div>
-            {clothingCategory && <p className="text-xs text-muted-foreground text-center mt-1">
-                Dipilih: {clothingCategory.charAt(0).toUpperCase() + clothingCategory.slice(1)}
-              </p>}
-          </div>
-          
-          <div className="relative">
-            <div className="aspect-[3/4] bg-muted/20 rounded-xl border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 transition-colors overflow-hidden min-h-[200px] sm:min-h-[250px]">
-              {clothingImagePreview ? <div className="relative w-full h-full">
-                  <img 
-                    src={clothingImagePreview} 
-                    alt="Clothing preview" 
-                    className="w-full h-full object-cover" 
-                    onError={(e) => {
-                      console.error('Failed to load clothing image:', clothingImagePreview);
-                      toast({
-                        title: 'Error',
-                        description: 'Gagal memuat gambar. Silakan coba upload ulang.',
-                        variant: 'destructive'
-                      });
-                    }}
-                    onLoad={() => {
-                      console.log('Clothing image loaded successfully');
-                    }}
-                  />
-                  <button onClick={() => {
-                setClothingImage(null);
-                setClothingImagePreview(null);
-              }} className="absolute top-2 right-2 bg-background/80 backdrop-blur-sm text-foreground rounded-full w-8 h-8 flex items-center justify-center hover:bg-background/90 transition-colors touch-target">
-                    ×
-                  </button>
-                </div> : <div className="relative w-full h-full">
-                  {/* Shadow guide image */}
-                  <img src="/lovable-uploads/65812cd8-a3b0-4c9c-9483-d9c21ac76d83.png" alt="Clothing positioning guide" className="absolute inset-0 w-full h-full object-contain opacity-20 pointer-events-none z-10" />
-                  <label htmlFor="clothing-upload" className="relative w-full h-full flex flex-col items-center justify-center cursor-pointer hover:bg-muted/10 transition-colors p-4 z-20">
-                    <Upload className="w-10 h-10 sm:w-12 sm:h-12 text-muted-foreground mb-3 sm:mb-4" />
-                    <span className="text-base sm:text-lg font-medium text-primary mb-2 text-center">Upload foto pakaian</span>
-                    <span className="text-xs sm:text-sm text-muted-foreground text-center">JPG, PNG, HEIC · auto-compress</span>
-                    <Input id="clothing-upload" type="file" accept="image/*,.heic,.heif" className="sr-only" onChange={handleClothingImageChange} />
-                  </label>
-                </div>}
-            </div>
-          </div>
+            <p className="text-xs text-muted-foreground text-center">
+              {clothingCategory
+                ? `Default kategori untuk upload baru: ${clothingCategory.charAt(0).toUpperCase() + clothingCategory.slice(1)}`
+                : 'Pilih kategori default (bisa diubah per pakaian)'}
+            </p>
 
-        </div>
+            {/* Upload area */}
+            <div className="border-2 border-dashed border-muted-foreground/25 rounded-xl p-4 hover:border-primary/50 transition-colors">
+              <label
+                htmlFor="bulk-upload"
+                className={`flex flex-col items-center justify-center gap-2 cursor-pointer ${
+                  bulkRunning || bulkItems.length >= BULK_MAX_ITEMS ? 'opacity-50 pointer-events-none' : ''
+                }`}
+              >
+                <Plus className="h-8 w-8 text-primary" />
+                <span className="text-sm font-medium text-primary">
+                  Tambah pakaian ({bulkItems.length}/{BULK_MAX_ITEMS})
+                </span>
+                <span className="text-xs text-muted-foreground">Pilih multiple file sekaligus</span>
+                <Input
+                  id="bulk-upload"
+                  type="file"
+                  multiple
+                  accept="image/*,.heic,.heif"
+                  className="sr-only"
+                  onChange={handleBulkAddFiles}
+                  disabled={bulkRunning}
+                />
+              </label>
+            </div>
+
+            {/* Items grid */}
+            {bulkItems.length > 0 && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium">{bulkItems.length} item</span>
+                  {!bulkRunning && (
+                    <Button onClick={handleBulkClearAll} variant="ghost" size="sm" className="text-xs h-7">
+                      Hapus semua
+                    </Button>
+                  )}
+                </div>
+                <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 max-h-[400px] overflow-y-auto pr-1">
+                  {bulkItems.map((item, idx) => (
+                    <div
+                      key={item.id}
+                      className={`relative rounded-lg overflow-hidden border-2 transition-colors ${
+                        bulkCurrentIndex === idx
+                          ? 'border-primary ring-2 ring-primary/30'
+                          : item.status === 'completed'
+                          ? 'border-success/50'
+                          : item.status === 'failed'
+                          ? 'border-destructive/50'
+                          : 'border-border'
+                      }`}
+                    >
+                      <div className="aspect-square bg-muted/20">
+                        <img
+                          src={item.resultUrl ?? item.previewUrl}
+                          alt={`Garment ${idx + 1}`}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+
+                      {/* Status overlay */}
+                      {item.status === 'uploading' && (
+                        <div className="absolute inset-0 bg-background/60 backdrop-blur-sm flex items-center justify-center">
+                          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary" />
+                        </div>
+                      )}
+                      {item.status === 'processing' && (
+                        <div className="absolute inset-0 bg-primary/20 backdrop-blur-sm flex flex-col items-center justify-center">
+                          <Sparkles className="h-5 w-5 text-primary animate-pulse" />
+                          <span className="text-[10px] mt-1 font-medium">AI...</span>
+                        </div>
+                      )}
+                      {item.status === 'completed' && (
+                        <div className="absolute top-1 left-1 bg-success text-success-foreground rounded-full p-0.5">
+                          <CheckCircle2 className="h-3 w-3" />
+                        </div>
+                      )}
+                      {item.status === 'failed' && (
+                        <div className="absolute inset-0 bg-destructive/20 flex flex-col items-center justify-center p-1">
+                          <XCircle className="h-4 w-4 text-destructive" />
+                          <span className="text-[9px] text-center mt-1 line-clamp-2 px-1">
+                            {item.errorMessage}
+                          </span>
+                        </div>
+                      )}
+
+                      {/* Remove button */}
+                      {!bulkRunning && item.status !== 'processing' && item.status !== 'uploading' && (
+                        <button
+                          onClick={() => handleBulkRemoveItem(item.id)}
+                          className="absolute top-1 right-1 bg-background/80 hover:bg-background rounded-full w-5 h-5 flex items-center justify-center"
+                          aria-label="Hapus"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      )}
+
+                      {/* Per-item category */}
+                      <div className="px-1 py-1 bg-background/95 border-t border-border">
+                        <select
+                          value={item.category}
+                          onChange={(e) => handleBulkSetCategory(item.id, e.target.value)}
+                          disabled={bulkRunning}
+                          className="w-full text-[10px] bg-transparent border-0 outline-none cursor-pointer"
+                        >
+                          <option value="Atasan">Atasan</option>
+                          <option value="Bawahan">Bawahan</option>
+                          <option value="Gaun">Gaun</option>
+                          <option value="Hijab">Hijab</option>
+                        </select>
+                      </div>
+
+                      {/* Download single result */}
+                      {item.status === 'completed' && item.resultUrl && (
+                        <a
+                          href={item.resultUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          download
+                          className="absolute bottom-7 right-1 bg-background/90 hover:bg-background rounded-full w-6 h-6 flex items-center justify-center"
+                          aria-label="Download"
+                        >
+                          <Download className="h-3 w-3" />
+                        </a>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
+
 
       {/* Generate Button — hidden once a job is active so result viewer takes focus */}
       {!activeJob && (
