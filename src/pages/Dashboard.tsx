@@ -24,6 +24,7 @@ import {
   FlaskConical,
   History,
   Plus,
+  HelpCircle,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -52,6 +53,15 @@ const Dashboard = () => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('studio');
+  const [forceOnboarding, setForceOnboarding] = useState(false);
+
+  const showHelp = () => {
+    // Re-enable onboarding even if previously dismissed
+    localStorage.removeItem('busana_onboarding_dismissed');
+    setForceOnboarding(true);
+    // Scroll to top so user sees the panel
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
   const navigate = useNavigate();
   const { toast } = useToast();
   const isMobile = useIsMobile();
