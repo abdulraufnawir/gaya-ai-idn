@@ -124,7 +124,7 @@ const Dashboard = () => {
 
   // Lab — eksperimen non-core (multi-kategori produk)
   const labItems = [
-    { id: 'produk', label: 'Produk Lab', icon: FlaskConical, beta: true },
+    { id: 'produk', label: 'Konten Produk', icon: FlaskConical, beta: true },
   ];
 
   // Akun
@@ -137,7 +137,7 @@ const Dashboard = () => {
     { id: 'studio', label: 'Try-On', icon: Shirt },
     { id: 'model-swap', label: 'Model', icon: UserSquare2 },
     { id: 'photo-edit', label: 'Edit', icon: Wand2 },
-    { id: 'history', label: 'Project', icon: History },
+    { id: 'history', label: 'Hasil', icon: History },
     { id: 'profile', label: 'Akun', icon: UserIcon },
   ];
 
