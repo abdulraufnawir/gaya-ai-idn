@@ -236,12 +236,59 @@ const Dashboard = () => {
               </h1>
             </div>
 
-            {/* Navigation Menu */}
+            {/* Fashion Studio - Core */}
             <SidebarGroup>
-              <SidebarGroupLabel>Menu Utama</SidebarGroupLabel>
+              <SidebarGroupLabel>Fashion Studio</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {menuItems.map((item) => (
+                  {fashionItems.map((item) => (
+                    <SidebarMenuItem key={item.id}>
+                      <SidebarMenuButton
+                        onClick={() => setActiveTab(item.id)}
+                        isActive={activeTab === item.id}
+                        className="w-full justify-start"
+                      >
+                        <item.icon className="mr-2 h-4 w-4" />
+                        <span>{item.label}</span>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+
+            {/* Lab - Eksperimen / Multi-kategori */}
+            <SidebarGroup>
+              <SidebarGroupLabel>Lab</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {labItems.map((item) => (
+                    <SidebarMenuItem key={item.id}>
+                      <SidebarMenuButton
+                        onClick={() => setActiveTab(item.id)}
+                        isActive={activeTab === item.id}
+                        className="w-full justify-start"
+                      >
+                        <item.icon className="mr-2 h-4 w-4" />
+                        <span className="flex-1">{item.label}</span>
+                        {item.beta && (
+                          <span className="ml-auto text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded bg-primary/10 text-primary">
+                            Beta
+                          </span>
+                        )}
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+
+            {/* Akun */}
+            <SidebarGroup>
+              <SidebarGroupLabel>Akun</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {accountItems.map((item) => (
                     <SidebarMenuItem key={item.id}>
                       <SidebarMenuButton
                         onClick={() => setActiveTab(item.id)}
