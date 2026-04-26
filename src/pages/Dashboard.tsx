@@ -203,9 +203,9 @@ const Dashboard = () => {
 
             {/* Bottom Navigation - Mobile */}
             <div className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-t border-border z-50">
-              <TabsList className="grid w-full grid-cols-6 h-16 bg-transparent rounded-none border-none p-0">
-                {menuItems.map((item) => (
-                  <TabsTrigger 
+              <TabsList className="grid w-full grid-cols-5 h-16 bg-transparent rounded-none border-none p-0">
+                {mobileItems.map((item) => (
+                  <TabsTrigger
                     key={item.id}
                     value={item.id}
                     className="flex flex-col items-center justify-center gap-1 p-2 text-xs data-[state=active]:bg-primary/10 data-[state=active]:text-primary rounded-none border-none h-full"
