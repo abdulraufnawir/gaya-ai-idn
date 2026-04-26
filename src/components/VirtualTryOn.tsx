@@ -349,14 +349,58 @@ const VirtualTryOn = ({
     }
   };
   const uploadImage = async (file: File, type: string): Promise<string> => {
-    // Sanitize filename to avoid spaces and special characters in public URLs
-    const base = file.name.normalize('NFKD').replace(/[\s]+/g, '_').replace(/[^\w.-]/g, '_');
+    // Sanitize filename: lowercase extension, remove spaces/special chars
+    const rawBase = file.name.normalize('NFKD').replace(/[\s]+/g, '_').replace(/[^\w.-]/g, '_');
+    const dotIdx = rawBase.lastIndexOf('.');
+    const base = dotIdx > 0
+      ? rawBase.slice(0, dotIdx) + rawBase.slice(dotIdx).toLowerCase()
+      : rawBase;
     const fileName = `${userId}/${type}_${Date.now()}_${base}`;
-    const { data, error } = await supabase.storage.from('tryon-images').upload(fileName, file);
-    if (error) throw error;
-    const { data: { publicUrl } } = supabase.storage.from('tryon-images').getPublicUrl(fileName);
-    return publicUrl;
+
+    // Retry with exponential backoff for transient gateway errors (502/503/504/network)
+    const maxAttempts = 3;
+    let lastError: any = null;
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        const { error } = await supabase.storage
+          .from('tryon-images')
+          .upload(fileName, file, {
+            upsert: true,
+            contentType: file.type || 'image/jpeg',
+            cacheControl: '3600',
+          });
+        if (error) throw error;
+        const { data: { publicUrl } } = supabase.storage
+          .from('tryon-images')
+          .getPublicUrl(fileName);
+        return publicUrl;
+      } catch (err: any) {
+        lastError = err;
+        const msg = (err?.message || '').toLowerCase();
+        const isTransient =
+          msg.includes('502') ||
+          msg.includes('503') ||
+          msg.includes('504') ||
+          msg.includes('bad gateway') ||
+          msg.includes('gateway') ||
+          msg.includes('network') ||
+          msg.includes('failed to fetch') ||
+          msg.includes('timeout');
+        console.warn(`[upload] attempt ${attempt}/${maxAttempts} failed`, err);
+        if (!isTransient || attempt === maxAttempts) break;
+        // Backoff: 1s, 2s
+        await new Promise((r) => setTimeout(r, attempt * 1000));
+      }
+    }
+
+    const friendly =
+      (lastError?.message || '').toLowerCase().includes('502') ||
+      (lastError?.message || '').toLowerCase().includes('gateway')
+        ? 'Server penyimpanan sedang sibuk (gateway error). Coba lagi dalam beberapa detik atau perkecil ukuran gambar.'
+        : (lastError?.message || 'Gagal mengunggah gambar.');
+    throw new Error(friendly);
   };
+
 
   const handleGenerateModel = async () => {
     if (!aiModelPrompt.trim()) {
