@@ -13,18 +13,16 @@ const marketplaces = [
 
 const MarketplaceTrust = () => {
   return (
-    <section className="py-16 bg-background border-y border-border">
+    <section className="section-tight bg-background border-y border-border">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-10">
-          <p className="text-xs uppercase tracking-widest text-muted-foreground font-semibold mb-3">
-            Konten Fashion Anda, Siap di Setiap Channel
-          </p>
-          <h3 className="text-2xl sm:text-3xl font-bold text-foreground">
+          <span className="eyebrow">Konten Anda, siap di setiap channel</span>
+          <h3 className="heading-card mt-2">
             Lookbook, marketplace, sosial media — semua format otomatis
           </h3>
         </div>
 
-        {/* Marquee-style logo strip (text-based fallback for now) */}
+        {/* Logo strip — semua mono muted untuk demote saturasi */}
         <div className="flex flex-wrap justify-center items-center gap-x-8 gap-y-4 sm:gap-x-12">
           {marketplaces.map((name) => (
             <div
@@ -32,7 +30,7 @@ const MarketplaceTrust = () => {
               className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
             >
               <ShoppingBag className="w-4 h-4" />
-              <span className="text-lg font-semibold">{name}</span>
+              <span className="text-base sm:text-lg font-semibold">{name}</span>
             </div>
           ))}
         </div>
