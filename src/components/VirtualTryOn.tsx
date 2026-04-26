@@ -309,27 +309,127 @@ const VirtualTryOn = ({
           clothing_category: normalizedCategory
         }
       }).eq('id', project.id);
-      toast({
-        title: 'Berhasil!',
-        description: 'Virtual try-on sedang diproses dengan KIE AI. Silakan cek riwayat proyek untuk melihat hasilnya.'
-      });
 
-      // Reset form
-      setModelImage(null);
-      setModelImageUrl(null);
-      setClothingImage(null);
-      setModelImagePreview(null);
-      setClothingImagePreview(null);
-      setSelectedModel(null);
-      setClothingCategory(null);
+      // Set active job — DO NOT reset form. Inline viewer will render below.
+      setActiveJob({
+        projectId: project.id,
+        predictionId,
+        startedAt: Date.now(),
+        modelImageUrl: finalModelImageUrl!,
+        garmentImageUrl: clothingImageUrl,
+        category: normalizedCategory!,
+        status: 'processing',
+      });
+      setElapsedMs(0);
+      startPolling(project.id);
     } catch (error: any) {
       toast({
-        title: 'Error',
+        title: 'Gagal memulai',
         description: error.message,
         variant: 'destructive'
       });
     } finally {
       setProcessing(false);
+    }
+  };
+
+  // Poll project row until status === 'completed' or 'failed'
+  const startPolling = (projectId: string) => {
+    stopPolling();
+    const startedAt = Date.now();
+
+    tickRef.current = window.setInterval(() => {
+      setElapsedMs(Date.now() - startedAt);
+    }, 250);
+
+    const tick = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('projects')
+          .select('status, result_url, result_image_url, error_message')
+          .eq('id', projectId)
+          .maybeSingle();
+        if (error) throw error;
+        if (!data) return;
+
+        if (data.status === 'completed') {
+          const url = data.result_url || data.result_image_url;
+          stopPolling();
+          setActiveJob((j) => j && j.projectId === projectId
+            ? { ...j, status: 'completed', resultUrl: url ?? undefined }
+            : j);
+          toast({ title: 'Selesai!', description: 'Virtual try-on siap dilihat.' });
+        } else if (data.status === 'failed') {
+          stopPolling();
+          setActiveJob((j) => j && j.projectId === projectId
+            ? { ...j, status: 'failed', errorMessage: data.error_message ?? 'Generation failed' }
+            : j);
+          toast({
+            title: 'Generasi gagal',
+            description: data.error_message || 'Coba lagi dalam beberapa saat.',
+            variant: 'destructive',
+          });
+        } else if (Date.now() - startedAt > POLL_TIMEOUT_MS) {
+          stopPolling();
+          setActiveJob((j) => j && j.projectId === projectId
+            ? { ...j, status: 'failed', errorMessage: 'Timeout — coba lagi.' }
+            : j);
+        }
+      } catch (e) {
+        console.error('[poll] error', e);
+      }
+    };
+
+    tick(); // immediate first poll
+    pollRef.current = window.setInterval(tick, POLL_INTERVAL_MS);
+  };
+
+  const stopPolling = () => {
+    if (pollRef.current) { window.clearInterval(pollRef.current); pollRef.current = null; }
+    if (tickRef.current) { window.clearInterval(tickRef.current); tickRef.current = null; }
+  };
+
+  // Cleanup on unmount
+  useEffect(() => () => stopPolling(), []);
+
+  const handleNewTryOn = () => {
+    stopPolling();
+    setActiveJob(null);
+    setElapsedMs(0);
+    setModelImage(null);
+    setModelImageUrl(null);
+    setClothingImage(null);
+    setModelImagePreview(null);
+    setClothingImagePreview(null);
+    setSelectedModel(null);
+    setClothingCategory(null);
+    setLastGarmentUploadedUrl(null);
+  };
+
+  const handleSwapGarmentOnly = () => {
+    stopPolling();
+    setActiveJob(null);
+    setElapsedMs(0);
+    setClothingImage(null);
+    setClothingImagePreview(null);
+    setLastGarmentUploadedUrl(null);
+    // Keep model + category
+  };
+
+  const handleDownloadResult = async () => {
+    if (!activeJob?.resultUrl) return;
+    try {
+      const res = await fetch(activeJob.resultUrl);
+      const blob = await res.blob();
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `tryon-${activeJob.projectId}.jpg`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    } catch {
+      // Fallback: open in new tab
+      window.open(activeJob.resultUrl, '_blank');
     }
   };
   const uploadImage = async (file: File, type: string): Promise<string> => {
