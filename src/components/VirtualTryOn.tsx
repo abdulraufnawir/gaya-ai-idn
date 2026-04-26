@@ -426,6 +426,351 @@ const VirtualTryOn = ({
       window.open(activeJob.resultUrl, '_blank');
     }
   };
+
+  // ============================================================
+  // BULK MODE — 1 model × N garments, sequential queue
+  // ============================================================
+
+  const handleBulkAddFiles = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    e.target.value = ''; // allow re-selecting same files
+    if (!files.length) return;
+
+    const remaining = BULK_MAX_ITEMS - bulkItems.length;
+    if (remaining <= 0) {
+      toast({
+        title: 'Batas tercapai',
+        description: `Maksimal ${BULK_MAX_ITEMS} pakaian per batch.`,
+        variant: 'destructive',
+      });
+      return;
+    }
+    const accepted = files.slice(0, remaining);
+    if (files.length > accepted.length) {
+      toast({
+        title: 'Sebagian dilewati',
+        description: `Hanya ${accepted.length} pakaian ditambahkan (max ${BULK_MAX_ITEMS}).`,
+      });
+    }
+
+    const defaultCategory = clothingCategory
+      ? clothingCategory.charAt(0).toUpperCase() + clothingCategory.slice(1).toLowerCase()
+      : 'Atasan';
+
+    const newItems: BulkGarmentItem[] = [];
+    for (const file of accepted) {
+      if (!file.type.startsWith('image/') && !/\.(heic|heif)$/i.test(file.name)) continue;
+      if (file.size > 25 * 1024 * 1024) {
+        toast({
+          title: 'Dilewati: terlalu besar',
+          description: `${file.name} > 25 MB`,
+          variant: 'destructive',
+        });
+        continue;
+      }
+      const processed = await preprocessForUpload(file);
+      if (!processed) continue;
+      newItems.push({
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        file: processed,
+        previewUrl: URL.createObjectURL(processed),
+        category: defaultCategory,
+        status: 'pending',
+      });
+    }
+    if (newItems.length) {
+      setBulkItems((prev) => [...prev, ...newItems]);
+    }
+  };
+
+  const handleBulkRemoveItem = (id: string) => {
+    if (bulkRunning) return;
+    setBulkItems((prev) => {
+      const target = prev.find((i) => i.id === id);
+      if (target) URL.revokeObjectURL(target.previewUrl);
+      return prev.filter((i) => i.id !== id);
+    });
+  };
+
+  const handleBulkSetCategory = (id: string, category: string) => {
+    if (bulkRunning) return;
+    setBulkItems((prev) => prev.map((i) => (i.id === id ? { ...i, category } : i)));
+  };
+
+  const handleBulkClearAll = () => {
+    if (bulkRunning) return;
+    bulkItems.forEach((i) => URL.revokeObjectURL(i.previewUrl));
+    setBulkItems([]);
+  };
+
+  // Resolve model URL once (reused across all items in batch)
+  const resolveModelUrlForBatch = async (): Promise<string> => {
+    const isRemoteHttpUrl = (u: string) =>
+      u.startsWith('http://') || u.startsWith('https://');
+
+    if (modelImageUrl && isRemoteHttpUrl(modelImageUrl)) return modelImageUrl;
+    if (modelImageUrl && !isRemoteHttpUrl(modelImageUrl)) {
+      const response = await fetch(modelImageUrl);
+      const blob = await response.blob();
+      const file = new File([blob], `template-model-${Date.now()}.jpg`, { type: 'image/jpeg' });
+      return await uploadImage(file, 'model');
+    }
+    if (modelImage) return await uploadImage(modelImage, 'model');
+    throw new Error('Tidak ada model terpilih');
+  };
+
+  // Poll a single bulk item's project until completion. Returns when terminal.
+  const pollBulkItem = (item: BulkGarmentItem): Promise<void> => {
+    return new Promise((resolve) => {
+      const startedAt = Date.now();
+      const interval = window.setInterval(async () => {
+        if (bulkAbortRef.current) {
+          window.clearInterval(interval);
+          resolve();
+          return;
+        }
+        try {
+          const { data } = await supabase
+            .from('projects')
+            .select('status, result_url, result_image_url, error_message')
+            .eq('id', item.projectId!)
+            .maybeSingle();
+          if (!data) return;
+
+          if (data.status === 'completed') {
+            window.clearInterval(interval);
+            const url = data.result_url || data.result_image_url || undefined;
+            setBulkItems((prev) =>
+              prev.map((it) =>
+                it.id === item.id
+                  ? { ...it, status: 'completed', resultUrl: url, finishedAt: Date.now() }
+                  : it,
+              ),
+            );
+            resolve();
+          } else if (data.status === 'failed') {
+            window.clearInterval(interval);
+            setBulkItems((prev) =>
+              prev.map((it) =>
+                it.id === item.id
+                  ? {
+                      ...it,
+                      status: 'failed',
+                      errorMessage: data.error_message ?? 'Generation failed',
+                      finishedAt: Date.now(),
+                    }
+                  : it,
+              ),
+            );
+            resolve();
+          } else if (Date.now() - startedAt > POLL_TIMEOUT_MS) {
+            window.clearInterval(interval);
+            setBulkItems((prev) =>
+              prev.map((it) =>
+                it.id === item.id
+                  ? { ...it, status: 'failed', errorMessage: 'Timeout', finishedAt: Date.now() }
+                  : it,
+              ),
+            );
+            resolve();
+          }
+        } catch (err) {
+          console.error('[bulk-poll] error', err);
+        }
+      }, POLL_INTERVAL_MS);
+    });
+  };
+
+  const handleBulkProcess = async () => {
+    if (bulkRunning) return;
+    const hasModel = Boolean(modelImage || modelImageUrl);
+    if (!hasModel) {
+      toast({
+        title: 'Pilih model dulu',
+        description: 'Bulk mode butuh 1 model untuk semua pakaian.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    const queue = bulkItems.filter((i) => i.status === 'pending' || i.status === 'failed');
+    if (!queue.length) {
+      toast({
+        title: 'Tidak ada pakaian',
+        description: 'Tambahkan pakaian terlebih dahulu.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setBulkRunning(true);
+    bulkAbortRef.current = false;
+
+    let modelUrl: string;
+    try {
+      modelUrl = await resolveModelUrlForBatch();
+    } catch (err: any) {
+      toast({
+        title: 'Gagal siapkan model',
+        description: err?.message ?? 'Coba pilih model lain.',
+        variant: 'destructive',
+      });
+      setBulkRunning(false);
+      return;
+    }
+
+    // Reset failed items back to pending so retries work
+    setBulkItems((prev) =>
+      prev.map((i) =>
+        i.status === 'failed'
+          ? { ...i, status: 'pending', errorMessage: undefined, resultUrl: undefined }
+          : i,
+      ),
+    );
+
+    for (let idx = 0; idx < bulkItems.length; idx++) {
+      if (bulkAbortRef.current) break;
+      // Re-read the latest snapshot from state (closure may be stale)
+      const snapshot = bulkItems[idx];
+      if (!snapshot) continue;
+      if (snapshot.status === 'completed') continue;
+
+      setBulkCurrentIndex(idx);
+
+      // 1. Upload garment
+      setBulkItems((prev) =>
+        prev.map((it, i) => (i === idx ? { ...it, status: 'uploading', startedAt: Date.now() } : it)),
+      );
+      let garmentUrl: string;
+      try {
+        garmentUrl = await uploadImage(snapshot.file, 'clothing');
+      } catch (err: any) {
+        setBulkItems((prev) =>
+          prev.map((it, i) =>
+            i === idx
+              ? { ...it, status: 'failed', errorMessage: err?.message ?? 'Upload gagal', finishedAt: Date.now() }
+              : it,
+          ),
+        );
+        continue;
+      }
+
+      // 2. Create project
+      const { data: project, error: projectError } = await supabase
+        .from('projects')
+        .insert({
+          user_id: userId,
+          title: `Bulk Try-On #${idx + 1} - ${new Date().toLocaleDateString('id-ID')}`,
+          description: `Bulk virtual try-on (${snapshot.category})`,
+          project_type: 'virtual_tryon',
+          status: 'processing',
+        })
+        .select()
+        .single();
+
+      if (projectError || !project) {
+        setBulkItems((prev) =>
+          prev.map((it, i) =>
+            i === idx
+              ? { ...it, status: 'failed', errorMessage: 'Gagal buat project', finishedAt: Date.now() }
+              : it,
+          ),
+        );
+        continue;
+      }
+
+      // 3. Invoke kie-ai
+      const { data: kieResponse, error: invokeError } = await supabase.functions.invoke('kie-ai', {
+        body: {
+          action: 'virtualTryOn',
+          modelImage: modelUrl,
+          garmentImage: garmentUrl,
+          projectId: project.id,
+          clothingCategory: snapshot.category,
+        },
+      });
+
+      if (invokeError || !kieResponse || kieResponse.error) {
+        const msg = invokeError?.message || kieResponse?.error || 'AI invoke gagal';
+        setBulkItems((prev) =>
+          prev.map((it, i) =>
+            i === idx ? { ...it, status: 'failed', errorMessage: msg, finishedAt: Date.now() } : it,
+          ),
+        );
+        continue;
+      }
+
+      const predictionId = kieResponse.prediction_id || kieResponse.id;
+      await supabase.from('projects').update({
+        prediction_id: predictionId,
+        settings: {
+          prediction_id: predictionId,
+          model_image_url: modelUrl,
+          garment_image_url: garmentUrl,
+          clothing_category: snapshot.category,
+          bulk_batch: true,
+        },
+      }).eq('id', project.id);
+
+      setBulkItems((prev) =>
+        prev.map((it, i) =>
+          i === idx
+            ? {
+                ...it,
+                uploadedUrl: garmentUrl,
+                projectId: project.id,
+                predictionId,
+                status: 'processing',
+              }
+            : it,
+        ),
+      );
+
+      // 4. Poll until done
+      await pollBulkItem({ ...snapshot, projectId: project.id, predictionId });
+    }
+
+    setBulkCurrentIndex(null);
+    setBulkRunning(false);
+
+    const finalItems = bulkItems; // for toast counts we re-read from latest state below
+    // Use functional setter to capture latest counts
+    setBulkItems((prev) => {
+      const ok = prev.filter((i) => i.status === 'completed').length;
+      const fail = prev.filter((i) => i.status === 'failed').length;
+      toast({
+        title: bulkAbortRef.current ? 'Batch dihentikan' : 'Batch selesai',
+        description: `${ok} berhasil · ${fail} gagal · total ${prev.length}`,
+      });
+      return prev;
+    });
+  };
+
+  const handleBulkStop = () => {
+    bulkAbortRef.current = true;
+  };
+
+  const handleBulkDownloadAll = async () => {
+    const completed = bulkItems.filter((i) => i.status === 'completed' && i.resultUrl);
+    if (!completed.length) return;
+    for (let i = 0; i < completed.length; i++) {
+      const item = completed[i];
+      try {
+        const res = await fetch(item.resultUrl!);
+        const blob = await res.blob();
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `tryon-bulk-${i + 1}-${item.projectId}.jpg`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        // small stagger so browsers don't block multi-download
+        await new Promise((r) => setTimeout(r, 250));
+      } catch {
+        window.open(item.resultUrl!, '_blank');
+      }
+    }
+  };
+
   const uploadImage = async (file: File, type: string): Promise<string> => {
     // Sanitize filename: lowercase extension, remove spaces/special chars
     const rawBase = file.name.normalize('NFKD').replace(/[\s]+/g, '_').replace(/[^\w.-]/g, '_');
