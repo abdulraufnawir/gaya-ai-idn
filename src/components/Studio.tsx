@@ -17,7 +17,6 @@ interface StudioProps {
 }
 
 const Studio = ({ userId }: StudioProps) => {
-  const [activeStudioTab, setActiveStudioTab] = useState('pakaian');
 
   return (
     <div className="w-full">
