@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Calendar, Download, Eye, Trash2, RefreshCw } from 'lucide-react';
+import { Calendar, Download, Eye, Trash2, RefreshCw, ImageIcon, Sparkles } from 'lucide-react';
 import ResultViewer from './ResultViewer';
 import { useRealtimeProjects } from '@/hooks/useRealtimeProjects';
 import { StatusChecker } from './StatusChecker';
@@ -287,8 +287,30 @@ const ProjectHistory = ({ userId }: ProjectHistoryProps) => {
               <p className="text-sm text-muted-foreground mt-2">Memuat riwayat proyek...</p>
             </div>
           ) : projects.length === 0 ? (
-            <div className="text-center py-8">
-              <p className="text-muted-foreground">Belum ada proyek yang dibuat</p>
+            <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
+              <div className="relative mb-5">
+                <div className="h-20 w-20 rounded-2xl bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center">
+                  <ImageIcon className="h-9 w-9 text-primary/60" strokeWidth={1.5} />
+                </div>
+                <div className="absolute -top-1 -right-1 h-6 w-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-warm">
+                  <Sparkles className="h-3 w-3" />
+                </div>
+              </div>
+              <h3 className="text-base font-semibold mb-1">Galeri kamu masih kosong</h3>
+              <p className="text-sm text-muted-foreground max-w-sm mb-5">
+                Mulai dari Try-On — upload foto baju & pilih model. Hasil otomatis tersimpan di sini, siap untuk Shopee, Tokopedia, IG &amp; TikTok.
+              </p>
+              <Button
+                onClick={() => {
+                  // Switch to Try-On tab via custom event picked up by Dashboard listener
+                  window.dispatchEvent(new CustomEvent('switchToStudioTab'));
+                }}
+                className="rounded-full"
+                size="sm"
+              >
+                <Sparkles className="h-4 w-4 mr-1.5" />
+                Mulai foto pertama
+              </Button>
             </div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
