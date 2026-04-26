@@ -10,6 +10,7 @@ import { processImageForUpload } from '@/lib/imageProcessing';
 import { Upload, Sparkles, Users, Image, Download, RotateCcw, CheckCircle2, XCircle, Layers, X, Plus } from 'lucide-react';
 import ModelGallery from './ModelGallery';
 import TryOnPresets, { type TryOnPreset } from './TryOnPresets';
+import ResultRating from './ResultRating';
 
 interface VirtualTryOnProps {
   userId: string;
@@ -25,6 +26,8 @@ type ActiveJob = {
   status: 'processing' | 'completed' | 'failed';
   resultUrl?: string;
   errorMessage?: string;
+  retryCount?: number;
+  parentProjectId?: string | null;
 };
 
 type BulkGarmentItem = {
@@ -442,6 +445,86 @@ const VirtualTryOn = ({
     });
   };
 
+  // Re-generate using SAME model+garment+category but new prediction (different seed).
+  // Creates a NEW project linked via parent_project_id, increments retry_count.
+  const handleRegenerate = async () => {
+    if (!activeJob || activeJob.status === 'processing') return;
+    const parentJob = activeJob;
+    const nextRetry = (parentJob.retryCount ?? 0) + 1;
+    if (nextRetry > 3) {
+      toast({
+        title: 'Batas retry tercapai',
+        description: 'Sudah 3x generate ulang. Coba ganti foto pakaian/model.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      // Create new project linked to parent
+      const { data: project, error: projectError } = await supabase
+        .from('projects')
+        .insert({
+          user_id: userId,
+          title: `Re-Try-On #${nextRetry} - ${new Date().toLocaleDateString('id-ID')}`,
+          description: `Regenerate dari hasil sebelumnya (rating jelek)`,
+          project_type: 'virtual_tryon',
+          status: 'processing',
+          retry_count: nextRetry,
+          parent_project_id: parentJob.parentProjectId ?? parentJob.projectId,
+        })
+        .select()
+        .single();
+      if (projectError) throw projectError;
+
+      const { data: kieResponse, error: invokeError } = await supabase.functions.invoke('kie-ai', {
+        body: {
+          action: 'virtualTryOn',
+          modelImage: parentJob.modelImageUrl,
+          garmentImage: parentJob.garmentImageUrl,
+          projectId: project.id,
+          clothingCategory: parentJob.category,
+        },
+      });
+      if (invokeError) throw new Error(invokeError.message);
+      if (!kieResponse || kieResponse.error) throw new Error(kieResponse?.error || 'AI invoke gagal');
+
+      const predictionId = kieResponse.prediction_id || kieResponse.id;
+      await supabase.from('projects').update({
+        prediction_id: predictionId,
+        settings: {
+          prediction_id: predictionId,
+          model_image_url: parentJob.modelImageUrl,
+          garment_image_url: parentJob.garmentImageUrl,
+          clothing_category: parentJob.category,
+          regenerated: true,
+          parent_project_id: parentJob.parentProjectId ?? parentJob.projectId,
+        },
+      }).eq('id', project.id);
+
+      setActiveJob({
+        projectId: project.id,
+        predictionId,
+        startedAt: Date.now(),
+        modelImageUrl: parentJob.modelImageUrl,
+        garmentImageUrl: parentJob.garmentImageUrl,
+        category: parentJob.category,
+        status: 'processing',
+        retryCount: nextRetry,
+        parentProjectId: parentJob.parentProjectId ?? parentJob.projectId,
+      });
+      setElapsedMs(0);
+      startPolling(project.id);
+      toast({ title: `Generate ulang #${nextRetry}`, description: 'AI mencoba lagi dengan seed baru.' });
+    } catch (err: any) {
+      console.error('[regenerate] error', err);
+      toast({
+        title: 'Gagal generate ulang',
+        description: err?.message ?? 'Coba lagi.',
+        variant: 'destructive',
+      });
+    }
+  };
 
   const handleDownloadResult = async () => {
     if (!activeJob?.resultUrl) return;
@@ -1588,6 +1671,17 @@ const VirtualTryOn = ({
                 </p>
               )}
             </div>
+
+            {/* Rating + auto-regenerate (Sprint 6) */}
+            {activeJob.status === 'completed' && (
+              <ResultRating
+                userId={userId}
+                projectId={activeJob.projectId}
+                retryCount={activeJob.retryCount ?? 0}
+                onRegenerate={handleRegenerate}
+                regenerateDisabled={(activeJob.retryCount ?? 0) >= 3}
+              />
+            )}
           </div>
         </div>
       )}
