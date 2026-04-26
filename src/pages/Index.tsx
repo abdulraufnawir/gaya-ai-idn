@@ -2,14 +2,15 @@ import { useEffect } from 'react';
 import Navigation from "@/components/Navigation";
 import Hero from "@/components/Hero";
 import MarketplaceTrust from "@/components/MarketplaceTrust";
+import ProductTiers from "@/components/ProductTiers";
 import Stats from "@/components/Stats";
 import Features from "@/components/Features";
 import HowItWorks from "@/components/HowItWorks";
+import Testimonials from "@/components/Testimonials";
 import Footer from "@/components/Footer";
 
 const Index = () => {
   useEffect(() => {
-    // Debug log to confirm this component is rendering
     console.log('Index page is rendering on route:', window.location.pathname);
   }, []);
 
@@ -18,9 +19,11 @@ const Index = () => {
       <Navigation />
       <Hero />
       <MarketplaceTrust />
-      <Stats />
+      <ProductTiers />
       <Features />
       <HowItWorks />
+      <Stats />
+      <Testimonials />
       <Footer />
     </div>
   );
