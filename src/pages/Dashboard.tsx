@@ -166,9 +166,9 @@ const Dashboard = () => {
 
         <div className="container mx-auto px-4 py-3">
           <div className="mb-4">
-            <h2 className="text-xl font-bold mb-1">Selamat datang di BUSANA.AI</h2>
+            <h2 className="text-xl font-bold mb-1">AI Fashion Studio</h2>
             <p className="text-sm text-muted-foreground">
-              Gunakan AI untuk mengembangkan bisnis fashion Anda
+              Foto on-model, ganti model, &amp; lookbook editorial — tanpa studio fisik
             </p>
           </div>
 
