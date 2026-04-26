@@ -7,7 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { User } from '@supabase/supabase-js';
-import { Upload, Sparkles, Users, Edit3, LogOut, User as UserIcon, Package } from 'lucide-react';
+import { Shirt, Sparkles, UserSquare2, Wand2, LogOut, User as UserIcon, FlaskConical, History } from 'lucide-react';
 import {
   Sidebar,
   SidebarContent,
@@ -109,30 +109,34 @@ const Dashboard = () => {
     return null;
   }
 
-  // Fashion Studio: fitur core sesuai positioning Fashion Premium
-  const fashionItems = [
-    { id: 'studio', label: 'Virtual Try-On', icon: Upload },
-    { id: 'model-swap', label: 'Ganti Model', icon: Users },
-    { id: 'photo-edit', label: 'Edit Foto', icon: Edit3 },
+  // Create — alur produksi konten fashion (mengikuti Lumoo: On-Model, Model, Editorial Edit)
+  const createItems = [
+    { id: 'studio', label: 'On-Model Try-On', icon: Shirt, desc: 'Foto produk → on-model' },
+    { id: 'model-swap', label: 'Model Library', icon: UserSquare2, desc: 'Ganti model & pose' },
+    { id: 'photo-edit', label: 'Editorial Edit', icon: Wand2, desc: 'Background & retouch' },
   ];
 
-  // Lab: fitur eksperimental / multi-kategori (beta)
+  // Library — aset & riwayat
+  const libraryItems = [
+    { id: 'history', label: 'Project Saya', icon: History },
+  ];
+
+  // Lab — eksperimen non-core (multi-kategori produk)
   const labItems = [
-    { id: 'produk', label: 'Konten Produk', icon: Package, beta: true },
+    { id: 'produk', label: 'Produk Lab', icon: FlaskConical, beta: true },
   ];
 
-  // Account: riwayat & profil
+  // Akun
   const accountItems = [
-    { id: 'history', label: 'Riwayat', icon: Sparkles },
-    { id: 'profile', label: 'Profil', icon: UserIcon },
+    { id: 'profile', label: 'Akun & Kredit', icon: UserIcon },
   ];
 
-  // Mobile bottom nav (5 slot agar muat & tetap touch-friendly)
+  // Mobile bottom nav (5 slot, fokus produksi konten fashion)
   const mobileItems = [
-    { id: 'studio', label: 'Try-On', icon: Upload },
-    { id: 'model-swap', label: 'Model', icon: Users },
-    { id: 'photo-edit', label: 'Edit', icon: Edit3 },
-    { id: 'produk', label: 'Lab', icon: Package },
+    { id: 'studio', label: 'Try-On', icon: Shirt },
+    { id: 'model-swap', label: 'Model', icon: UserSquare2 },
+    { id: 'photo-edit', label: 'Edit', icon: Wand2 },
+    { id: 'history', label: 'Project', icon: History },
     { id: 'profile', label: 'Akun', icon: UserIcon },
   ];
 
