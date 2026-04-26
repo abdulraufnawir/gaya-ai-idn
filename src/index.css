@@ -137,6 +137,14 @@ All colors MUST be HSL.
     @apply bg-background text-foreground;
   }
 
+  /* Typography hierarchy — fashion-editorial scale */
+  h1 {
+    @apply tracking-tight;
+  }
+  h2, h3, h4 {
+    @apply tracking-tight;
+  }
+
   /* Mobile touch targets */
   .touch-target {
     min-width: 44px;
@@ -148,10 +156,41 @@ All colors MUST be HSL.
     body {
       overflow-x: hidden;
     }
-    
+
     /* Ensure proper touch scrolling */
     * {
       -webkit-overflow-scrolling: touch;
     }
+  }
+}
+
+@layer components {
+  /* === Editorial type & layout primitives ===
+   * Pakai class ini agar setiap section punya rhythm yang sama.
+   * H2 selalu 36–60px, eyebrow uppercase 11px, lead 18px.
+   */
+  .section {
+    @apply py-20 md:py-28;
+  }
+  .section-tight {
+    @apply py-16 md:py-20;
+  }
+  .section-header {
+    @apply max-w-3xl mx-auto text-center mb-14 md:mb-20;
+  }
+  .eyebrow {
+    @apply text-[11px] uppercase tracking-[0.18em] font-semibold text-muted-foreground mb-4 inline-block;
+  }
+  .heading-display {
+    @apply text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground tracking-tight leading-[1.05];
+  }
+  .heading-section {
+    @apply text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground tracking-tight leading-[1.1];
+  }
+  .heading-card {
+    @apply text-xl sm:text-2xl font-semibold text-foreground tracking-tight;
+  }
+  .lead {
+    @apply text-base sm:text-lg text-muted-foreground leading-relaxed max-w-2xl mx-auto mt-5;
   }
 }
