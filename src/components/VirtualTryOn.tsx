@@ -323,6 +323,7 @@ const VirtualTryOn = ({
         garmentImageUrl: clothingImageUrl,
         category: normalizedCategory!,
         status: 'processing',
+        backgroundPreset, // chained after try-on completes
       });
       setElapsedMs(0);
       startPolling(project.id);
