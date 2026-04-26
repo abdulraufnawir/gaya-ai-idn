@@ -411,6 +411,38 @@ const VirtualTryOn = ({
     // Keep model + category
   };
 
+  // Apply a saved preset: restore model + category, leave garment empty so user just uploads it.
+  const handleApplyPreset = (preset: TryOnPreset) => {
+    if (bulkRunning || activeJob?.status === 'processing') {
+      toast({
+        title: 'Tunggu proses selesai',
+        description: 'Tidak bisa ganti preset saat AI sedang bekerja.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    // Reset garment state so user uploads fresh one for this preset
+    setClothingImage(null);
+    setClothingImagePreview(null);
+    setLastGarmentUploadedUrl(null);
+    // Apply model
+    if (preset.model_image_url) {
+      setModelImage(null);
+      setModelImageUrl(preset.model_image_url);
+      setModelImagePreview(preset.model_image_url);
+      setSelectedModel(preset.model_meta ?? { imageUrl: preset.model_image_url });
+    }
+    // Apply category (preset stores Title Case; UI uses lowercase)
+    if (preset.category) {
+      setClothingCategory(preset.category.toLowerCase());
+    }
+    toast({
+      title: `Preset "${preset.name}" diterapkan`,
+      description: 'Tinggal upload pakaian dan tekan Generate.',
+    });
+  };
+
+
   const handleDownloadResult = async () => {
     if (!activeJob?.resultUrl) return;
     try {
