@@ -1,6 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Shirt, Package, Info, CheckCircle2, XCircle, Lightbulb } from 'lucide-react';
 import VirtualTryOn from './VirtualTryOn';
 import goodModelSingle from '@/assets/examples/good-model-single.jpg';
