@@ -190,7 +190,9 @@ const VirtualTryOn = ({
     }
   };
   const handleProcess = async () => {
-    if (!modelImage && !modelImageUrl || !clothingImage) {
+    const hasModel = Boolean(modelImage || modelImageUrl);
+    const hasGarment = Boolean(clothingImage);
+    if (!hasModel || !hasGarment) {
       toast({
         title: 'Error',
         description: 'Silakan upload gambar model dan pakaian',
@@ -210,15 +212,16 @@ const VirtualTryOn = ({
 
     setProcessing(true);
     try {
-      // Beta testing: Credits system disabled
-
       // Get model image URL - either from uploaded file or selected model
       let finalModelImageUrl = modelImageUrl;
-      
-      // If modelImageUrl is a local asset path, fetch and upload it to Supabase
-      if (modelImageUrl && (modelImageUrl.startsWith('/src/') || modelImageUrl.startsWith('/assets/') || !modelImageUrl.startsWith('http'))) {
+
+      // If modelImageUrl is a local/relative asset path (Vite dev OR hashed prod build),
+      // fetch and re-upload it to Supabase so KIE AI can access it.
+      const isRemoteHttpUrl = (u: string) =>
+        u.startsWith('http://') || u.startsWith('https://');
+
+      if (modelImageUrl && !isRemoteHttpUrl(modelImageUrl)) {
         try {
-          // Fetch the local image
           const response = await fetch(modelImageUrl);
           const blob = await response.blob();
           const file = new File([blob], `template-model-${Date.now()}.jpg`, { type: 'image/jpeg' });
@@ -230,10 +233,11 @@ const VirtualTryOn = ({
       } else if (!modelImageUrl && modelImage) {
         finalModelImageUrl = await uploadImage(modelImage, 'model');
       }
-      
-      const clothingImageUrl = await uploadImage(clothingImage, 'clothing');
+
+      const clothingImageUrl = await uploadImage(clothingImage!, 'clothing');
+      setLastGarmentUploadedUrl(clothingImageUrl);
       // Normalize clothing category to Title Case expected by backend
-      const normalizedCategory = clothingCategory 
+      const normalizedCategory = clothingCategory
         ? clothingCategory.charAt(0).toUpperCase() + clothingCategory.slice(1).toLowerCase()
         : null;
 
