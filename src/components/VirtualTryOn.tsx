@@ -526,6 +526,7 @@ const VirtualTryOn = ({
     }
   };
 
+  const handleDownloadResult = async () => {
     if (!activeJob?.resultUrl) return;
     try {
       const res = await fetch(activeJob.resultUrl);
