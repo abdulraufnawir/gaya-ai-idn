@@ -247,10 +247,12 @@ export type Database = {
           model_image_url: string | null
           name: string
           original_image_url: string | null
+          parent_project_id: string | null
           prediction_id: string | null
           project_type: string
           result_image_url: string | null
           result_url: string | null
+          retry_count: number
           settings: Json | null
           status: string
           title: string
@@ -268,10 +270,12 @@ export type Database = {
           model_image_url?: string | null
           name?: string
           original_image_url?: string | null
+          parent_project_id?: string | null
           prediction_id?: string | null
           project_type?: string
           result_image_url?: string | null
           result_url?: string | null
+          retry_count?: number
           settings?: Json | null
           status?: string
           title?: string
@@ -289,10 +293,12 @@ export type Database = {
           model_image_url?: string | null
           name?: string
           original_image_url?: string | null
+          parent_project_id?: string | null
           prediction_id?: string | null
           project_type?: string
           result_image_url?: string | null
           result_url?: string | null
+          retry_count?: number
           settings?: Json | null
           status?: string
           title?: string
@@ -342,6 +348,39 @@ export type Database = {
           settings?: Json | null
           updated_at?: string
           use_count?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      tryon_ratings: {
+        Row: {
+          comment: string | null
+          created_at: string
+          id: string
+          project_id: string
+          rating: number
+          reasons: string[] | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          project_id: string
+          rating: number
+          reasons?: string[] | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          project_id?: string
+          rating?: number
+          reasons?: string[] | null
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
