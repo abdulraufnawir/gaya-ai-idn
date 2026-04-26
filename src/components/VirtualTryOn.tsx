@@ -121,89 +121,63 @@ const VirtualTryOn = ({
   }, [toast]);
   const handleModelImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      // Convert AVIF/WEBP to JPEG for Replicate compatibility
-      let processedFile = file;
-      if (file.type === 'image/avif' || file.type === 'image/webp') {
-        try {
-          processedFile = await convertToJpeg(file);
-          toast({
-            title: 'Format Dikonversi',
-            description: 'Gambar telah dikonversi ke JPEG untuk kompatibilitas',
-          });
-        } catch (error) {
-          console.error('Image conversion error:', error);
-          toast({
-            title: 'Konversi Gagal',
-            description: 'Gagal mengkonversi format gambar. Silakan coba format lain.',
-            variant: 'destructive'
-          });
-          return;
-        }
-      }
-      
-      setModelImage(processedFile);
-      setModelImageUrl(null);
-      const previewUrl = URL.createObjectURL(processedFile);
-      setModelImagePreview(previewUrl);
+    if (!file) return;
+
+    if (!file.type.startsWith('image/') && !/\.(heic|heif)$/i.test(file.name)) {
+      toast({
+        title: 'Format tidak didukung',
+        description: 'File yang dipilih bukan gambar.',
+        variant: 'destructive',
+      });
+      return;
     }
+    if (file.size > 25 * 1024 * 1024) {
+      toast({
+        title: 'File terlalu besar',
+        description: 'Maksimal 25 MB. Gambar besar akan diperkecil otomatis.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const processed = await preprocessForUpload(file);
+    if (!processed) return;
+
+    setModelImage(processed);
+    setModelImageUrl(null);
+    const previewUrl = URL.createObjectURL(processed);
+    setModelImagePreview(previewUrl);
   };
+
   const handleClothingImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      console.log('Clothing file selected:', file.name, file.size, file.type);
-      
-      // Check if file is valid image
-      if (!file.type.startsWith('image/')) {
-        toast({
-          title: 'Error',
-          description: 'File yang dipilih bukan gambar yang valid',
-          variant: 'destructive'
-        });
-        return;
-      }
-      
-      // Check file size (10MB limit)
-      if (file.size > 10 * 1024 * 1024) {
-        toast({
-          title: 'Error', 
-          description: 'Ukuran file terlalu besar. Maksimal 10MB',
-          variant: 'destructive'
-        });
-        return;
-      }
-      
-      // Convert AVIF/WEBP to JPEG for Replicate compatibility
-      let processedFile = file;
-      if (file.type === 'image/avif' || file.type === 'image/webp') {
-        try {
-          processedFile = await convertToJpeg(file);
-          toast({
-            title: 'Format Dikonversi',
-            description: 'Gambar telah dikonversi ke JPEG untuk kompatibilitas',
-          });
-        } catch (error) {
-          console.error('Image conversion error:', error);
-          toast({
-            title: 'Konversi Gagal',
-            description: 'Gagal mengkonversi format gambar. Silakan coba format lain.',
-            variant: 'destructive'
-          });
-          return;
-        }
-      }
-      
-      setClothingImage(processedFile);
-      const previewUrl = URL.createObjectURL(processedFile);
-      setClothingImagePreview(previewUrl);
-      // Reset cached uploaded URL so a fresh upload re-captures it on Generate
-      setLastGarmentUploadedUrl(null);
+    if (!file) return;
 
+    if (!file.type.startsWith('image/') && !/\.(heic|heif)$/i.test(file.name)) {
       toast({
-        title: 'Berhasil',
-        description: 'Gambar pakaian berhasil diupload'
+        title: 'Format tidak didukung',
+        description: 'File yang dipilih bukan gambar.',
+        variant: 'destructive',
       });
+      return;
     }
+    if (file.size > 25 * 1024 * 1024) {
+      toast({
+        title: 'File terlalu besar',
+        description: 'Maksimal 25 MB.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const processed = await preprocessForUpload(file);
+    if (!processed) return;
+
+    setClothingImage(processed);
+    const previewUrl = URL.createObjectURL(processed);
+    setClothingImagePreview(previewUrl);
+    // Reset cached uploaded URL so a fresh upload re-captures it on Generate
+    setLastGarmentUploadedUrl(null);
   };
   const handleProcess = async () => {
     const hasModel = Boolean(modelImage || modelImageUrl);
