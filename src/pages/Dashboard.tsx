@@ -29,6 +29,7 @@ import UserProfile from '@/components/UserProfile';
 import AdminAccess from '@/components/AdminAccess';
 import CreditStatus from '@/components/CreditStatus';
 import ContentStudio from '@/components/product/ContentStudio';
+import OnboardingQuickStart from '@/components/OnboardingQuickStart';
 
 const Dashboard = () => {
   const [user, setUser] = useState<User | null>(null);
