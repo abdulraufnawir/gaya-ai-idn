@@ -51,17 +51,16 @@ const ProductTiers = () => {
   const navigate = useNavigate();
 
   return (
-    <section className="py-20 bg-muted/30">
+    <section className="section bg-background">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-14">
-          <p className="text-xs uppercase tracking-widest text-muted-foreground font-semibold mb-3">
-            What We Power
-          </p>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground tracking-tight">
+        <div className="section-header">
+          <span className="eyebrow">What We Power</span>
+          <h2 className="heading-section">
             Konten fashion, dibuat dalam skala apapun
           </h2>
-          <p className="text-lg text-muted-foreground mt-4 max-w-2xl mx-auto">
-            Dari brand nasional sampai UMKM — pilih tier yang cocok untuk skala produksi Anda
+          <p className="lead">
+            Dari brand nasional sampai UMKM — pilih tier yang cocok untuk skala
+            produksi Anda.
           </p>
         </div>
 
