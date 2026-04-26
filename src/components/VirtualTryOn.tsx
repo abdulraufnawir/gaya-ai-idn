@@ -7,7 +7,7 @@ import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { processImageForUpload } from '@/lib/imageProcessing';
-import { Upload, Sparkles, Users, Image, Download, RotateCcw, CheckCircle2, XCircle } from 'lucide-react';
+import { Upload, Sparkles, Users, Image, Download, RotateCcw, CheckCircle2, XCircle, Layers, X, Plus } from 'lucide-react';
 import ModelGallery from './ModelGallery';
 
 interface VirtualTryOnProps {
@@ -26,9 +26,25 @@ type ActiveJob = {
   errorMessage?: string;
 };
 
+type BulkGarmentItem = {
+  id: string;            // local uuid
+  file: File;
+  previewUrl: string;
+  category: string;      // per-garment category (defaults to global pick)
+  uploadedUrl?: string;  // populated lazily during run
+  projectId?: string;
+  predictionId?: string;
+  status: 'pending' | 'uploading' | 'processing' | 'completed' | 'failed';
+  resultUrl?: string;
+  errorMessage?: string;
+  startedAt?: number;
+  finishedAt?: number;
+};
+
 const ESTIMATED_DURATION_MS = 25_000; // observed: ~20-25s end-to-end
 const POLL_INTERVAL_MS = 2_500;
 const POLL_TIMEOUT_MS = 120_000;
+const BULK_MAX_ITEMS = 10;
 
 const VirtualTryOn = ({
   userId
@@ -49,6 +65,14 @@ const VirtualTryOn = ({
   const [elapsedMs, setElapsedMs] = useState(0);
   const pollRef = useRef<number | null>(null);
   const tickRef = useRef<number | null>(null);
+
+  // Bulk mode (1 model × N garments, sequential)
+  const [bulkMode, setBulkMode] = useState(false);
+  const [bulkItems, setBulkItems] = useState<BulkGarmentItem[]>([]);
+  const [bulkRunning, setBulkRunning] = useState(false);
+  const [bulkCurrentIndex, setBulkCurrentIndex] = useState<number | null>(null);
+  const bulkAbortRef = useRef(false);
+
   const { toast } = useToast();
 
   // Image preprocessing: HEIC→JPEG, AVIF/WEBP→JPEG, auto-resize, compress.
@@ -402,6 +426,350 @@ const VirtualTryOn = ({
       window.open(activeJob.resultUrl, '_blank');
     }
   };
+
+  // ============================================================
+  // BULK MODE — 1 model × N garments, sequential queue
+  // ============================================================
+
+  const handleBulkAddFiles = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    e.target.value = ''; // allow re-selecting same files
+    if (!files.length) return;
+
+    const remaining = BULK_MAX_ITEMS - bulkItems.length;
+    if (remaining <= 0) {
+      toast({
+        title: 'Batas tercapai',
+        description: `Maksimal ${BULK_MAX_ITEMS} pakaian per batch.`,
+        variant: 'destructive',
+      });
+      return;
+    }
+    const accepted = files.slice(0, remaining);
+    if (files.length > accepted.length) {
+      toast({
+        title: 'Sebagian dilewati',
+        description: `Hanya ${accepted.length} pakaian ditambahkan (max ${BULK_MAX_ITEMS}).`,
+      });
+    }
+
+    const defaultCategory = clothingCategory
+      ? clothingCategory.charAt(0).toUpperCase() + clothingCategory.slice(1).toLowerCase()
+      : 'Atasan';
+
+    const newItems: BulkGarmentItem[] = [];
+    for (const file of accepted) {
+      if (!file.type.startsWith('image/') && !/\.(heic|heif)$/i.test(file.name)) continue;
+      if (file.size > 25 * 1024 * 1024) {
+        toast({
+          title: 'Dilewati: terlalu besar',
+          description: `${file.name} > 25 MB`,
+          variant: 'destructive',
+        });
+        continue;
+      }
+      const processed = await preprocessForUpload(file);
+      if (!processed) continue;
+      newItems.push({
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        file: processed,
+        previewUrl: URL.createObjectURL(processed),
+        category: defaultCategory,
+        status: 'pending',
+      });
+    }
+    if (newItems.length) {
+      setBulkItems((prev) => [...prev, ...newItems]);
+    }
+  };
+
+  const handleBulkRemoveItem = (id: string) => {
+    if (bulkRunning) return;
+    setBulkItems((prev) => {
+      const target = prev.find((i) => i.id === id);
+      if (target) URL.revokeObjectURL(target.previewUrl);
+      return prev.filter((i) => i.id !== id);
+    });
+  };
+
+  const handleBulkSetCategory = (id: string, category: string) => {
+    if (bulkRunning) return;
+    setBulkItems((prev) => prev.map((i) => (i.id === id ? { ...i, category } : i)));
+  };
+
+  const handleBulkClearAll = () => {
+    if (bulkRunning) return;
+    bulkItems.forEach((i) => URL.revokeObjectURL(i.previewUrl));
+    setBulkItems([]);
+  };
+
+  // Resolve model URL once (reused across all items in batch)
+  const resolveModelUrlForBatch = async (): Promise<string> => {
+    const isRemoteHttpUrl = (u: string) =>
+      u.startsWith('http://') || u.startsWith('https://');
+
+    if (modelImageUrl && isRemoteHttpUrl(modelImageUrl)) return modelImageUrl;
+    if (modelImageUrl && !isRemoteHttpUrl(modelImageUrl)) {
+      const response = await fetch(modelImageUrl);
+      const blob = await response.blob();
+      const file = new File([blob], `template-model-${Date.now()}.jpg`, { type: 'image/jpeg' });
+      return await uploadImage(file, 'model');
+    }
+    if (modelImage) return await uploadImage(modelImage, 'model');
+    throw new Error('Tidak ada model terpilih');
+  };
+
+  // Poll a single bulk item's project until completion. Returns when terminal.
+  const pollBulkItem = (item: BulkGarmentItem): Promise<void> => {
+    return new Promise((resolve) => {
+      const startedAt = Date.now();
+      const interval = window.setInterval(async () => {
+        if (bulkAbortRef.current) {
+          window.clearInterval(interval);
+          resolve();
+          return;
+        }
+        try {
+          const { data } = await supabase
+            .from('projects')
+            .select('status, result_url, result_image_url, error_message')
+            .eq('id', item.projectId!)
+            .maybeSingle();
+          if (!data) return;
+
+          if (data.status === 'completed') {
+            window.clearInterval(interval);
+            const url = data.result_url || data.result_image_url || undefined;
+            setBulkItems((prev) =>
+              prev.map((it) =>
+                it.id === item.id
+                  ? { ...it, status: 'completed', resultUrl: url, finishedAt: Date.now() }
+                  : it,
+              ),
+            );
+            resolve();
+          } else if (data.status === 'failed') {
+            window.clearInterval(interval);
+            setBulkItems((prev) =>
+              prev.map((it) =>
+                it.id === item.id
+                  ? {
+                      ...it,
+                      status: 'failed',
+                      errorMessage: data.error_message ?? 'Generation failed',
+                      finishedAt: Date.now(),
+                    }
+                  : it,
+              ),
+            );
+            resolve();
+          } else if (Date.now() - startedAt > POLL_TIMEOUT_MS) {
+            window.clearInterval(interval);
+            setBulkItems((prev) =>
+              prev.map((it) =>
+                it.id === item.id
+                  ? { ...it, status: 'failed', errorMessage: 'Timeout', finishedAt: Date.now() }
+                  : it,
+              ),
+            );
+            resolve();
+          }
+        } catch (err) {
+          console.error('[bulk-poll] error', err);
+        }
+      }, POLL_INTERVAL_MS);
+    });
+  };
+
+  const handleBulkProcess = async () => {
+    if (bulkRunning) return;
+    const hasModel = Boolean(modelImage || modelImageUrl);
+    if (!hasModel) {
+      toast({
+        title: 'Pilih model dulu',
+        description: 'Bulk mode butuh 1 model untuk semua pakaian.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    const queue = bulkItems.filter((i) => i.status === 'pending' || i.status === 'failed');
+    if (!queue.length) {
+      toast({
+        title: 'Tidak ada pakaian',
+        description: 'Tambahkan pakaian terlebih dahulu.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setBulkRunning(true);
+    bulkAbortRef.current = false;
+
+    let modelUrl: string;
+    try {
+      modelUrl = await resolveModelUrlForBatch();
+    } catch (err: any) {
+      toast({
+        title: 'Gagal siapkan model',
+        description: err?.message ?? 'Coba pilih model lain.',
+        variant: 'destructive',
+      });
+      setBulkRunning(false);
+      return;
+    }
+
+    // Reset failed items back to pending so retries work
+    setBulkItems((prev) =>
+      prev.map((i) =>
+        i.status === 'failed'
+          ? { ...i, status: 'pending', errorMessage: undefined, resultUrl: undefined }
+          : i,
+      ),
+    );
+
+    for (let idx = 0; idx < bulkItems.length; idx++) {
+      if (bulkAbortRef.current) break;
+      // Re-read the latest snapshot from state (closure may be stale)
+      const snapshot = bulkItems[idx];
+      if (!snapshot) continue;
+      if (snapshot.status === 'completed') continue;
+
+      setBulkCurrentIndex(idx);
+
+      // 1. Upload garment
+      setBulkItems((prev) =>
+        prev.map((it, i) => (i === idx ? { ...it, status: 'uploading', startedAt: Date.now() } : it)),
+      );
+      let garmentUrl: string;
+      try {
+        garmentUrl = await uploadImage(snapshot.file, 'clothing');
+      } catch (err: any) {
+        setBulkItems((prev) =>
+          prev.map((it, i) =>
+            i === idx
+              ? { ...it, status: 'failed', errorMessage: err?.message ?? 'Upload gagal', finishedAt: Date.now() }
+              : it,
+          ),
+        );
+        continue;
+      }
+
+      // 2. Create project
+      const { data: project, error: projectError } = await supabase
+        .from('projects')
+        .insert({
+          user_id: userId,
+          title: `Bulk Try-On #${idx + 1} - ${new Date().toLocaleDateString('id-ID')}`,
+          description: `Bulk virtual try-on (${snapshot.category})`,
+          project_type: 'virtual_tryon',
+          status: 'processing',
+        })
+        .select()
+        .single();
+
+      if (projectError || !project) {
+        setBulkItems((prev) =>
+          prev.map((it, i) =>
+            i === idx
+              ? { ...it, status: 'failed', errorMessage: 'Gagal buat project', finishedAt: Date.now() }
+              : it,
+          ),
+        );
+        continue;
+      }
+
+      // 3. Invoke kie-ai
+      const { data: kieResponse, error: invokeError } = await supabase.functions.invoke('kie-ai', {
+        body: {
+          action: 'virtualTryOn',
+          modelImage: modelUrl,
+          garmentImage: garmentUrl,
+          projectId: project.id,
+          clothingCategory: snapshot.category,
+        },
+      });
+
+      if (invokeError || !kieResponse || kieResponse.error) {
+        const msg = invokeError?.message || kieResponse?.error || 'AI invoke gagal';
+        setBulkItems((prev) =>
+          prev.map((it, i) =>
+            i === idx ? { ...it, status: 'failed', errorMessage: msg, finishedAt: Date.now() } : it,
+          ),
+        );
+        continue;
+      }
+
+      const predictionId = kieResponse.prediction_id || kieResponse.id;
+      await supabase.from('projects').update({
+        prediction_id: predictionId,
+        settings: {
+          prediction_id: predictionId,
+          model_image_url: modelUrl,
+          garment_image_url: garmentUrl,
+          clothing_category: snapshot.category,
+          bulk_batch: true,
+        },
+      }).eq('id', project.id);
+
+      setBulkItems((prev) =>
+        prev.map((it, i) =>
+          i === idx
+            ? {
+                ...it,
+                uploadedUrl: garmentUrl,
+                projectId: project.id,
+                predictionId,
+                status: 'processing',
+              }
+            : it,
+        ),
+      );
+
+      // 4. Poll until done
+      await pollBulkItem({ ...snapshot, projectId: project.id, predictionId });
+    }
+
+    setBulkCurrentIndex(null);
+    setBulkRunning(false);
+
+    // Toast counts using latest snapshot via functional setter
+    setBulkItems((prev) => {
+      const ok = prev.filter((i) => i.status === 'completed').length;
+      const fail = prev.filter((i) => i.status === 'failed').length;
+      toast({
+        title: bulkAbortRef.current ? 'Batch dihentikan' : 'Batch selesai',
+        description: `${ok} berhasil · ${fail} gagal · total ${prev.length}`,
+      });
+      return prev;
+    });
+  };
+
+  const handleBulkStop = () => {
+    bulkAbortRef.current = true;
+  };
+
+  const handleBulkDownloadAll = async () => {
+    const completed = bulkItems.filter((i) => i.status === 'completed' && i.resultUrl);
+    if (!completed.length) return;
+    for (let i = 0; i < completed.length; i++) {
+      const item = completed[i];
+      try {
+        const res = await fetch(item.resultUrl!);
+        const blob = await res.blob();
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `tryon-bulk-${i + 1}-${item.projectId}.jpg`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        // small stagger so browsers don't block multi-download
+        await new Promise((r) => setTimeout(r, 250));
+      } catch {
+        window.open(item.resultUrl!, '_blank');
+      }
+    }
+  };
+
   const uploadImage = async (file: File, type: string): Promise<string> => {
     // Sanitize filename: lowercase extension, remove spaces/special chars
     const rawBase = file.name.normalize('NFKD').replace(/[\s]+/g, '_').replace(/[^\w.-]/g, '_');
@@ -552,10 +920,40 @@ const VirtualTryOn = ({
               Sistem kredit akan datang
             </Badge>
           </div>
+
+          {/* Mode Toggle: Single vs Bulk */}
+          <div className="mt-4 inline-flex rounded-lg border border-border bg-muted/30 p-1 mx-auto">
+            <button
+              type="button"
+              onClick={() => !bulkRunning && setBulkMode(false)}
+              disabled={bulkRunning}
+              className={`px-4 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                !bulkMode
+                  ? 'bg-background text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <Sparkles className="h-3 w-3 inline mr-1" />
+              Single
+            </button>
+            <button
+              type="button"
+              onClick={() => !activeJob && setBulkMode(true)}
+              disabled={Boolean(activeJob)}
+              className={`px-4 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                bulkMode
+                  ? 'bg-background text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <Layers className="h-3 w-3 inline mr-1" />
+              Bulk · 1 model × N
+              <Badge variant="secondary" className="ml-1.5 text-[9px] px-1">PRO</Badge>
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Main Content */}
       <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Pilih Model */}
         <div className="space-y-4">
@@ -718,84 +1116,253 @@ const VirtualTryOn = ({
 
         </div>
 
-        {/* Select Garment */}
-        <div className="space-y-4">
-          <div className="text-center">
-            <h2 className="text-lg sm:text-xl font-semibold flex items-center justify-center gap-2">
-              Pilih Pakaian
-              <div className="w-4 h-4 bg-muted-foreground/20 rounded-full flex items-center justify-center">
-               </div>
-            </h2>
-          </div>
+        {/* Select Garment — Single OR Bulk */}
+        {!bulkMode ? (
+          <div className="space-y-4">
+            <div className="text-center">
+              <h2 className="text-lg sm:text-xl font-semibold flex items-center justify-center gap-2">
+                Pilih Pakaian
+                <div className="w-4 h-4 bg-muted-foreground/20 rounded-full flex items-center justify-center">
+                </div>
+              </h2>
+            </div>
 
-          {/* Clothing Category Selection */}
-          <div>
-            
+            {/* Clothing Category Selection */}
+            <div>
+              <div className="flex flex-wrap gap-2 justify-center">
+                {[{
+                key: 'atasan',
+                label: 'Atasan'
+              }, {
+                key: 'bawahan',
+                label: 'Bawahan'
+              }, {
+                key: 'gaun',
+                label: 'Gaun'
+              }, {
+                key: 'hijab',
+                label: 'Hijab'
+              }].map(category => <Button key={category.key} variant={clothingCategory === category.key ? 'default' : 'outline'} size="sm" onClick={() => setClothingCategory(clothingCategory === category.key ? null : category.key)} className="text-xs">
+                    {category.label}
+                  </Button>)}
+              </div>
+              {clothingCategory && <p className="text-xs text-muted-foreground text-center mt-1">
+                  Dipilih: {clothingCategory.charAt(0).toUpperCase() + clothingCategory.slice(1)}
+                </p>}
+            </div>
+
+            <div className="relative">
+              <div className="aspect-[3/4] bg-muted/20 rounded-xl border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 transition-colors overflow-hidden min-h-[200px] sm:min-h-[250px]">
+                {clothingImagePreview ? <div className="relative w-full h-full">
+                    <img
+                      src={clothingImagePreview}
+                      alt="Clothing preview"
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        console.error('Failed to load clothing image:', clothingImagePreview);
+                        toast({
+                          title: 'Error',
+                          description: 'Gagal memuat gambar. Silakan coba upload ulang.',
+                          variant: 'destructive'
+                        });
+                      }}
+                      onLoad={() => {
+                        console.log('Clothing image loaded successfully');
+                      }}
+                    />
+                    <button onClick={() => {
+                  setClothingImage(null);
+                  setClothingImagePreview(null);
+                }} className="absolute top-2 right-2 bg-background/80 backdrop-blur-sm text-foreground rounded-full w-8 h-8 flex items-center justify-center hover:bg-background/90 transition-colors touch-target">
+                      ×
+                    </button>
+                  </div> : <div className="relative w-full h-full">
+                    {/* Shadow guide image */}
+                    <img src="/lovable-uploads/65812cd8-a3b0-4c9c-9483-d9c21ac76d83.png" alt="Clothing positioning guide" className="absolute inset-0 w-full h-full object-contain opacity-20 pointer-events-none z-10" />
+                    <label htmlFor="clothing-upload" className="relative w-full h-full flex flex-col items-center justify-center cursor-pointer hover:bg-muted/10 transition-colors p-4 z-20">
+                      <Upload className="w-10 h-10 sm:w-12 sm:h-12 text-muted-foreground mb-3 sm:mb-4" />
+                      <span className="text-base sm:text-lg font-medium text-primary mb-2 text-center">Upload foto pakaian</span>
+                      <span className="text-xs sm:text-sm text-muted-foreground text-center">JPG, PNG, HEIC · auto-compress</span>
+                      <Input id="clothing-upload" type="file" accept="image/*,.heic,.heif" className="sr-only" onChange={handleClothingImageChange} />
+                    </label>
+                  </div>}
+              </div>
+            </div>
+          </div>
+        ) : (
+          /* ======= BULK GARMENT PANEL ======= */
+          <div className="space-y-3">
+            <div className="text-center">
+              <h2 className="text-lg sm:text-xl font-semibold flex items-center justify-center gap-2">
+                <Layers className="h-5 w-5" />
+                Pakaian (Batch)
+              </h2>
+              <p className="text-xs text-muted-foreground mt-1">
+                Upload sampai {BULK_MAX_ITEMS} pakaian. Semua akan di-try-on ke 1 model yang sama.
+              </p>
+            </div>
+
+            {/* Default category picker (applied to new uploads) */}
             <div className="flex flex-wrap gap-2 justify-center">
-              {[{
-              key: 'atasan',
-              label: 'Atasan'
-            }, {
-              key: 'bawahan',
-              label: 'Bawahan'
-            }, {
-              key: 'gaun',
-              label: 'Gaun'
-            }, {
-              key: 'hijab',
-              label: 'Hijab'
-            }].map(category => <Button key={category.key} variant={clothingCategory === category.key ? 'default' : 'outline'} size="sm" onClick={() => setClothingCategory(clothingCategory === category.key ? null : category.key)} className="text-xs">
-                  {category.label}
-                </Button>)}
+              {[
+                { key: 'atasan', label: 'Atasan' },
+                { key: 'bawahan', label: 'Bawahan' },
+                { key: 'gaun', label: 'Gaun' },
+                { key: 'hijab', label: 'Hijab' },
+              ].map((c) => (
+                <Button
+                  key={c.key}
+                  variant={clothingCategory === c.key ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setClothingCategory(clothingCategory === c.key ? null : c.key)}
+                  className="text-xs"
+                  disabled={bulkRunning}
+                >
+                  {c.label}
+                </Button>
+              ))}
             </div>
-            {clothingCategory && <p className="text-xs text-muted-foreground text-center mt-1">
-                Dipilih: {clothingCategory.charAt(0).toUpperCase() + clothingCategory.slice(1)}
-              </p>}
-          </div>
-          
-          <div className="relative">
-            <div className="aspect-[3/4] bg-muted/20 rounded-xl border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 transition-colors overflow-hidden min-h-[200px] sm:min-h-[250px]">
-              {clothingImagePreview ? <div className="relative w-full h-full">
-                  <img 
-                    src={clothingImagePreview} 
-                    alt="Clothing preview" 
-                    className="w-full h-full object-cover" 
-                    onError={(e) => {
-                      console.error('Failed to load clothing image:', clothingImagePreview);
-                      toast({
-                        title: 'Error',
-                        description: 'Gagal memuat gambar. Silakan coba upload ulang.',
-                        variant: 'destructive'
-                      });
-                    }}
-                    onLoad={() => {
-                      console.log('Clothing image loaded successfully');
-                    }}
-                  />
-                  <button onClick={() => {
-                setClothingImage(null);
-                setClothingImagePreview(null);
-              }} className="absolute top-2 right-2 bg-background/80 backdrop-blur-sm text-foreground rounded-full w-8 h-8 flex items-center justify-center hover:bg-background/90 transition-colors touch-target">
-                    ×
-                  </button>
-                </div> : <div className="relative w-full h-full">
-                  {/* Shadow guide image */}
-                  <img src="/lovable-uploads/65812cd8-a3b0-4c9c-9483-d9c21ac76d83.png" alt="Clothing positioning guide" className="absolute inset-0 w-full h-full object-contain opacity-20 pointer-events-none z-10" />
-                  <label htmlFor="clothing-upload" className="relative w-full h-full flex flex-col items-center justify-center cursor-pointer hover:bg-muted/10 transition-colors p-4 z-20">
-                    <Upload className="w-10 h-10 sm:w-12 sm:h-12 text-muted-foreground mb-3 sm:mb-4" />
-                    <span className="text-base sm:text-lg font-medium text-primary mb-2 text-center">Upload foto pakaian</span>
-                    <span className="text-xs sm:text-sm text-muted-foreground text-center">JPG, PNG, HEIC · auto-compress</span>
-                    <Input id="clothing-upload" type="file" accept="image/*,.heic,.heif" className="sr-only" onChange={handleClothingImageChange} />
-                  </label>
-                </div>}
-            </div>
-          </div>
+            <p className="text-xs text-muted-foreground text-center">
+              {clothingCategory
+                ? `Default kategori untuk upload baru: ${clothingCategory.charAt(0).toUpperCase() + clothingCategory.slice(1)}`
+                : 'Pilih kategori default (bisa diubah per pakaian)'}
+            </p>
 
-        </div>
+            {/* Upload area */}
+            <div className="border-2 border-dashed border-muted-foreground/25 rounded-xl p-4 hover:border-primary/50 transition-colors">
+              <label
+                htmlFor="bulk-upload"
+                className={`flex flex-col items-center justify-center gap-2 cursor-pointer ${
+                  bulkRunning || bulkItems.length >= BULK_MAX_ITEMS ? 'opacity-50 pointer-events-none' : ''
+                }`}
+              >
+                <Plus className="h-8 w-8 text-primary" />
+                <span className="text-sm font-medium text-primary">
+                  Tambah pakaian ({bulkItems.length}/{BULK_MAX_ITEMS})
+                </span>
+                <span className="text-xs text-muted-foreground">Pilih multiple file sekaligus</span>
+                <Input
+                  id="bulk-upload"
+                  type="file"
+                  multiple
+                  accept="image/*,.heic,.heif"
+                  className="sr-only"
+                  onChange={handleBulkAddFiles}
+                  disabled={bulkRunning}
+                />
+              </label>
+            </div>
+
+            {/* Items grid */}
+            {bulkItems.length > 0 && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium">{bulkItems.length} item</span>
+                  {!bulkRunning && (
+                    <Button onClick={handleBulkClearAll} variant="ghost" size="sm" className="text-xs h-7">
+                      Hapus semua
+                    </Button>
+                  )}
+                </div>
+                <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 max-h-[400px] overflow-y-auto pr-1">
+                  {bulkItems.map((item, idx) => (
+                    <div
+                      key={item.id}
+                      className={`relative rounded-lg overflow-hidden border-2 transition-colors ${
+                        bulkCurrentIndex === idx
+                          ? 'border-primary ring-2 ring-primary/30'
+                          : item.status === 'completed'
+                          ? 'border-success/50'
+                          : item.status === 'failed'
+                          ? 'border-destructive/50'
+                          : 'border-border'
+                      }`}
+                    >
+                      <div className="aspect-square bg-muted/20">
+                        <img
+                          src={item.resultUrl ?? item.previewUrl}
+                          alt={`Garment ${idx + 1}`}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+
+                      {/* Status overlay */}
+                      {item.status === 'uploading' && (
+                        <div className="absolute inset-0 bg-background/60 backdrop-blur-sm flex items-center justify-center">
+                          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary" />
+                        </div>
+                      )}
+                      {item.status === 'processing' && (
+                        <div className="absolute inset-0 bg-primary/20 backdrop-blur-sm flex flex-col items-center justify-center">
+                          <Sparkles className="h-5 w-5 text-primary animate-pulse" />
+                          <span className="text-[10px] mt-1 font-medium">AI...</span>
+                        </div>
+                      )}
+                      {item.status === 'completed' && (
+                        <div className="absolute top-1 left-1 bg-success text-success-foreground rounded-full p-0.5">
+                          <CheckCircle2 className="h-3 w-3" />
+                        </div>
+                      )}
+                      {item.status === 'failed' && (
+                        <div className="absolute inset-0 bg-destructive/20 flex flex-col items-center justify-center p-1">
+                          <XCircle className="h-4 w-4 text-destructive" />
+                          <span className="text-[9px] text-center mt-1 line-clamp-2 px-1">
+                            {item.errorMessage}
+                          </span>
+                        </div>
+                      )}
+
+                      {/* Remove button */}
+                      {!bulkRunning && item.status !== 'processing' && item.status !== 'uploading' && (
+                        <button
+                          onClick={() => handleBulkRemoveItem(item.id)}
+                          className="absolute top-1 right-1 bg-background/80 hover:bg-background rounded-full w-5 h-5 flex items-center justify-center"
+                          aria-label="Hapus"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      )}
+
+                      {/* Per-item category */}
+                      <div className="px-1 py-1 bg-background/95 border-t border-border">
+                        <select
+                          value={item.category}
+                          onChange={(e) => handleBulkSetCategory(item.id, e.target.value)}
+                          disabled={bulkRunning}
+                          className="w-full text-[10px] bg-transparent border-0 outline-none cursor-pointer"
+                        >
+                          <option value="Atasan">Atasan</option>
+                          <option value="Bawahan">Bawahan</option>
+                          <option value="Gaun">Gaun</option>
+                          <option value="Hijab">Hijab</option>
+                        </select>
+                      </div>
+
+                      {/* Download single result */}
+                      {item.status === 'completed' && item.resultUrl && (
+                        <a
+                          href={item.resultUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          download
+                          className="absolute bottom-7 right-1 bg-background/90 hover:bg-background rounded-full w-6 h-6 flex items-center justify-center"
+                          aria-label="Download"
+                        >
+                          <Download className="h-3 w-3" />
+                        </a>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
-      {/* Generate Button — hidden once a job is active so result viewer takes focus */}
-      {!activeJob && (
+
+      {/* Action Bar — Single mode (Generate) */}
+      {!bulkMode && !activeJob && (
         <div className="max-w-7xl mx-auto mt-4 flex justify-center px-4">
           <Button
             onClick={handleProcess}
@@ -819,8 +1386,59 @@ const VirtualTryOn = ({
         </div>
       )}
 
+      {/* Action Bar — Bulk mode */}
+      {bulkMode && (
+        <div className="max-w-7xl mx-auto mt-4 flex flex-wrap items-center justify-center gap-2 px-4">
+          {!bulkRunning ? (
+            <>
+              <Button
+                onClick={handleBulkProcess}
+                disabled={(!modelImage && !modelImageUrl) || bulkItems.filter(i => i.status === 'pending' || i.status === 'failed').length === 0}
+                size="lg"
+                className="h-12 text-base sm:min-w-[280px]"
+              >
+                <Layers className="h-5 w-5 mr-2" />
+                Generate {bulkItems.filter(i => i.status === 'pending' || i.status === 'failed').length} pakaian
+                <Badge variant="secondary" className="ml-2 text-[10px]">Beta · Gratis</Badge>
+              </Button>
+              {bulkItems.some(i => i.status === 'completed') && (
+                <Button onClick={handleBulkDownloadAll} variant="outline" size="lg" className="h-12">
+                  <Download className="h-4 w-4 mr-2" />
+                  Download semua
+                </Button>
+              )}
+            </>
+          ) : (
+            <div className="w-full max-w-2xl space-y-3">
+              <div className="flex items-center justify-between text-sm">
+                <span className="font-medium">
+                  Memproses {(bulkCurrentIndex ?? 0) + 1} dari {bulkItems.length}...
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  {bulkItems.filter(i => i.status === 'completed').length} selesai · {bulkItems.filter(i => i.status === 'failed').length} gagal
+                </span>
+              </div>
+              <Progress
+                value={((bulkItems.filter(i => i.status === 'completed' || i.status === 'failed').length) / bulkItems.length) * 100}
+                className="h-2"
+              />
+              <div className="flex justify-center">
+                <Button onClick={handleBulkStop} variant="outline" size="sm">
+                  Hentikan setelah item ini
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground text-center">
+                Estimasi total: ~{Math.round((ESTIMATED_DURATION_MS * bulkItems.length) / 1000)}s.
+                Anda boleh tinggal halaman — hasil tetap di Riwayat.
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+
+
       {/* Inline Result Viewer */}
-      {activeJob && (
+      {!bulkMode && activeJob && (
         <div className="max-w-7xl mx-auto mt-6 px-2 sm:px-4">
           <div className="rounded-xl border border-border bg-card p-4 sm:p-6 shadow-soft">
             {/* Status header */}
