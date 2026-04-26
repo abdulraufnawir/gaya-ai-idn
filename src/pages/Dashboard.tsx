@@ -373,6 +373,8 @@ const Dashboard = () => {
             <CreditStatus userId={user.id} />
           </div>
 
+          <OnboardingQuickStart userId={user.id} onSelectStep={setActiveTab} />
+
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <TabsContent value="studio">
                 <Studio userId={user.id} />
