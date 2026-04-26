@@ -89,6 +89,10 @@ const Dashboard = () => {
       setActiveTab('model-swap');
     };
 
+    const handleSwitchToStudioTab = () => {
+      setActiveTab('studio');
+    };
+
     const handleSelectModelForTryOn = (event: any) => {
       setActiveTab('studio');
       const virtualTryOnEvent = new CustomEvent('setSelectedModel', {
@@ -98,11 +102,13 @@ const Dashboard = () => {
     };
 
     window.addEventListener('switchToModelTab', handleSwitchToModelTab);
+    window.addEventListener('switchToStudioTab', handleSwitchToStudioTab);
     window.addEventListener('selectModelForTryOn', handleSelectModelForTryOn);
 
     return () => {
       subscription.unsubscribe();
       window.removeEventListener('switchToModelTab', handleSwitchToModelTab);
+      window.removeEventListener('switchToStudioTab', handleSwitchToStudioTab);
       window.removeEventListener('selectModelForTryOn', handleSelectModelForTryOn);
     };
   }, [navigate]);
