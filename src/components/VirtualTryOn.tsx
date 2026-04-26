@@ -1671,6 +1671,17 @@ const VirtualTryOn = ({
                 </p>
               )}
             </div>
+
+            {/* Rating + auto-regenerate (Sprint 6) */}
+            {activeJob.status === 'completed' && (
+              <ResultRating
+                userId={userId}
+                projectId={activeJob.projectId}
+                retryCount={activeJob.retryCount ?? 0}
+                onRegenerate={handleRegenerate}
+                regenerateDisabled={(activeJob.retryCount ?? 0) >= 3}
+              />
+            )}
           </div>
         </div>
       )}
