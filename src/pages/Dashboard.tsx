@@ -178,6 +178,8 @@ const Dashboard = () => {
             <CreditStatus userId={user.id} />
           </div>
 
+          <OnboardingQuickStart userId={user.id} onSelectStep={setActiveTab} />
+
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             {/* Content area with bottom padding for fixed nav */}
             <div className="pb-20">
