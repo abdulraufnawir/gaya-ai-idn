@@ -396,7 +396,7 @@ const Dashboard = () => {
               <SidebarTrigger className="-ml-1" />
               <h2 className="font-semibold">Dashboard</h2>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
               {activeTab !== 'studio' && (
                 <Button
                   size="sm"
@@ -407,12 +407,26 @@ const Dashboard = () => {
                   Mulai Try-On
                 </Button>
               )}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={showHelp}
+                aria-label="Panduan singkat"
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <HelpCircle className="h-5 w-5" />
+              </Button>
               <ProfileMenu />
             </div>
           </header>
 
           <div className="flex-1 p-6">
-            <OnboardingQuickStart userId={user.id} onSelectStep={setActiveTab} />
+            <OnboardingQuickStart
+              userId={user.id}
+              onSelectStep={setActiveTab}
+              forceShow={forceOnboarding}
+              onDismiss={() => setForceOnboarding(false)}
+            />
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <TabsContent value="studio">
