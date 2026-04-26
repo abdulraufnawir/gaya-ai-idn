@@ -454,7 +454,7 @@ const VirtualTryOn = ({
           
           {/* Beta Notice */}
           <div className="mt-3 flex items-center justify-center gap-2">
-            <Badge variant="outline" className="flex items-center gap-1 bg-green-50 border-green-200 text-green-700">
+            <Badge variant="outline" className="flex items-center gap-1 bg-success/10 border-success/30 text-success">
               <Sparkles className="h-3 w-3" />
               Beta Testing - Gratis
             </Badge>
