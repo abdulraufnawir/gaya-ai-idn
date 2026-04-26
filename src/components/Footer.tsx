@@ -3,28 +3,31 @@ const Footer = () => {
   const footerSections = [{
     title: "Produk",
     links: [{
-      label: "Virtual Try-On",
-      href: "#"
+      label: "BUSANA Studio (Brand)",
+      href: "#tiers"
     }, {
-      label: "Model AI",
-      href: "#"
+      label: "BUSANA Air (UMKM)",
+      href: "#tiers"
     }, {
-      label: "Photo Editor",
-      href: "#"
+      label: "On-Model Try-On",
+      href: "#features"
+    }, {
+      label: "Model Library",
+      href: "#features"
     }]
   }, {
     title: "Solusi",
     links: [{
-      label: "Fashion Retail",
+      label: "Brand Modest & Hijab",
       href: "#"
     }, {
-      label: "UMKM",
+      label: "Ready-to-Wear",
       href: "#"
     }, {
-      label: "Online Shop",
+      label: "Reseller & Dropshipper",
       href: "#"
     }, {
-      label: "Fashion Brand",
+      label: "Marketplace Sellers",
       href: "#"
     }]
   }, {
@@ -33,10 +36,10 @@ const Footer = () => {
       label: "Help Center",
       href: "#"
     }, {
-      label: "Kontak",
-      href: "#"
+      label: "Jadwalkan Demo",
+      href: "/auth"
     }, {
-      label: "Live Chat",
+      label: "WhatsApp Support",
       href: "#"
     }]
   }];
