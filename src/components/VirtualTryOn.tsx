@@ -50,39 +50,34 @@ const VirtualTryOn = ({
   const tickRef = useRef<number | null>(null);
   const { toast } = useToast();
 
-  // Helper function to convert images to JPEG format
-  const convertToJpeg = async (file: File): Promise<File> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const img = document.createElement('img');
-        img.onload = () => {
-          const canvas = document.createElement('canvas');
-          canvas.width = img.width;
-          canvas.height = img.height;
-          const ctx = canvas.getContext('2d');
-          if (!ctx) {
-            reject(new Error('Failed to get canvas context'));
-            return;
-          }
-          ctx.drawImage(img, 0, 0);
-          canvas.toBlob((blob) => {
-            if (!blob) {
-              reject(new Error('Failed to convert image'));
-              return;
-            }
-            const newFile = new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), {
-              type: 'image/jpeg'
-            });
-            resolve(newFile);
-          }, 'image/jpeg', 0.95);
-        };
-        img.onerror = () => reject(new Error('Failed to load image'));
-        img.src = e.target?.result as string;
-      };
-      reader.onerror = () => reject(new Error('Failed to read file'));
-      reader.readAsDataURL(file);
-    });
+  // Image preprocessing: HEIC→JPEG, AVIF/WEBP→JPEG, auto-resize, compress.
+  // Returns the final File ready for upload, or null if user-facing error already shown.
+  const preprocessForUpload = async (file: File): Promise<File | null> => {
+    try {
+      const result = await processImageForUpload(file);
+      if (result.wasTranscoded) {
+        toast({
+          title: 'Format dikonversi',
+          description: 'Foto HEIC/AVIF/WEBP diubah ke JPEG agar kompatibel.',
+        });
+      }
+      if (result.wasResized || result.processedSizeKB < result.originalSizeKB * 0.7) {
+        // Subtle hint only — no toast spam for routine compression.
+        console.log(
+          `[image] ${file.name}: ${result.originalSizeKB} KB → ${result.processedSizeKB} KB ` +
+          `(resized: ${result.wasResized})`,
+        );
+      }
+      return result.file;
+    } catch (err: any) {
+      console.error('[image] processing error', err);
+      toast({
+        title: 'Gambar tidak didukung',
+        description: err?.message || 'Gagal memproses gambar. Coba JPG/PNG.',
+        variant: 'destructive',
+      });
+      return null;
+    }
   };
 
   // Unified model-selection handler (consolidated from 3 overlapping listeners).
