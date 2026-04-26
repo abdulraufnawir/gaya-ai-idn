@@ -301,6 +301,51 @@ export type Database = {
         }
         Relationships: []
       }
+      tryon_presets: {
+        Row: {
+          category: string | null
+          created_at: string
+          id: string
+          last_used_at: string | null
+          model_image_url: string | null
+          model_meta: Json | null
+          model_source: string | null
+          name: string
+          settings: Json | null
+          updated_at: string
+          use_count: number
+          user_id: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          id?: string
+          last_used_at?: string | null
+          model_image_url?: string | null
+          model_meta?: Json | null
+          model_source?: string | null
+          name: string
+          settings?: Json | null
+          updated_at?: string
+          use_count?: number
+          user_id: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          id?: string
+          last_used_at?: string | null
+          model_image_url?: string | null
+          model_meta?: Json | null
+          model_source?: string | null
+          name?: string
+          settings?: Json | null
+          updated_at?: string
+          use_count?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_credits: {
         Row: {
           created_at: string

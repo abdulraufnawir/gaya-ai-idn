@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { processImageForUpload } from '@/lib/imageProcessing';
 import { Upload, Sparkles, Users, Image, Download, RotateCcw, CheckCircle2, XCircle, Layers, X, Plus } from 'lucide-react';
 import ModelGallery from './ModelGallery';
+import TryOnPresets, { type TryOnPreset } from './TryOnPresets';
 
 interface VirtualTryOnProps {
   userId: string;
@@ -409,6 +410,38 @@ const VirtualTryOn = ({
     setLastGarmentUploadedUrl(null);
     // Keep model + category
   };
+
+  // Apply a saved preset: restore model + category, leave garment empty so user just uploads it.
+  const handleApplyPreset = (preset: TryOnPreset) => {
+    if (bulkRunning || activeJob?.status === 'processing') {
+      toast({
+        title: 'Tunggu proses selesai',
+        description: 'Tidak bisa ganti preset saat AI sedang bekerja.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    // Reset garment state so user uploads fresh one for this preset
+    setClothingImage(null);
+    setClothingImagePreview(null);
+    setLastGarmentUploadedUrl(null);
+    // Apply model
+    if (preset.model_image_url) {
+      setModelImage(null);
+      setModelImageUrl(preset.model_image_url);
+      setModelImagePreview(preset.model_image_url);
+      setSelectedModel(preset.model_meta ?? { imageUrl: preset.model_image_url });
+    }
+    // Apply category (preset stores Title Case; UI uses lowercase)
+    if (preset.category) {
+      setClothingCategory(preset.category.toLowerCase());
+    }
+    toast({
+      title: `Preset "${preset.name}" diterapkan`,
+      description: 'Tinggal upload pakaian dan tekan Generate.',
+    });
+  };
+
 
   const handleDownloadResult = async () => {
     if (!activeJob?.resultUrl) return;
@@ -953,6 +986,20 @@ const VirtualTryOn = ({
           </div>
         </div>
       </div>
+
+      {/* Preset bar — quick save & apply favorite combos */}
+      <TryOnPresets
+        userId={userId}
+        current={{
+          modelImageUrl: modelImageUrl ?? modelImagePreview,
+          modelSource: selectedModel ? (selectedModel.source ?? 'gallery') : (modelImage ? 'upload' : null),
+          modelMeta: selectedModel ?? undefined,
+          category: clothingCategory
+            ? clothingCategory.charAt(0).toUpperCase() + clothingCategory.slice(1).toLowerCase()
+            : null,
+        }}
+        onApply={handleApplyPreset}
+      />
 
       <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Pilih Model */}
