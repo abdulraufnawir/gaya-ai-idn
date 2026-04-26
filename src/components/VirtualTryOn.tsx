@@ -1554,6 +1554,17 @@ const VirtualTryOn = ({
       </div>
 
 
+      {/* Background pre-selector — only in single mode, before generate */}
+      {!bulkMode && !activeJob && (
+        <div className="max-w-7xl mx-auto mt-4 px-4">
+          <BackgroundSelector
+            value={backgroundPreset}
+            onChange={setBackgroundPreset}
+            disabled={processing}
+          />
+        </div>
+      )}
+
       {/* Action Bar — Single mode (Generate) */}
       {!bulkMode && !activeJob && (
         <div className="max-w-7xl mx-auto mt-4 flex justify-center px-4">
@@ -1572,7 +1583,11 @@ const VirtualTryOn = ({
               <>
                 <Sparkles className="h-5 w-5 mr-3" />
                 Generate
-                <Badge variant="secondary" className="ml-2 text-[10px]">Beta · Gratis</Badge>
+                {backgroundPreset ? (
+                  <Badge variant="secondary" className="ml-2 text-[10px]">2 langkah · 2 kredit</Badge>
+                ) : (
+                  <Badge variant="secondary" className="ml-2 text-[10px]">Beta · Gratis</Badge>
+                )}
               </>
             )}
           </Button>
