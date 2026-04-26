@@ -1695,7 +1695,21 @@ const VirtualTryOn = ({
               <div className="mb-4">
                 <Progress value={Math.min(95, (elapsedMs / ESTIMATED_DURATION_MS) * 100)} className="h-2" />
                 <p className="text-xs text-muted-foreground mt-2">
-                  AI sedang memasangkan pakaian ke model. Estimasi ~25 detik.
+                  {activeJob.backgroundPreset
+                    ? `AI memasangkan pakaian. Setelah selesai, background akan otomatis diganti ke "${
+                        BACKGROUND_PRESETS.find((b) => b.key === activeJob.backgroundPreset)?.label
+                      }".`
+                    : 'AI sedang memasangkan pakaian ke model. Estimasi ~25 detik.'}
+                </p>
+              </div>
+            )}
+            {activeJob.status === 'swapping_background' && (
+              <div className="mb-4">
+                <Progress value={70} className="h-2" />
+                <p className="text-xs text-muted-foreground mt-2">
+                  Mengganti background ke "
+                  {BACKGROUND_PRESETS.find((b) => b.key === activeJob.backgroundPreset)?.label}
+                  "... ~10 detik.
                 </p>
               </div>
             )}
@@ -1721,6 +1735,18 @@ const VirtualTryOn = ({
                 <div className="aspect-[3/4] bg-muted/20 rounded-lg overflow-hidden relative ring-2 ring-primary/20">
                   {activeJob.status === 'completed' && activeJob.resultUrl ? (
                     <img src={activeJob.resultUrl} alt="Hasil try-on" className="w-full h-full object-cover" />
+                  ) : activeJob.status === 'swapping_background' && activeJob.baseResultUrl ? (
+                    <>
+                      <img
+                        src={activeJob.baseResultUrl}
+                        alt="Try-on (sebelum background diganti)"
+                        className="w-full h-full object-cover opacity-60"
+                      />
+                      <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/40 backdrop-blur-[1px]">
+                        <Sparkles className="h-8 w-8 text-primary animate-pulse mb-2" />
+                        <p className="text-xs font-medium">Mengganti background...</p>
+                      </div>
+                    </>
                   ) : activeJob.status === 'failed' ? (
                     <div className="w-full h-full flex flex-col items-center justify-center p-4 text-center">
                       <XCircle className="h-8 w-8 text-destructive mb-2" />
@@ -1752,7 +1778,7 @@ const VirtualTryOn = ({
                   )}
                 </>
               )}
-              {activeJob.status !== 'processing' && (
+              {activeJob.status !== 'processing' && activeJob.status !== 'swapping_background' && (
                 <>
                   <Button onClick={handleSwapGarmentOnly} variant="outline" size="sm">
                     <RotateCcw className="h-4 w-4 mr-2" />
@@ -1763,7 +1789,7 @@ const VirtualTryOn = ({
                   </Button>
                 </>
               )}
-              {activeJob.status === 'processing' && (
+              {(activeJob.status === 'processing' || activeJob.status === 'swapping_background') && (
                 <p className="text-xs text-muted-foreground">
                   Anda boleh meninggalkan halaman — hasil tetap tersimpan di Riwayat.
                 </p>
