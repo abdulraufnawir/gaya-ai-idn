@@ -81,11 +81,9 @@ const Footer = () => {
             <div className="space-y-3">
               <div className="flex items-center gap-3">
                 <Mail className="w-4 h-4 text-primary" />
-                <span className="text-sm text-background/70">support@busana.ai</span>
-              </div>
-              <div className="flex items-center gap-3">
-                
-                
+                <a href={`mailto:${SUPPORT_EMAIL}`} className="text-sm text-background/70 hover:text-primary transition-colors">
+                  {SUPPORT_EMAIL}
+                </a>
               </div>
               <div className="flex items-center gap-3">
                 <MapPin className="w-4 h-4 text-primary" />
