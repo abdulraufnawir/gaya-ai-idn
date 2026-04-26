@@ -1439,7 +1439,7 @@ const VirtualTryOn = ({
 
 
       {/* Inline Result Viewer */}
-      {activeJob && (
+      {!bulkMode && activeJob && (
         <div className="max-w-7xl mx-auto mt-6 px-2 sm:px-4">
           <div className="rounded-xl border border-border bg-card p-4 sm:p-6 shadow-soft">
             {/* Status header */}
