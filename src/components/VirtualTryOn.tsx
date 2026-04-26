@@ -11,6 +11,8 @@ import { Upload, Sparkles, Users, Image, Download, RotateCcw, CheckCircle2, XCir
 import ModelGallery from './ModelGallery';
 import TryOnPresets, { type TryOnPreset } from './TryOnPresets';
 import ResultRating from './ResultRating';
+import LookbookPanel from './LookbookPanel';
+import MarketplaceExport from './MarketplaceExport';
 
 interface VirtualTryOnProps {
   userId: string;
@@ -1649,10 +1651,18 @@ const VirtualTryOn = ({
             {/* Action bar */}
             <div className="mt-4 flex flex-wrap gap-2 justify-center">
               {activeJob.status === 'completed' && (
-                <Button onClick={handleDownloadResult} variant="default" size="sm">
-                  <Download className="h-4 w-4 mr-2" />
-                  Download
-                </Button>
+                <>
+                  <Button onClick={handleDownloadResult} variant="default" size="sm">
+                    <Download className="h-4 w-4 mr-2" />
+                    Download
+                  </Button>
+                  {activeJob.resultUrl && (
+                    <MarketplaceExport
+                      imageUrl={activeJob.resultUrl}
+                      filenameBase={`busana-${activeJob.projectId.slice(0, 8)}`}
+                    />
+                  )}
+                </>
               )}
               {activeJob.status !== 'processing' && (
                 <>
@@ -1671,6 +1681,15 @@ const VirtualTryOn = ({
                 </p>
               )}
             </div>
+
+            {/* Lookbook (pose + background variations) — landing page promise */}
+            {activeJob.status === 'completed' && activeJob.resultUrl && (
+              <LookbookPanel
+                userId={userId}
+                sourceProjectId={activeJob.projectId}
+                sourceImageUrl={activeJob.resultUrl}
+              />
+            )}
 
             {/* Rating + auto-regenerate (Sprint 6) */}
             {activeJob.status === 'completed' && (

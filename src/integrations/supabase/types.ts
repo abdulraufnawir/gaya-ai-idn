@@ -89,6 +89,54 @@ export type Database = {
         }
         Relationships: []
       }
+      lookbook_variations: {
+        Row: {
+          created_at: string
+          credits_used: number
+          error_message: string | null
+          id: string
+          result_image_url: string | null
+          source_image_url: string
+          source_project_id: string
+          status: string
+          updated_at: string
+          user_id: string
+          variation_key: string
+          variation_label: string
+          variation_type: string
+        }
+        Insert: {
+          created_at?: string
+          credits_used?: number
+          error_message?: string | null
+          id?: string
+          result_image_url?: string | null
+          source_image_url: string
+          source_project_id: string
+          status?: string
+          updated_at?: string
+          user_id: string
+          variation_key: string
+          variation_label: string
+          variation_type: string
+        }
+        Update: {
+          created_at?: string
+          credits_used?: number
+          error_message?: string | null
+          id?: string
+          result_image_url?: string | null
+          source_image_url?: string
+          source_project_id?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+          variation_key?: string
+          variation_label?: string
+          variation_type?: string
+        }
+        Relationships: []
+      }
       product_content: {
         Row: {
           content_text: string | null
