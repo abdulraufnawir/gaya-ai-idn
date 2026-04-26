@@ -124,7 +124,7 @@ const Dashboard = () => {
 
   // Lab — eksperimen non-core (multi-kategori produk)
   const labItems = [
-    { id: 'produk', label: 'Produk Lab', icon: FlaskConical, beta: true },
+    { id: 'produk', label: 'Konten Produk', icon: FlaskConical, beta: true },
   ];
 
   // Akun
@@ -137,7 +137,7 @@ const Dashboard = () => {
     { id: 'studio', label: 'Try-On', icon: Shirt },
     { id: 'model-swap', label: 'Model', icon: UserSquare2 },
     { id: 'photo-edit', label: 'Edit', icon: Wand2 },
-    { id: 'history', label: 'Project', icon: History },
+    { id: 'history', label: 'Hasil', icon: History },
     { id: 'profile', label: 'Akun', icon: UserIcon },
   ];
 
@@ -253,13 +253,11 @@ const Dashboard = () => {
                       <SidebarMenuButton
                         onClick={() => setActiveTab(item.id)}
                         isActive={activeTab === item.id}
+                        tooltip={item.desc}
                         className="w-full justify-start"
                       >
                         <item.icon className="mr-2 h-4 w-4" />
-                        <div className="flex flex-col items-start leading-tight">
-                          <span>{item.label}</span>
-                          <span className="text-[10px] text-muted-foreground">{item.desc}</span>
-                        </div>
+                        <span>{item.label}</span>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   ))}
@@ -267,9 +265,9 @@ const Dashboard = () => {
               </SidebarGroupContent>
             </SidebarGroup>
 
-            {/* Library — project & aset */}
+            {/* Workspace — project, asset, eksperimen */}
             <SidebarGroup>
-              <SidebarGroupLabel>Library</SidebarGroupLabel>
+              <SidebarGroupLabel>Workspace</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
                   {libraryItems.map((item) => (
@@ -284,26 +282,18 @@ const Dashboard = () => {
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   ))}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-
-            {/* Lab - Eksperimen / Multi-kategori */}
-            <SidebarGroup>
-              <SidebarGroupLabel>Lab</SidebarGroupLabel>
-              <SidebarGroupContent>
-                <SidebarMenu>
                   {labItems.map((item) => (
                     <SidebarMenuItem key={item.id}>
                       <SidebarMenuButton
                         onClick={() => setActiveTab(item.id)}
                         isActive={activeTab === item.id}
+                        tooltip="Eksperimen — multi-kategori produk"
                         className="w-full justify-start"
                       >
                         <item.icon className="mr-2 h-4 w-4" />
                         <span className="flex-1">{item.label}</span>
                         {item.beta && (
-                          <span className="ml-auto text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded bg-primary/10 text-primary">
+                          <span className="ml-auto text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded bg-muted text-muted-foreground border border-border">
                             Beta
                           </span>
                         )}

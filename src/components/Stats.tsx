@@ -29,17 +29,16 @@ const stats = [
 
 const Stats = () => {
   return (
-    <section className="py-20 bg-foreground text-background relative overflow-hidden">
-      {/* Subtle decoration */}
+    <section className="section bg-foreground text-background relative overflow-hidden">
       <div className="absolute top-0 left-0 w-96 h-96 bg-primary/10 rounded-full blur-3xl" />
       <div className="absolute bottom-0 right-0 w-96 h-96 bg-primary-glow/10 rounded-full blur-3xl" />
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative">
-        <div className="max-w-3xl mb-12">
-          <p className="text-sm uppercase tracking-widest text-background/60 mb-4">
+        <div className="max-w-3xl mb-14">
+          <span className="text-[11px] uppercase tracking-[0.18em] font-semibold text-background/60 mb-4 inline-block">
             Hasil Nyata untuk Brand Fashion
-          </p>
-          <h2 className="text-4xl sm:text-5xl font-bold tracking-tight">
+          </span>
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight leading-[1.1]">
             Konten editorial.
             <br />
             <span className="text-primary-glow">Tanpa studio fisik.</span>
@@ -48,11 +47,8 @@ const Stats = () => {
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-10">
           {stats.map((stat, idx) => (
-            <div
-              key={idx}
-              className="border-t border-background/20 pt-6"
-            >
-              <stat.icon className="w-6 h-6 text-primary-glow mb-4" />
+            <div key={idx} className="border-t border-background/20 pt-6">
+              <stat.icon className="w-5 h-5 text-background/50 mb-4" />
               <div className="text-3xl sm:text-4xl font-bold mb-2 tracking-tight">
                 {stat.value}
               </div>

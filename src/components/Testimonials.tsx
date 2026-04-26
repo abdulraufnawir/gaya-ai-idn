@@ -18,16 +18,14 @@ const partnerCategories = [
 
 const Testimonials = () => {
   return (
-    <section className="py-20 bg-background">
+    <section className="section bg-background">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-12">
-          <p className="text-xs uppercase tracking-widest text-muted-foreground font-semibold mb-3">
-            Komunitas awal
-          </p>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground tracking-tight mb-4">
+        <div className="section-header">
+          <span className="eyebrow">Komunitas awal</span>
+          <h2 className="heading-section">
             Dibangun bersama brand fashion Indonesia
           </h2>
-          <p className="text-base text-muted-foreground max-w-2xl mx-auto">
+          <p className="lead">
             Kami sedang onboarding brand modest, RTW, dan hijab boutique generasi awal.
             Mau jadi case study?{" "}
             <a
