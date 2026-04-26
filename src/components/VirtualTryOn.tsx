@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { processImageForUpload } from '@/lib/imageProcessing';
 import { Upload, Sparkles, Users, Image, Download, RotateCcw, CheckCircle2, XCircle } from 'lucide-react';
 import ModelGallery from './ModelGallery';
 
