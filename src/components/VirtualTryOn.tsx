@@ -13,6 +13,7 @@ import TryOnPresets, { type TryOnPreset } from './TryOnPresets';
 import ResultRating from './ResultRating';
 import LookbookPanel from './LookbookPanel';
 import MarketplaceExport from './MarketplaceExport';
+import BackgroundSelector, { type BackgroundPresetKey, BACKGROUND_PRESETS } from './BackgroundSelector';
 
 interface VirtualTryOnProps {
   userId: string;
