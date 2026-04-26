@@ -29,6 +29,7 @@ import UserProfile from '@/components/UserProfile';
 import AdminAccess from '@/components/AdminAccess';
 import CreditStatus from '@/components/CreditStatus';
 import ContentStudio from '@/components/product/ContentStudio';
+import OnboardingQuickStart from '@/components/OnboardingQuickStart';
 
 const Dashboard = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -176,6 +177,8 @@ const Dashboard = () => {
           <div className="mb-4">
             <CreditStatus userId={user.id} />
           </div>
+
+          <OnboardingQuickStart userId={user.id} onSelectStep={setActiveTab} />
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             {/* Content area with bottom padding for fixed nav */}
@@ -369,6 +372,8 @@ const Dashboard = () => {
           <div className="mb-6">
             <CreditStatus userId={user.id} />
           </div>
+
+          <OnboardingQuickStart userId={user.id} onSelectStep={setActiveTab} />
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <TabsContent value="studio">

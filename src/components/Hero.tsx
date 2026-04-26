@@ -1,8 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, ArrowRight } from "lucide-react";
+import { Sparkles, ArrowRight, MessageCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import heroEditorial from "@/assets/hero-editorial.jpg";
+import { buildWhatsAppLink, DEMO_BRAND_MESSAGE } from "@/lib/contact";
 
 const Hero = () => {
   const navigate = useNavigate();
@@ -66,10 +67,17 @@ const Hero = () => {
               size="xl"
               variant="outline"
               className="rounded-full px-8 border-foreground/20 backdrop-blur bg-background/50 hover:bg-background"
-              onClick={() => navigate("/auth")}
+              asChild
             >
-              Demo untuk Brand
-              <ArrowRight className="w-5 h-5 ml-2" />
+              <a
+                href={buildWhatsAppLink(DEMO_BRAND_MESSAGE)}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Jadwalkan demo untuk brand via WhatsApp"
+              >
+                <MessageCircle className="w-5 h-5 mr-2" />
+                Demo untuk Brand
+              </a>
             </Button>
           </div>
 
