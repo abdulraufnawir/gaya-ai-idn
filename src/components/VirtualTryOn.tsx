@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { processImageForUpload } from '@/lib/imageProcessing';
 import { Upload, Sparkles, Users, Image, Download, RotateCcw, CheckCircle2, XCircle } from 'lucide-react';
 import ModelGallery from './ModelGallery';
 
@@ -50,39 +51,34 @@ const VirtualTryOn = ({
   const tickRef = useRef<number | null>(null);
   const { toast } = useToast();
 
-  // Helper function to convert images to JPEG format
-  const convertToJpeg = async (file: File): Promise<File> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const img = document.createElement('img');
-        img.onload = () => {
-          const canvas = document.createElement('canvas');
-          canvas.width = img.width;
-          canvas.height = img.height;
-          const ctx = canvas.getContext('2d');
-          if (!ctx) {
-            reject(new Error('Failed to get canvas context'));
-            return;
-          }
-          ctx.drawImage(img, 0, 0);
-          canvas.toBlob((blob) => {
-            if (!blob) {
-              reject(new Error('Failed to convert image'));
-              return;
-            }
-            const newFile = new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), {
-              type: 'image/jpeg'
-            });
-            resolve(newFile);
-          }, 'image/jpeg', 0.95);
-        };
-        img.onerror = () => reject(new Error('Failed to load image'));
-        img.src = e.target?.result as string;
-      };
-      reader.onerror = () => reject(new Error('Failed to read file'));
-      reader.readAsDataURL(file);
-    });
+  // Image preprocessing: HEIC→JPEG, AVIF/WEBP→JPEG, auto-resize, compress.
+  // Returns the final File ready for upload, or null if user-facing error already shown.
+  const preprocessForUpload = async (file: File): Promise<File | null> => {
+    try {
+      const result = await processImageForUpload(file);
+      if (result.wasTranscoded) {
+        toast({
+          title: 'Format dikonversi',
+          description: 'Foto HEIC/AVIF/WEBP diubah ke JPEG agar kompatibel.',
+        });
+      }
+      if (result.wasResized || result.processedSizeKB < result.originalSizeKB * 0.7) {
+        // Subtle hint only — no toast spam for routine compression.
+        console.log(
+          `[image] ${file.name}: ${result.originalSizeKB} KB → ${result.processedSizeKB} KB ` +
+          `(resized: ${result.wasResized})`,
+        );
+      }
+      return result.file;
+    } catch (err: any) {
+      console.error('[image] processing error', err);
+      toast({
+        title: 'Gambar tidak didukung',
+        description: err?.message || 'Gagal memproses gambar. Coba JPG/PNG.',
+        variant: 'destructive',
+      });
+      return null;
+    }
   };
 
   // Unified model-selection handler (consolidated from 3 overlapping listeners).
@@ -125,89 +121,63 @@ const VirtualTryOn = ({
   }, [toast]);
   const handleModelImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      // Convert AVIF/WEBP to JPEG for Replicate compatibility
-      let processedFile = file;
-      if (file.type === 'image/avif' || file.type === 'image/webp') {
-        try {
-          processedFile = await convertToJpeg(file);
-          toast({
-            title: 'Format Dikonversi',
-            description: 'Gambar telah dikonversi ke JPEG untuk kompatibilitas',
-          });
-        } catch (error) {
-          console.error('Image conversion error:', error);
-          toast({
-            title: 'Konversi Gagal',
-            description: 'Gagal mengkonversi format gambar. Silakan coba format lain.',
-            variant: 'destructive'
-          });
-          return;
-        }
-      }
-      
-      setModelImage(processedFile);
-      setModelImageUrl(null);
-      const previewUrl = URL.createObjectURL(processedFile);
-      setModelImagePreview(previewUrl);
+    if (!file) return;
+
+    if (!file.type.startsWith('image/') && !/\.(heic|heif)$/i.test(file.name)) {
+      toast({
+        title: 'Format tidak didukung',
+        description: 'File yang dipilih bukan gambar.',
+        variant: 'destructive',
+      });
+      return;
     }
+    if (file.size > 25 * 1024 * 1024) {
+      toast({
+        title: 'File terlalu besar',
+        description: 'Maksimal 25 MB. Gambar besar akan diperkecil otomatis.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const processed = await preprocessForUpload(file);
+    if (!processed) return;
+
+    setModelImage(processed);
+    setModelImageUrl(null);
+    const previewUrl = URL.createObjectURL(processed);
+    setModelImagePreview(previewUrl);
   };
+
   const handleClothingImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      console.log('Clothing file selected:', file.name, file.size, file.type);
-      
-      // Check if file is valid image
-      if (!file.type.startsWith('image/')) {
-        toast({
-          title: 'Error',
-          description: 'File yang dipilih bukan gambar yang valid',
-          variant: 'destructive'
-        });
-        return;
-      }
-      
-      // Check file size (10MB limit)
-      if (file.size > 10 * 1024 * 1024) {
-        toast({
-          title: 'Error', 
-          description: 'Ukuran file terlalu besar. Maksimal 10MB',
-          variant: 'destructive'
-        });
-        return;
-      }
-      
-      // Convert AVIF/WEBP to JPEG for Replicate compatibility
-      let processedFile = file;
-      if (file.type === 'image/avif' || file.type === 'image/webp') {
-        try {
-          processedFile = await convertToJpeg(file);
-          toast({
-            title: 'Format Dikonversi',
-            description: 'Gambar telah dikonversi ke JPEG untuk kompatibilitas',
-          });
-        } catch (error) {
-          console.error('Image conversion error:', error);
-          toast({
-            title: 'Konversi Gagal',
-            description: 'Gagal mengkonversi format gambar. Silakan coba format lain.',
-            variant: 'destructive'
-          });
-          return;
-        }
-      }
-      
-      setClothingImage(processedFile);
-      const previewUrl = URL.createObjectURL(processedFile);
-      setClothingImagePreview(previewUrl);
-      // Reset cached uploaded URL so a fresh upload re-captures it on Generate
-      setLastGarmentUploadedUrl(null);
+    if (!file) return;
 
+    if (!file.type.startsWith('image/') && !/\.(heic|heif)$/i.test(file.name)) {
       toast({
-        title: 'Berhasil',
-        description: 'Gambar pakaian berhasil diupload'
+        title: 'Format tidak didukung',
+        description: 'File yang dipilih bukan gambar.',
+        variant: 'destructive',
       });
+      return;
     }
+    if (file.size > 25 * 1024 * 1024) {
+      toast({
+        title: 'File terlalu besar',
+        description: 'Maksimal 25 MB.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const processed = await preprocessForUpload(file);
+    if (!processed) return;
+
+    setClothingImage(processed);
+    const previewUrl = URL.createObjectURL(processed);
+    setClothingImagePreview(previewUrl);
+    // Reset cached uploaded URL so a fresh upload re-captures it on Generate
+    setLastGarmentUploadedUrl(null);
   };
   const handleProcess = async () => {
     const hasModel = Boolean(modelImage || modelImageUrl);
@@ -739,8 +709,8 @@ const VirtualTryOn = ({
                   <label htmlFor="model-upload" className="relative w-full h-full flex flex-col items-center justify-center cursor-pointer hover:bg-muted/10 transition-colors p-4 z-20">
                     <Upload className="w-10 h-10 sm:w-12 sm:h-12 text-muted-foreground mb-3 sm:mb-4" />
                     <span className="text-base sm:text-lg font-medium text-primary mb-2 text-center">Upload foto model</span>
-                    <span className="text-xs sm:text-sm text-muted-foreground text-center">PNG, JPG hingga 10MB</span>
-                    <Input id="model-upload" type="file" accept="image/*" className="sr-only" onChange={handleModelImageChange} />
+                    <span className="text-xs sm:text-sm text-muted-foreground text-center">JPG, PNG, HEIC · auto-compress</span>
+                    <Input id="model-upload" type="file" accept="image/*,.heic,.heif" className="sr-only" onChange={handleModelImageChange} />
                   </label>
                 </div>}
             </div>
@@ -814,8 +784,8 @@ const VirtualTryOn = ({
                   <label htmlFor="clothing-upload" className="relative w-full h-full flex flex-col items-center justify-center cursor-pointer hover:bg-muted/10 transition-colors p-4 z-20">
                     <Upload className="w-10 h-10 sm:w-12 sm:h-12 text-muted-foreground mb-3 sm:mb-4" />
                     <span className="text-base sm:text-lg font-medium text-primary mb-2 text-center">Upload foto pakaian</span>
-                    <span className="text-xs sm:text-sm text-muted-foreground text-center">PNG, JPG hingga 10MB</span>
-                    <Input id="clothing-upload" type="file" accept="image/*" className="sr-only" onChange={handleClothingImageChange} />
+                    <span className="text-xs sm:text-sm text-muted-foreground text-center">JPG, PNG, HEIC · auto-compress</span>
+                    <Input id="clothing-upload" type="file" accept="image/*,.heic,.heif" className="sr-only" onChange={handleClothingImageChange} />
                   </label>
                 </div>}
             </div>

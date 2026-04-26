@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { processImageForUpload } from '@/lib/imageProcessing';
 import { Upload, ArrowLeftRight, Loader2, Sparkles, Image } from 'lucide-react';
 import ModelGallery from './ModelGallery';
 interface ModelSwapProps {
@@ -63,23 +64,35 @@ const {
     width: 819,
     height: 1024
   }];
-  const handleOriginalImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleOriginalImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      setOriginalImage(file);
-      const previewUrl = URL.createObjectURL(file);
-      setOriginalImagePreview(previewUrl);
+    if (!file) return;
+    try {
+      const { file: processed, wasTranscoded } = await processImageForUpload(file);
+      if (wasTranscoded) {
+        toast({ title: 'Format dikonversi', description: 'Foto diubah ke JPEG agar kompatibel.' });
+      }
+      setOriginalImage(processed);
+      setOriginalImagePreview(URL.createObjectURL(processed));
+    } catch (err: any) {
+      toast({ title: 'Gambar tidak didukung', description: err?.message || 'Gagal memproses gambar.', variant: 'destructive' });
     }
   };
   const handleModelSelect = (model: Model) => {
     setSelectedModel(model);
   };
-  const handleReferenceImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleReferenceImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      setReferenceImage(file);
-      const previewUrl = URL.createObjectURL(file);
-      setReferenceImagePreview(previewUrl);
+    if (!file) return;
+    try {
+      const { file: processed, wasTranscoded } = await processImageForUpload(file);
+      if (wasTranscoded) {
+        toast({ title: 'Format dikonversi', description: 'Foto diubah ke JPEG agar kompatibel.' });
+      }
+      setReferenceImage(processed);
+      setReferenceImagePreview(URL.createObjectURL(processed));
+    } catch (err: any) {
+      toast({ title: 'Gambar tidak didukung', description: err?.message || 'Gagal memproses gambar.', variant: 'destructive' });
     }
   };
   const handleGenerateModel = async () => {
@@ -367,7 +380,7 @@ settings: {
                       <Image className="w-4 h-4" />
                       <span className="font-medium">Image Reference</span>
                       <span className="text-sm text-muted-foreground">Copy pose or silhouette from an image</span>
-                      <Input id="reference-upload" type="file" accept="image/*" className="sr-only" onChange={handleReferenceImageChange} />
+                      <Input id="reference-upload" type="file" accept="image/*,.heic,.heif" className="sr-only" onChange={handleReferenceImageChange} />
                     </label>}
                 </CardContent>
               </Card>
@@ -438,7 +451,7 @@ settings: {
                         <Upload className="w-8 h-8 text-muted-foreground mb-2" />
                         <span className="text-sm font-medium text-primary">Upload gambar produk</span>
                         <span className="text-xs text-muted-foreground">PNG, JPG hingga 10MB</span>
-                        <Input id="original-upload" type="file" accept="image/*" className="sr-only" onChange={handleOriginalImageChange} />
+                        <Input id="original-upload" type="file" accept="image/*,.heic,.heif" className="sr-only" onChange={handleOriginalImageChange} />
                       </label>}
                   </div>
                 </div>
