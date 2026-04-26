@@ -921,10 +921,40 @@ const VirtualTryOn = ({
               Sistem kredit akan datang
             </Badge>
           </div>
+
+          {/* Mode Toggle: Single vs Bulk */}
+          <div className="mt-4 inline-flex rounded-lg border border-border bg-muted/30 p-1 mx-auto">
+            <button
+              type="button"
+              onClick={() => !bulkRunning && setBulkMode(false)}
+              disabled={bulkRunning}
+              className={`px-4 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                !bulkMode
+                  ? 'bg-background text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <Sparkles className="h-3 w-3 inline mr-1" />
+              Single
+            </button>
+            <button
+              type="button"
+              onClick={() => !activeJob && setBulkMode(true)}
+              disabled={Boolean(activeJob)}
+              className={`px-4 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                bulkMode
+                  ? 'bg-background text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <Layers className="h-3 w-3 inline mr-1" />
+              Bulk · 1 model × N
+              <Badge variant="secondary" className="ml-1.5 text-[9px] px-1">PRO</Badge>
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Main Content */}
       <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Pilih Model */}
         <div className="space-y-4">
