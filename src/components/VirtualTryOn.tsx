@@ -1362,8 +1362,8 @@ const VirtualTryOn = ({
       </div>
 
 
-      {/* Generate Button — hidden once a job is active so result viewer takes focus */}
-      {!activeJob && (
+      {/* Action Bar — Single mode (Generate) */}
+      {!bulkMode && !activeJob && (
         <div className="max-w-7xl mx-auto mt-4 flex justify-center px-4">
           <Button
             onClick={handleProcess}
@@ -1386,6 +1386,57 @@ const VirtualTryOn = ({
           </Button>
         </div>
       )}
+
+      {/* Action Bar — Bulk mode */}
+      {bulkMode && (
+        <div className="max-w-7xl mx-auto mt-4 flex flex-wrap items-center justify-center gap-2 px-4">
+          {!bulkRunning ? (
+            <>
+              <Button
+                onClick={handleBulkProcess}
+                disabled={(!modelImage && !modelImageUrl) || bulkItems.filter(i => i.status === 'pending' || i.status === 'failed').length === 0}
+                size="lg"
+                className="h-12 text-base sm:min-w-[280px]"
+              >
+                <Layers className="h-5 w-5 mr-2" />
+                Generate {bulkItems.filter(i => i.status === 'pending' || i.status === 'failed').length} pakaian
+                <Badge variant="secondary" className="ml-2 text-[10px]">Beta · Gratis</Badge>
+              </Button>
+              {bulkItems.some(i => i.status === 'completed') && (
+                <Button onClick={handleBulkDownloadAll} variant="outline" size="lg" className="h-12">
+                  <Download className="h-4 w-4 mr-2" />
+                  Download semua
+                </Button>
+              )}
+            </>
+          ) : (
+            <div className="w-full max-w-2xl space-y-3">
+              <div className="flex items-center justify-between text-sm">
+                <span className="font-medium">
+                  Memproses {(bulkCurrentIndex ?? 0) + 1} dari {bulkItems.length}...
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  {bulkItems.filter(i => i.status === 'completed').length} selesai · {bulkItems.filter(i => i.status === 'failed').length} gagal
+                </span>
+              </div>
+              <Progress
+                value={((bulkItems.filter(i => i.status === 'completed' || i.status === 'failed').length) / bulkItems.length) * 100}
+                className="h-2"
+              />
+              <div className="flex justify-center">
+                <Button onClick={handleBulkStop} variant="outline" size="sm">
+                  Hentikan setelah item ini
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground text-center">
+                Estimasi total: ~{Math.round((ESTIMATED_DURATION_MS * bulkItems.length) / 1000)}s.
+                Anda boleh tinggal halaman — hasil tetap di Riwayat.
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+
 
       {/* Inline Result Viewer */}
       {activeJob && (
