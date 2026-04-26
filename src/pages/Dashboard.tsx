@@ -24,6 +24,7 @@ import {
   FlaskConical,
   History,
   Plus,
+  HelpCircle,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -52,6 +53,15 @@ const Dashboard = () => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('studio');
+  const [forceOnboarding, setForceOnboarding] = useState(false);
+
+  const showHelp = () => {
+    // Re-enable onboarding even if previously dismissed
+    localStorage.removeItem('busana_onboarding_dismissed');
+    setForceOnboarding(true);
+    // Scroll to top so user sees the panel
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
   const navigate = useNavigate();
   const { toast } = useToast();
   const isMobile = useIsMobile();
@@ -79,6 +89,10 @@ const Dashboard = () => {
       setActiveTab('model-swap');
     };
 
+    const handleSwitchToStudioTab = () => {
+      setActiveTab('studio');
+    };
+
     const handleSelectModelForTryOn = (event: any) => {
       setActiveTab('studio');
       const virtualTryOnEvent = new CustomEvent('setSelectedModel', {
@@ -88,11 +102,13 @@ const Dashboard = () => {
     };
 
     window.addEventListener('switchToModelTab', handleSwitchToModelTab);
+    window.addEventListener('switchToStudioTab', handleSwitchToStudioTab);
     window.addEventListener('selectModelForTryOn', handleSelectModelForTryOn);
 
     return () => {
       subscription.unsubscribe();
       window.removeEventListener('switchToModelTab', handleSwitchToModelTab);
+      window.removeEventListener('switchToStudioTab', handleSwitchToStudioTab);
       window.removeEventListener('selectModelForTryOn', handleSelectModelForTryOn);
     };
   }, [navigate]);
@@ -201,8 +217,17 @@ const Dashboard = () => {
               <h1 className="text-base font-bold bg-gradient-primary bg-clip-text text-transparent shrink-0">
                 BUSANA.AI
               </h1>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5">
                 <CreditPill userId={user.id} onClick={() => setActiveTab('profile')} />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={showHelp}
+                  aria-label="Panduan singkat"
+                  className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                >
+                  <HelpCircle className="h-4 w-4" />
+                </Button>
                 <AdminAccess />
                 <ProfileMenu />
               </div>
@@ -223,7 +248,12 @@ const Dashboard = () => {
             </Button>
           )}
 
-          <OnboardingQuickStart userId={user.id} onSelectStep={setActiveTab} />
+          <OnboardingQuickStart
+            userId={user.id}
+            onSelectStep={setActiveTab}
+            forceShow={forceOnboarding}
+            onDismiss={() => setForceOnboarding(false)}
+          />
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <div className="pb-20">
@@ -372,7 +402,7 @@ const Dashboard = () => {
               <SidebarTrigger className="-ml-1" />
               <h2 className="font-semibold">Dashboard</h2>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
               {activeTab !== 'studio' && (
                 <Button
                   size="sm"
@@ -383,12 +413,26 @@ const Dashboard = () => {
                   Mulai Try-On
                 </Button>
               )}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={showHelp}
+                aria-label="Panduan singkat"
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <HelpCircle className="h-5 w-5" />
+              </Button>
               <ProfileMenu />
             </div>
           </header>
 
           <div className="flex-1 p-6">
-            <OnboardingQuickStart userId={user.id} onSelectStep={setActiveTab} />
+            <OnboardingQuickStart
+              userId={user.id}
+              onSelectStep={setActiveTab}
+              forceShow={forceOnboarding}
+              onDismiss={() => setForceOnboarding(false)}
+            />
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <TabsContent value="studio">
