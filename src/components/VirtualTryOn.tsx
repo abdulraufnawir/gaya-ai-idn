@@ -179,9 +179,10 @@ const VirtualTryOn = ({
       
       setClothingImage(processedFile);
       const previewUrl = URL.createObjectURL(processedFile);
-      console.log('Clothing preview URL created:', previewUrl);
       setClothingImagePreview(previewUrl);
-      
+      // Reset cached uploaded URL so a fresh upload re-captures it on Generate
+      setLastGarmentUploadedUrl(null);
+
       toast({
         title: 'Berhasil',
         description: 'Gambar pakaian berhasil diupload'
