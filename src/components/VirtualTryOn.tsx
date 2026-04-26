@@ -26,6 +26,8 @@ type ActiveJob = {
   status: 'processing' | 'completed' | 'failed';
   resultUrl?: string;
   errorMessage?: string;
+  retryCount?: number;
+  parentProjectId?: string | null;
 };
 
 type BulkGarmentItem = {
