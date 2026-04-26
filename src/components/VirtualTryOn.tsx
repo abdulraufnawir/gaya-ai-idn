@@ -1655,7 +1655,19 @@ const VirtualTryOn = ({
                 {activeJob.status === 'processing' && (
                   <>
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary" />
-                    <span className="font-medium">Memproses virtual try-on...</span>
+                    <span className="font-medium">
+                      {activeJob.backgroundPreset
+                        ? 'Langkah 1/2 — Memasangkan pakaian...'
+                        : 'Memproses virtual try-on...'}
+                    </span>
+                  </>
+                )}
+                {activeJob.status === 'swapping_background' && (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary" />
+                    <span className="font-medium">
+                      Langkah 2/2 — Mengganti background...
+                    </span>
                   </>
                 )}
                 {activeJob.status === 'completed' && (
