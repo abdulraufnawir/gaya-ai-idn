@@ -732,9 +732,7 @@ const VirtualTryOn = ({
     setBulkCurrentIndex(null);
     setBulkRunning(false);
 
-    const finalItems = bulkItems; // for toast counts we re-read from latest state below
-    // Use functional setter to capture latest counts
-    setBulkItems((prev) => {
+    // Toast counts using latest snapshot via functional setter
       const ok = prev.filter((i) => i.status === 'completed').length;
       const fail = prev.filter((i) => i.status === 'failed').length;
       toast({
