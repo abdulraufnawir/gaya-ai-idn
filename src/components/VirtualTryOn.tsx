@@ -1567,33 +1567,58 @@ const VirtualTryOn = ({
       )}
 
       {/* Action Bar — Single mode (Generate) */}
-      {!bulkMode && !activeJob && (
-        <div className="max-w-7xl mx-auto mt-4 flex justify-center px-4">
-          <Button
-            onClick={handleProcess}
-            disabled={processing || (!modelImage && !modelImageUrl) || !clothingImage || !clothingCategory}
-            size="lg"
-            className="w-full sm:w-auto sm:min-w-[300px] h-12 text-base"
-          >
-            {processing ? (
-              <>
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-current mr-3"></div>
-                Mengirim ke AI...
-              </>
-            ) : (
-              <>
-                <Sparkles className="h-5 w-5 mr-3" />
-                Generate
-                {backgroundPreset ? (
-                  <Badge variant="secondary" className="ml-2 text-[10px]">2 langkah · 2 kredit</Badge>
-                ) : (
-                  <Badge variant="secondary" className="ml-2 text-[10px]">Beta · Gratis</Badge>
-                )}
-              </>
+      {!bulkMode && !activeJob && (() => {
+        const missing: string[] = [];
+        if (!modelImage && !modelImageUrl) missing.push('foto model');
+        if (!clothingImage) missing.push('foto pakaian');
+        if (!clothingCategory) missing.push('kategori pakaian');
+        const hasMissing = missing.length > 0;
+
+        const handleClick = () => {
+          if (hasMissing) {
+            toast({
+              title: 'Lengkapi dulu',
+              description: `Belum ada: ${missing.join(', ')}.`,
+              variant: 'destructive',
+            });
+            return;
+          }
+          handleProcess();
+        };
+
+        return (
+          <div className="max-w-7xl mx-auto mt-4 flex flex-col items-center gap-2 px-4">
+            <Button
+              onClick={handleClick}
+              disabled={processing}
+              size="lg"
+              className="w-full sm:w-auto sm:min-w-[300px] h-12 text-base"
+            >
+              {processing ? (
+                <>
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-current mr-3"></div>
+                  Mengirim ke AI...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="h-5 w-5 mr-3" />
+                  Generate
+                  {backgroundPreset ? (
+                    <Badge variant="secondary" className="ml-2 text-[10px]">2 langkah · 2 kredit</Badge>
+                  ) : (
+                    <Badge variant="secondary" className="ml-2 text-[10px]">Beta · Gratis</Badge>
+                  )}
+                </>
+              )}
+            </Button>
+            {hasMissing && !processing && (
+              <p className="text-xs text-muted-foreground">
+                Lengkapi: <span className="text-destructive font-medium">{missing.join(', ')}</span>
+              </p>
             )}
-          </Button>
-        </div>
-      )}
+          </div>
+        );
+      })()}
 
       {/* Action Bar — Bulk mode */}
       {bulkMode && (
