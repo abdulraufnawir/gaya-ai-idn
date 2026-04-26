@@ -75,7 +75,49 @@ const Auth = () => {
 
       toast({
         title: 'Akun berhasil dibuat!',
-        description: 'Silakan periksa email Anda untuk verifikasi.',
+        description: 'Anda bisa langsung masuk dengan email & password Anda.',
+      });
+
+      // Auto sign-in after signup since auto-confirm is enabled
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      if (!signInError) {
+        navigate('/dashboard');
+      }
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResendConfirmation = async () => {
+    if (!email) {
+      toast({
+        title: 'Email diperlukan',
+        description: 'Masukkan email Anda terlebih dahulu.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    setLoading(true);
+    try {
+      const redirectUrl = `${window.location.protocol}//${window.location.host}/dashboard`.replace('http:', 'https:');
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email,
+        options: { emailRedirectTo: redirectUrl },
+      });
+      if (error) throw error;
+      toast({
+        title: 'Email konfirmasi terkirim ulang',
+        description: 'Periksa inbox dan folder Spam Anda.',
       });
     } catch (error: any) {
       toast({
@@ -104,9 +146,12 @@ const Auth = () => {
         navigate('/dashboard');
       }
     } catch (error: any) {
+      const isUnconfirmed = error.message?.toLowerCase().includes('email not confirmed');
       toast({
         title: 'Error',
-        description: error.message,
+        description: isUnconfirmed
+          ? 'Email belum terkonfirmasi. Klik "Kirim ulang email konfirmasi" di bawah.'
+          : error.message,
         variant: 'destructive',
       });
     } finally {
