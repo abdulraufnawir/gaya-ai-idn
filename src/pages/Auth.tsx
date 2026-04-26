@@ -293,14 +293,22 @@ const Auth = () => {
                   {loading ? 'Memproses...' : 'Masuk'}
                 </Button>
 
-                <div className="text-center">
+                <div className="text-center space-y-2">
                   <button
                     type="button"
                     onClick={handleForgotPassword}
                     disabled={loading}
-                    className="text-sm text-primary hover:underline disabled:opacity-50"
+                    className="text-sm text-primary hover:underline disabled:opacity-50 block w-full"
                   >
                     Lupa password?
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleResendConfirmation}
+                    disabled={loading}
+                    className="text-sm text-muted-foreground hover:text-primary hover:underline disabled:opacity-50 block w-full"
+                  >
+                    Kirim ulang email konfirmasi
                   </button>
                 </div>
                 
