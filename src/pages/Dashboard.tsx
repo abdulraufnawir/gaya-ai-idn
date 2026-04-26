@@ -211,8 +211,17 @@ const Dashboard = () => {
               <h1 className="text-base font-bold bg-gradient-primary bg-clip-text text-transparent shrink-0">
                 BUSANA.AI
               </h1>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5">
                 <CreditPill userId={user.id} onClick={() => setActiveTab('profile')} />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={showHelp}
+                  aria-label="Panduan singkat"
+                  className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                >
+                  <HelpCircle className="h-4 w-4" />
+                </Button>
                 <AdminAccess />
                 <ProfileMenu />
               </div>
@@ -233,7 +242,12 @@ const Dashboard = () => {
             </Button>
           )}
 
-          <OnboardingQuickStart userId={user.id} onSelectStep={setActiveTab} />
+          <OnboardingQuickStart
+            userId={user.id}
+            onSelectStep={setActiveTab}
+            forceShow={forceOnboarding}
+            onDismiss={() => setForceOnboarding(false)}
+          />
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <div className="pb-20">
