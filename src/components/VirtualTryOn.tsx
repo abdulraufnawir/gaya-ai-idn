@@ -13,6 +13,7 @@ import TryOnPresets, { type TryOnPreset } from './TryOnPresets';
 import ResultRating from './ResultRating';
 import LookbookPanel from './LookbookPanel';
 import MarketplaceExport from './MarketplaceExport';
+import BackgroundSelector, { type BackgroundPresetKey, BACKGROUND_PRESETS } from './BackgroundSelector';
 
 interface VirtualTryOnProps {
   userId: string;
@@ -25,8 +26,10 @@ type ActiveJob = {
   modelImageUrl: string;
   garmentImageUrl: string;
   category: string;
-  status: 'processing' | 'completed' | 'failed';
+  status: 'processing' | 'completed' | 'failed' | 'swapping_background';
   resultUrl?: string;
+  baseResultUrl?: string;        // pre-background-swap result (for "revert")
+  backgroundPreset?: BackgroundPresetKey | null;
   errorMessage?: string;
   retryCount?: number;
   parentProjectId?: string | null;
@@ -64,6 +67,7 @@ const VirtualTryOn = ({
   const [processing, setProcessing] = useState(false);
   const [selectedModel, setSelectedModel] = useState<any>(null);
   const [clothingCategory, setClothingCategory] = useState<string | null>(null);
+  const [backgroundPreset, setBackgroundPreset] = useState<BackgroundPresetKey | null>(null);
   const [aiModelPrompt, setAiModelPrompt] = useState<string>('');
   const [aiModelClothingType, setAiModelClothingType] = useState<string>('');
   const [generatingModel, setGeneratingModel] = useState(false);
@@ -319,6 +323,7 @@ const VirtualTryOn = ({
         garmentImageUrl: clothingImageUrl,
         category: normalizedCategory!,
         status: 'processing',
+        backgroundPreset, // chained after try-on completes
       });
       setElapsedMs(0);
       startPolling(project.id);
@@ -331,6 +336,43 @@ const VirtualTryOn = ({
     } finally {
       setProcessing(false);
     }
+  };
+
+  // After try-on completes, optionally chain a background swap so the user
+  // gets a single seamless flow (model + garment + background) in one click.
+  const chainBackgroundSwap = async (
+    projectId: string,
+    baseResultUrl: string,
+    bgKey: BackgroundPresetKey,
+  ) => {
+    const { data, error } = await supabase.functions.invoke('lookbook-generate', {
+      body: {
+        userId,
+        sourceProjectId: projectId,
+        sourceImageUrl: baseResultUrl,
+        variations: [{ type: 'background', key: bgKey }],
+      },
+    });
+    if (error) {
+      const ctx = (error as any)?.context;
+      if (ctx?.status === 402) throw new Error('Kredit tidak cukup untuk ganti background');
+      throw error;
+    }
+    const ok = (data?.results ?? []).find((r: any) => r.status === 'completed');
+    if (!ok?.resultUrl) {
+      const failMsg = (data?.results ?? [])[0]?.error ?? 'Background swap gagal';
+      throw new Error(failMsg);
+    }
+    // Persist the swapped result on the original project so history shows the final image
+    await supabase
+      .from('projects')
+      .update({ result_url: ok.resultUrl, result_image_url: ok.resultUrl })
+      .eq('id', projectId);
+
+    setActiveJob((j) => j && j.projectId === projectId
+      ? { ...j, status: 'completed', resultUrl: ok.resultUrl, baseResultUrl }
+      : j);
+    toast({ title: 'Background diganti!', description: `Hasil siap dengan ${ok.label}.` });
   };
 
   // Poll project row until status === 'completed' or 'failed'
@@ -355,6 +397,25 @@ const VirtualTryOn = ({
         if (data.status === 'completed') {
           const url = data.result_url || data.result_image_url;
           stopPolling();
+          // Chain background swap if user pre-selected one
+          if (url && backgroundPreset) {
+            setActiveJob((j) => j && j.projectId === projectId
+              ? { ...j, status: 'swapping_background', baseResultUrl: url, resultUrl: url }
+              : j);
+            chainBackgroundSwap(projectId, url, backgroundPreset).catch((err) => {
+              console.error('[bg-swap] error', err);
+              // Background swap failed but try-on succeeded — keep base result, surface a soft toast
+              setActiveJob((j) => j && j.projectId === projectId
+                ? { ...j, status: 'completed', resultUrl: url }
+                : j);
+              toast({
+                title: 'Background gagal diganti',
+                description: 'Hasil try-on tetap tersedia. Coba ganti background lewat panel Lookbook.',
+                variant: 'destructive',
+              });
+            });
+            return;
+          }
           setActiveJob((j) => j && j.projectId === projectId
             ? { ...j, status: 'completed', resultUrl: url ?? undefined }
             : j);
@@ -403,6 +464,7 @@ const VirtualTryOn = ({
     setClothingImagePreview(null);
     setSelectedModel(null);
     setClothingCategory(null);
+    setBackgroundPreset(null);
     setLastGarmentUploadedUrl(null);
   };
 
@@ -1493,6 +1555,17 @@ const VirtualTryOn = ({
       </div>
 
 
+      {/* Background pre-selector — only in single mode, before generate */}
+      {!bulkMode && !activeJob && (
+        <div className="max-w-7xl mx-auto mt-4 px-4">
+          <BackgroundSelector
+            value={backgroundPreset}
+            onChange={setBackgroundPreset}
+            disabled={processing}
+          />
+        </div>
+      )}
+
       {/* Action Bar — Single mode (Generate) */}
       {!bulkMode && !activeJob && (
         <div className="max-w-7xl mx-auto mt-4 flex justify-center px-4">
@@ -1511,7 +1584,11 @@ const VirtualTryOn = ({
               <>
                 <Sparkles className="h-5 w-5 mr-3" />
                 Generate
-                <Badge variant="secondary" className="ml-2 text-[10px]">Beta · Gratis</Badge>
+                {backgroundPreset ? (
+                  <Badge variant="secondary" className="ml-2 text-[10px]">2 langkah · 2 kredit</Badge>
+                ) : (
+                  <Badge variant="secondary" className="ml-2 text-[10px]">Beta · Gratis</Badge>
+                )}
               </>
             )}
           </Button>
@@ -1579,7 +1656,19 @@ const VirtualTryOn = ({
                 {activeJob.status === 'processing' && (
                   <>
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary" />
-                    <span className="font-medium">Memproses virtual try-on...</span>
+                    <span className="font-medium">
+                      {activeJob.backgroundPreset
+                        ? 'Langkah 1/2 — Memasangkan pakaian...'
+                        : 'Memproses virtual try-on...'}
+                    </span>
+                  </>
+                )}
+                {activeJob.status === 'swapping_background' && (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary" />
+                    <span className="font-medium">
+                      Langkah 2/2 — Mengganti background...
+                    </span>
                   </>
                 )}
                 {activeJob.status === 'completed' && (
@@ -1607,7 +1696,21 @@ const VirtualTryOn = ({
               <div className="mb-4">
                 <Progress value={Math.min(95, (elapsedMs / ESTIMATED_DURATION_MS) * 100)} className="h-2" />
                 <p className="text-xs text-muted-foreground mt-2">
-                  AI sedang memasangkan pakaian ke model. Estimasi ~25 detik.
+                  {activeJob.backgroundPreset
+                    ? `AI memasangkan pakaian. Setelah selesai, background akan otomatis diganti ke "${
+                        BACKGROUND_PRESETS.find((b) => b.key === activeJob.backgroundPreset)?.label
+                      }".`
+                    : 'AI sedang memasangkan pakaian ke model. Estimasi ~25 detik.'}
+                </p>
+              </div>
+            )}
+            {activeJob.status === 'swapping_background' && (
+              <div className="mb-4">
+                <Progress value={70} className="h-2" />
+                <p className="text-xs text-muted-foreground mt-2">
+                  Mengganti background ke "
+                  {BACKGROUND_PRESETS.find((b) => b.key === activeJob.backgroundPreset)?.label}
+                  "... ~10 detik.
                 </p>
               </div>
             )}
@@ -1633,6 +1736,18 @@ const VirtualTryOn = ({
                 <div className="aspect-[3/4] bg-muted/20 rounded-lg overflow-hidden relative ring-2 ring-primary/20">
                   {activeJob.status === 'completed' && activeJob.resultUrl ? (
                     <img src={activeJob.resultUrl} alt="Hasil try-on" className="w-full h-full object-cover" />
+                  ) : activeJob.status === 'swapping_background' && activeJob.baseResultUrl ? (
+                    <>
+                      <img
+                        src={activeJob.baseResultUrl}
+                        alt="Try-on (sebelum background diganti)"
+                        className="w-full h-full object-cover opacity-60"
+                      />
+                      <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/40 backdrop-blur-[1px]">
+                        <Sparkles className="h-8 w-8 text-primary animate-pulse mb-2" />
+                        <p className="text-xs font-medium">Mengganti background...</p>
+                      </div>
+                    </>
                   ) : activeJob.status === 'failed' ? (
                     <div className="w-full h-full flex flex-col items-center justify-center p-4 text-center">
                       <XCircle className="h-8 w-8 text-destructive mb-2" />
@@ -1664,7 +1779,7 @@ const VirtualTryOn = ({
                   )}
                 </>
               )}
-              {activeJob.status !== 'processing' && (
+              {activeJob.status !== 'processing' && activeJob.status !== 'swapping_background' && (
                 <>
                   <Button onClick={handleSwapGarmentOnly} variant="outline" size="sm">
                     <RotateCcw className="h-4 w-4 mr-2" />
@@ -1675,7 +1790,7 @@ const VirtualTryOn = ({
                   </Button>
                 </>
               )}
-              {activeJob.status === 'processing' && (
+              {(activeJob.status === 'processing' || activeJob.status === 'swapping_background') && (
                 <p className="text-xs text-muted-foreground">
                   Anda boleh meninggalkan halaman — hasil tetap tersimpan di Riwayat.
                 </p>
