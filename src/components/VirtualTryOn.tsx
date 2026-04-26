@@ -7,7 +7,7 @@ import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { processImageForUpload } from '@/lib/imageProcessing';
-import { Upload, Sparkles, Users, Image, Download, RotateCcw, CheckCircle2, XCircle } from 'lucide-react';
+import { Upload, Sparkles, Users, Image, Download, RotateCcw, CheckCircle2, XCircle, Layers, X, Plus } from 'lucide-react';
 import ModelGallery from './ModelGallery';
 
 interface VirtualTryOnProps {
@@ -26,9 +26,25 @@ type ActiveJob = {
   errorMessage?: string;
 };
 
+type BulkGarmentItem = {
+  id: string;            // local uuid
+  file: File;
+  previewUrl: string;
+  category: string;      // per-garment category (defaults to global pick)
+  uploadedUrl?: string;  // populated lazily during run
+  projectId?: string;
+  predictionId?: string;
+  status: 'pending' | 'uploading' | 'processing' | 'completed' | 'failed';
+  resultUrl?: string;
+  errorMessage?: string;
+  startedAt?: number;
+  finishedAt?: number;
+};
+
 const ESTIMATED_DURATION_MS = 25_000; // observed: ~20-25s end-to-end
 const POLL_INTERVAL_MS = 2_500;
 const POLL_TIMEOUT_MS = 120_000;
+const BULK_MAX_ITEMS = 10;
 
 const VirtualTryOn = ({
   userId
