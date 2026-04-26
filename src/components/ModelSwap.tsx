@@ -380,7 +380,7 @@ settings: {
                       <Image className="w-4 h-4" />
                       <span className="font-medium">Image Reference</span>
                       <span className="text-sm text-muted-foreground">Copy pose or silhouette from an image</span>
-                      <Input id="reference-upload" type="file" accept="image/*" className="sr-only" onChange={handleReferenceImageChange} />
+                      <Input id="reference-upload" type="file" accept="image/*,.heic,.heif" className="sr-only" onChange={handleReferenceImageChange} />
                     </label>}
                 </CardContent>
               </Card>
@@ -451,7 +451,7 @@ settings: {
                         <Upload className="w-8 h-8 text-muted-foreground mb-2" />
                         <span className="text-sm font-medium text-primary">Upload gambar produk</span>
                         <span className="text-xs text-muted-foreground">PNG, JPG hingga 10MB</span>
-                        <Input id="original-upload" type="file" accept="image/*" className="sr-only" onChange={handleOriginalImageChange} />
+                        <Input id="original-upload" type="file" accept="image/*,.heic,.heif" className="sr-only" onChange={handleOriginalImageChange} />
                       </label>}
                   </div>
                 </div>
