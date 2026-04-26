@@ -7,9 +7,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { useCredits } from '@/hooks/useCredits';
 import { supabase } from '@/integrations/supabase/client';
-import { Upload, Sparkles, Users, Shirt, Image, Coins, AlertCircle } from 'lucide-react';
+import { Upload, Sparkles, Users, Image } from 'lucide-react';
 import ModelGallery from './ModelGallery';
 interface VirtualTryOnProps {
   userId: string;
@@ -22,18 +21,14 @@ const VirtualTryOn = ({
   const [clothingImage, setClothingImage] = useState<File | null>(null);
   const [modelImagePreview, setModelImagePreview] = useState<string | null>(null);
   const [clothingImagePreview, setClothingImagePreview] = useState<string | null>(null);
+  const [lastGarmentUploadedUrl, setLastGarmentUploadedUrl] = useState<string | null>(null);
   const [processing, setProcessing] = useState(false);
   const [selectedModel, setSelectedModel] = useState<any>(null);
   const [clothingCategory, setClothingCategory] = useState<string | null>(null);
   const [aiModelPrompt, setAiModelPrompt] = useState<string>('');
   const [aiModelClothingType, setAiModelClothingType] = useState<string>('');
   const [generatingModel, setGeneratingModel] = useState(false);
-  const [userCredits, setUserCredits] = useState<number>(0);
-  const [loadingCredits, setLoadingCredits] = useState(true);
   const { toast } = useToast();
-  const { checkBalance, useCredits: useCreditsHook } = useCredits();
-
-  const VIRTUAL_TRYON_COST = 2; // 2 credits per virtual try-on
 
   // Helper function to convert images to JPEG format
   const convertToJpeg = async (file: File): Promise<File> => {
@@ -70,78 +65,42 @@ const VirtualTryOn = ({
     });
   };
 
-  const loadUserCredits = async () => {
-    setLoadingCredits(true);
-    try {
-      const creditBalance = await checkBalance();
-      if (creditBalance) {
-        setUserCredits(creditBalance.credits_balance);
-      }
-    } catch (error) {
-      console.error('Error loading credits:', error);
-    } finally {
-      setLoadingCredits(false);
-    }
-  };
+  // Unified model-selection handler (consolidated from 3 overlapping listeners).
+  // Dedupe rapid-fire events (<300ms) to avoid double-toast / state thrash.
   useEffect(() => {
-    loadUserCredits();
+    let lastUrl: string | null = null;
+    let lastAt = 0;
 
-    // Listen for model selection from ModelGallery
-    const handleSetSelectedModel = (event: any) => {
-      const selectedModel = event.detail.model;
-      if (selectedModel?.imageUrl) {
-        // Clear any uploaded file and set the selected model URL
-        setModelImage(null);
-        setModelImageUrl(selectedModel.imageUrl);
-        setModelImagePreview(selectedModel.imageUrl);
-        setSelectedModel(selectedModel);
-        toast({
-          title: 'Berhasil',
-          description: 'Model berhasil dipilih untuk virtual try-on'
-        });
-      }
+    const applyModel = (model: any, source: 'gallery' | 'ai') => {
+      if (!model?.imageUrl) return;
+      const now = Date.now();
+      if (model.imageUrl === lastUrl && now - lastAt < 300) return;
+      lastUrl = model.imageUrl;
+      lastAt = now;
+
+      setModelImage(null);
+      setModelImageUrl(model.imageUrl);
+      setModelImagePreview(model.imageUrl);
+      setSelectedModel(model);
+      toast({
+        title: source === 'ai' ? 'Model AI Siap!' : 'Model dipilih',
+        description: source === 'ai'
+          ? 'Model AI berhasil dibuat dan siap untuk virtual try-on'
+          : 'Model berhasil dipilih untuk virtual try-on',
+      });
     };
 
-    // Listen for model selection from gallery within VirtualTryOn
-    const handleSelectModelForTryOn = (event: any) => {
-      const selectedModel = event.detail.model;
-      if (selectedModel?.imageUrl) {
-        // Clear any uploaded file and set the selected model URL
-        setModelImage(null);
-        setModelImageUrl(selectedModel.imageUrl);
-        setModelImagePreview(selectedModel.imageUrl);
-        setSelectedModel(selectedModel);
-        toast({
-          title: 'Berhasil',
-          description: 'Model berhasil dipilih untuk virtual try-on'
-        });
-      }
-    };
+    const onGallery = (e: any) => applyModel(e.detail?.model, 'gallery');
+    const onAi = (e: any) => applyModel(e.detail?.model, 'ai');
 
-    // Listen for generated model completion
-    const handleGeneratedModelReady = (event: any) => {
-      const generatedModel = event.detail.model;
-      if (generatedModel?.imageUrl) {
-        // Set the generated model as selected for virtual try-on
-        setModelImage(null);
-        setModelImageUrl(generatedModel.imageUrl);
-        setModelImagePreview(generatedModel.imageUrl);
-        setSelectedModel(generatedModel);
-        toast({
-          title: 'Model AI Siap!',
-          description: 'Model AI telah berhasil dibuat dan siap untuk virtual try-on'
-        });
-      }
-    };
+    window.addEventListener('setSelectedModel', onGallery);
+    window.addEventListener('selectModelForTryOn', onGallery);
+    window.addEventListener('generatedModelReady', onAi);
 
-    window.addEventListener('setSelectedModel', handleSetSelectedModel);
-    window.addEventListener('selectModelForTryOn', handleSelectModelForTryOn);
-    window.addEventListener('generatedModelReady', handleGeneratedModelReady);
-    
     return () => {
-      window.removeEventListener('setSelectedModel', handleSetSelectedModel);
-      window.removeEventListener('selectModelForTryOn', handleSelectModelForTryOn);
-      window.removeEventListener('generatedModelReady', handleGeneratedModelReady);
+      window.removeEventListener('setSelectedModel', onGallery);
+      window.removeEventListener('selectModelForTryOn', onGallery);
+      window.removeEventListener('generatedModelReady', onAi);
     };
   }, [toast]);
   const handleModelImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -220,9 +179,10 @@ const VirtualTryOn = ({
       
       setClothingImage(processedFile);
       const previewUrl = URL.createObjectURL(processedFile);
-      console.log('Clothing preview URL created:', previewUrl);
       setClothingImagePreview(previewUrl);
-      
+      // Reset cached uploaded URL so a fresh upload re-captures it on Generate
+      setLastGarmentUploadedUrl(null);
+
       toast({
         title: 'Berhasil',
         description: 'Gambar pakaian berhasil diupload'
@@ -230,7 +190,9 @@ const VirtualTryOn = ({
     }
   };
   const handleProcess = async () => {
-    if (!modelImage && !modelImageUrl || !clothingImage) {
+    const hasModel = Boolean(modelImage || modelImageUrl);
+    const hasGarment = Boolean(clothingImage);
+    if (!hasModel || !hasGarment) {
       toast({
         title: 'Error',
         description: 'Silakan upload gambar model dan pakaian',
@@ -250,15 +212,16 @@ const VirtualTryOn = ({
 
     setProcessing(true);
     try {
-      // Beta testing: Credits system disabled
-
       // Get model image URL - either from uploaded file or selected model
       let finalModelImageUrl = modelImageUrl;
-      
-      // If modelImageUrl is a local asset path, fetch and upload it to Supabase
-      if (modelImageUrl && (modelImageUrl.startsWith('/src/') || modelImageUrl.startsWith('/assets/') || !modelImageUrl.startsWith('http'))) {
+
+      // If modelImageUrl is a local/relative asset path (Vite dev OR hashed prod build),
+      // fetch and re-upload it to Supabase so KIE AI can access it.
+      const isRemoteHttpUrl = (u: string) =>
+        u.startsWith('http://') || u.startsWith('https://');
+
+      if (modelImageUrl && !isRemoteHttpUrl(modelImageUrl)) {
         try {
-          // Fetch the local image
           const response = await fetch(modelImageUrl);
           const blob = await response.blob();
           const file = new File([blob], `template-model-${Date.now()}.jpg`, { type: 'image/jpeg' });
@@ -270,10 +233,11 @@ const VirtualTryOn = ({
       } else if (!modelImageUrl && modelImage) {
         finalModelImageUrl = await uploadImage(modelImage, 'model');
       }
-      
-      const clothingImageUrl = await uploadImage(clothingImage, 'clothing');
+
+      const clothingImageUrl = await uploadImage(clothingImage!, 'clothing');
+      setLastGarmentUploadedUrl(clothingImageUrl);
       // Normalize clothing category to Title Case expected by backend
-      const normalizedCategory = clothingCategory 
+      const normalizedCategory = clothingCategory
         ? clothingCategory.charAt(0).toUpperCase() + clothingCategory.slice(1).toLowerCase()
         : null;
 
@@ -447,7 +411,7 @@ const VirtualTryOn = ({
           prompt: aiModelPrompt,
           clothingType: aiModelClothingType,
           aspectRatio: '2:3',
-          referenceImage: (window as any)?.lastUploadedGarmentImageUrl,
+          referenceImage: lastGarmentUploadedUrl ?? undefined,
           projectId: project.id
         }
       });
@@ -490,7 +454,7 @@ const VirtualTryOn = ({
           
           {/* Beta Notice */}
           <div className="mt-3 flex items-center justify-center gap-2">
-            <Badge variant="outline" className="flex items-center gap-1 bg-green-50 border-green-200 text-green-700">
+            <Badge variant="outline" className="flex items-center gap-1 bg-success/10 border-success/30 text-success">
               <Sparkles className="h-3 w-3" />
               Beta Testing - Gratis
             </Badge>
@@ -553,14 +517,16 @@ const VirtualTryOn = ({
                     />
                   </div>
                   
-                  <Button 
+                  <Button
                     onClick={handleGenerateModel}
                     disabled={generatingModel || !aiModelPrompt.trim() || !aiModelClothingType}
-                    className="w-full bg-yellow-400 hover:bg-yellow-500 text-black font-medium py-3"
+                    variant="hero"
+                    size="lg"
+                    className="w-full"
                   >
                     {generatingModel ? (
                       <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-black mr-2"></div>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2"></div>
                         Generating...
                       </>
                     ) : (
@@ -573,7 +539,7 @@ const VirtualTryOn = ({
                   
                   <div className="relative">
                     <div className="absolute inset-0 flex items-center">
-                      <div className="w-full border-t border-gray-300" />
+                      <div className="w-full border-t border-border" />
                     </div>
                     <div className="relative flex justify-center text-sm">
                       <span className="px-2 bg-background text-muted-foreground">atau</span>
