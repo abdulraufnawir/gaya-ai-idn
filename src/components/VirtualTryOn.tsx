@@ -7,9 +7,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { useCredits } from '@/hooks/useCredits';
 import { supabase } from '@/integrations/supabase/client';
-import { Upload, Sparkles, Users, Shirt, Image, Coins, AlertCircle } from 'lucide-react';
+import { Upload, Sparkles, Users, Image } from 'lucide-react';
 import ModelGallery from './ModelGallery';
 interface VirtualTryOnProps {
   userId: string;
