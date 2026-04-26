@@ -26,8 +26,10 @@ type ActiveJob = {
   modelImageUrl: string;
   garmentImageUrl: string;
   category: string;
-  status: 'processing' | 'completed' | 'failed';
+  status: 'processing' | 'completed' | 'failed' | 'swapping_background';
   resultUrl?: string;
+  baseResultUrl?: string;        // pre-background-swap result (for "revert")
+  backgroundPreset?: BackgroundPresetKey | null;
   errorMessage?: string;
   retryCount?: number;
   parentProjectId?: string | null;
